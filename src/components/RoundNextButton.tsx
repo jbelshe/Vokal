@@ -1,6 +1,10 @@
 // src/components/buttons/RoundButton.tsx
 import React from 'react';
-import { TouchableOpacity, Image, StyleProp, ViewStyle } from 'react-native';
+import { TouchableOpacity, StyleProp, ViewStyle } from 'react-native';
+import Logo from '../assets/icons/chevron-right.svg';
+
+import { StyleSheet } from 'react-native';
+import { theme } from '../assets/theme';
 
 interface RoundButtonProps {
   onPress: () => void;
@@ -22,16 +26,11 @@ export const RoundNextButton: React.FC<RoundButtonProps> = ({
     onPress={onPress}
     disabled={disabled}
   >
-    <Image 
-      //source={require('../../assets/icons/chevron-right.svg')} 
-      style={{ width: 24, height: 24, tintColor: 'white' }}
-    />
+    <Logo width={40} height={40} fill="white" />
   </TouchableOpacity>
 );
 
 
-import { StyleSheet } from 'react-native';
-import { theme } from '../assets/theme';
 
 const styles = StyleSheet.create({
   buttonContainer: {

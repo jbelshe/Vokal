@@ -1,11 +1,24 @@
 import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import * as SecureStore from 'expo-secure-store';
+import { Birthday } from '../types/birthday';
 
 type User = { id: string; email?: string } | null;
+type Profile = {
+  phoneNumber: string | null;
+  firstName: string | null;
+  lastName: string | null;
+  email: string | null;
+  zipCode: string | null;
+  gender: string | null;
+  birthday: Birthday | null;
+  emailSubscribed: boolean;
+};
 
 type AuthContextType = {
   user: User;
   loading: boolean;
+  phoneNumber: string | null;
+  setPhoneNumber: (phone: string | null) => void;
   signIn: (tokenOrUser: string | User) => Promise<void>;
   signOut: () => Promise<void>;
 };
@@ -19,6 +32,8 @@ const SESSION_KEY = 'session_user'; // store token or serialized user
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User>(null);
   const [loading, setLoading] = useState(true);
+  const [phoneNumber, setPhoneNumber] = useState<string | null>(null);
+  const [newUser, setNewUser] = useState<Profile | null>(null);
 
   useEffect(() => {
     (async () => {
@@ -33,6 +48,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     })();
   }, []);
+
+  useEffect(() => {
+    if (phoneNumber) {
+      console.log('Phone number set:', phoneNumber);
+    }
+  }, [phoneNumber]);
 
   const signIn = async (tokenOrUser: string | User) => {
     if (typeof tokenOrUser === 'string') {
@@ -50,8 +71,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUser(null);
   };
 
-  const value = useMemo(() => ({ user, loading, signIn, signOut }), [user, loading]);
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  const value = useMemo(() => ({
+    user,
+    loading,
+    phoneNumber,
+    setPhoneNumber,
+    signIn,
+    signOut,
+  }), [user, loading, phoneNumber]);
+
+  return (
+    <AuthContext.Provider value={value}>
+      {children}
+    </AuthContext.Provider>
+  );
 }
 
 // Hook to use the context

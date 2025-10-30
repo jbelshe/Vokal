@@ -4,17 +4,20 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { AuthStackParamList } from '../../types/navigation';
 import { theme } from '../../assets/theme';
 import { RoundNextButton } from '../../components/RoundNextButton';
+import { useAuth } from '../../context/AuthContext';
 
 type Props = NativeStackScreenProps<AuthStackParamList, 'EnterPhoneNumber'>;
 
 export default function EnterPhoneNumber({ navigation }: Props) {
-  const [phoneNumber, setPhoneNumber] = React.useState('');
+  const { setPhoneNumber } = useAuth();
+
+  const [phoneNumberLocal, setPhoneNumberLocal] = React.useState('');
   const [isValid, setIsValid] = React.useState(false);
 
   const handlePhoneChange = (text: string) => {
     // Basic phone number validation (10 digits)
     const cleaned = text.replace(/\D/g, '');
-    setPhoneNumber(cleaned);
+    setPhoneNumberLocal(cleaned);
     setIsValid(cleaned.length === 10);
   };
 
@@ -23,8 +26,8 @@ export default function EnterPhoneNumber({ navigation }: Props) {
     const cleaned = ('' + text).replace(/\D/g, '');
     const match = cleaned.match(/^(\d{0,3})(\d{0,3})(\d{0,4})$/);
     if (match) {
-      return !match[2] 
-        ? match[1] 
+      return !match[2]
+        ? match[1]
         : `(${match[1]}) ${match[2]}${match[3] ? `-${match[3]}` : ''}`;
     }
     return text;
@@ -32,13 +35,14 @@ export default function EnterPhoneNumber({ navigation }: Props) {
 
   const handleNext = () => {
     if (isValid) {
+      setPhoneNumber(phoneNumberLocal);
       navigation.navigate('OTP');
     }
   };
 
   return (
-    <ImageBackground 
-      source={require('../../assets/images/bg-top-gradient.png')} 
+    <ImageBackground
+      source={require('../../assets/images/bg-top-gradient.png')}
       style={styles.background}
       resizeMode="cover"
     >
@@ -51,25 +55,25 @@ export default function EnterPhoneNumber({ navigation }: Props) {
           <Text style={[theme.textStyles.headline1, { textAlign: 'left' }]}>
             What's your mobile number?
           </Text>
-          
+
           <Text style={[theme.textStyles.body, { textAlign: 'left', marginBottom: 24 }]}>
             We'll text you a verification code
           </Text>
-          
+
           <View style={styles.inputContainer}>
             <Text style={styles.countryCode}>+1</Text>
             <TextInput
-              style={[styles.input, !isValid && phoneNumber.length > 0 && styles.inputError]}
+              style={[styles.input, !isValid && phoneNumberLocal.length > 0 && styles.inputError]}
               placeholder="(555) 123-4567"
               placeholderTextColor={theme.colors.secondary_text}
               keyboardType="phone-pad"
-              value={formatPhoneNumber(phoneNumber)}
+              value={formatPhoneNumber(phoneNumberLocal)}
               onChangeText={handlePhoneChange}
               maxLength={14} // (XXX) XXX-XXXX
               autoFocus
             />
           </View>
-          {!isValid && phoneNumber.length > 0 && (
+          {!isValid && phoneNumberLocal.length > 0 && (
             <Text style={styles.errorText}>Please enter a valid 10-digit phone number</Text>
           )}
         </View>
@@ -147,9 +151,5 @@ const styles = StyleSheet.create({
     paddingBottom: 40,
     alignItems: 'flex-end',  // Align to the right
   },
-  buttonText: {
-    color: 'white',
-    fontSize: 16,
-    fontWeight: '600',
-  },
+
 });
