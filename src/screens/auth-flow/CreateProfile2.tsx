@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Image, Text, ImageBackground, StyleSheet } from 'react-native';
+import { View, Image, Text, ImageBackground, StyleSheet, TouchableOpacity } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { AuthStackParamList } from '../../types/navigation';
 import { useAuth } from '../../context/AuthContext';
@@ -7,18 +7,18 @@ import { RoundNextButton } from '../../components/RoundNextButton';
 import { TextInput, View as RNView, Platform } from 'react-native';
 import { theme } from '../../assets/theme';
 import { Dropdown } from 'react-native-element-dropdown';
-import { Birthday } from '../../types/birthday';
+import BackIcon from '../../assets/icons/chevron-left.svg';
 
 type Props = NativeStackScreenProps<AuthStackParamList, 'CreateProfile2'>;
 
 export default function CreateProfile2({ navigation }: Props) {
-  const { signIn } = useAuth();
+  const { signIn, profile, updateProfile} = useAuth();
   const [selectedGender, setSelectedGender] = React.useState<string>('');
-  const [email, setEmail] = React.useState('');
-  const [zipCode, setZipCode] = React.useState('');
-  const [birthDay, setBirthDay] = React.useState<string>('');
-  const [birthMonth, setBirthMonth] = React.useState<string>('');
-  const [birthYear, setBirthYear] = React.useState<string>('');
+  const [email, setEmail] = React.useState(profile?.email || '');
+  const [zipCode, setZipCode] = React.useState(profile?.zipCode || '');
+  const [birthDay, setBirthDay] = React.useState<string>(profile?.birthday?.day || '');
+  const [birthMonth, setBirthMonth] = React.useState<string>(profile?.birthday?.month || '');
+  const [birthYear, setBirthYear] = React.useState<string>(profile?.birthday?.year || '');
   const [contentError, setContentError] = React.useState<string | null>(null);
   const [birthday, setBirthday] = React.useState<{ month: number; day: number; year: number } | null>(null);
 
@@ -104,10 +104,18 @@ export default function CreateProfile2({ navigation }: Props) {
   };
 
 
+  const handleBack = () => {
+    navigation.navigate('CreateProfile1');
+  };
+
   return (
     <ImageBackground
       source={require('../../assets/images/bg-top-gradient.png')}
       style={styles.background}>
+      <TouchableOpacity onPress={handleBack} style={styles.backButton}>
+        <BackIcon width={45} height={45} fill="black" />
+      </TouchableOpacity>
+      
       <View style={styles.topContainer}>
         <Image
           source={require('../../assets/icons/vokal-icon-no-bg.png')}
@@ -242,6 +250,14 @@ export default function CreateProfile2({ navigation }: Props) {
 }
 
 const styles = StyleSheet.create({
+  backButton: {
+    position: 'absolute',
+    color: theme.colors.primary_text,
+    top: 60,
+    left: 20,
+    zIndex: 10,
+    padding: 8,
+  },
   background: {
     flex: 1,               // fills the whole screen
     justifyContent: 'center',
@@ -304,7 +320,7 @@ const styles = StyleSheet.create({
   },
   dropdownOptionContainer: {
     backgroundColor: 'transparent',
-    paddingHorizontal: 16,
+    paddingHorizontal: 8,
   },
 
   placeholderStyle: {

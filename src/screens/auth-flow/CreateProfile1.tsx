@@ -4,15 +4,26 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { AuthStackParamList } from '../../types/navigation';
 import { theme } from '../../assets/theme';
 import { RoundNextButton } from '../../components/RoundNextButton';
+import { useAuth } from '../../context/AuthContext';
 
 type Props = NativeStackScreenProps<AuthStackParamList, 'CreateProfile1'>;
 
 export default function CreateProfile1({ navigation }: Props) {
+  const { profile, updateProfile } = useAuth();
 
-  const [firstName, setFirstName] = React.useState('');
-  const [lastName, setLastName] = React.useState('');
+  const [firstName, setFirstName] = React.useState(profile?.firstName || '');
+  const [lastName, setLastName] = React.useState(profile?.lastName || '');
+
+  // Update local state when profile changes
+  React.useEffect(() => {
+    if (profile) {
+      setFirstName(profile.firstName || '');
+      setLastName(profile.lastName || '');
+    }
+  }, [profile]);
 
   const handleNext = () => {
+    updateProfile({ firstName, lastName });
     navigation.navigate('CreateProfile2');
   };
 

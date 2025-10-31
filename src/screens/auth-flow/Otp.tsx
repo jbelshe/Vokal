@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Image, Text, ImageBackground, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Image, Text, ImageBackground, StyleSheet, TouchableOpacity, Alert } from 'react-native';
 import { CodeField, Cursor, useBlurOnFulfill, useClearByFocusCell } from 'react-native-confirmation-code-field';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { AuthStackParamList } from '../../types/navigation';
@@ -10,28 +10,31 @@ import { useAuth } from '@/context/AuthContext';
 type Props = NativeStackScreenProps<AuthStackParamList, 'OTP'>;
 
 export default function Otp({ navigation }: Props) {
-  const [value, setValue] = React.useState('');
+  const [otpValue, setOtpValue] = React.useState('');
   const [resendDisabled, setResendDisabled] = React.useState(false);
   const [countdown, setCountdown] = React.useState(30);
-  const ref = useBlurOnFulfill({ value, cellCount: 6 });
+  const [error, setError] = React.useState<string | null>(null);
+  const ref = useBlurOnFulfill({ value: otpValue, cellCount: 6 });
   const [props, getCellOnLayoutHandler] = useClearByFocusCell({
-    value,
-    setValue,
+    value: otpValue,
+    setValue: setOtpValue,
   });
 
 
-  const { phoneNumber } = useAuth();
+  const { phoneNumber, existingUser, handleVerifyOtp , handleSendOtp, setOtpInput, signIn} = useAuth();
 
   // We can safely assert that phoneNumber is not null here because this component
   // is only shown after the phone number has been set in the auth flow.
   const safePhoneNumber = phoneNumber!;
 
-  const isCodeComplete = value.length === 6;
+  const isCodeComplete = otpValue.length === 6;
 
   const handleResendCode = () => {
     if (resendDisabled) return;
 
     // Reset countdown and disable resend button for 30 seconds
+    console.log('Resending verification code...');
+    handleSendOtp(safePhoneNumber);
     setResendDisabled(true);
     setCountdown(30);
 
@@ -51,9 +54,32 @@ export default function Otp({ navigation }: Props) {
     console.log('Resending verification code...');
   };
 
-  const handleNext = () => {
-    if (isCodeComplete) {
-      navigation.navigate('CreateProfile1');
+  const handleNext = async () => {
+    if (!isCodeComplete) return;
+    
+    setError(null);
+    await setOtpInput(otpValue);
+    const success = await handleVerifyOtp(otpValue);
+    
+    if (success) {      
+      console.log("OTP entered successfully")
+      console.log("existingUser: ", existingUser)
+      if (true) {
+        if (phoneNumber == "4083132757") {
+          navigation.navigate('CreateProfile1');
+          return;
+        }
+      }
+      
+      if (existingUser) {
+        console.log("User exists... signing in")
+        signIn("token")
+      } else {
+        console.log("New User => Going to CreateProfile1")
+        navigation.navigate('CreateProfile1');
+      }
+    } else {
+      setError('Incorrect OTP. Please try again.');
     }
   };
 
@@ -79,7 +105,7 @@ export default function Otp({ navigation }: Props) {
     if (isCodeComplete) {
       handleNext();
     }
-  }, [value, isCodeComplete]);
+  }, [otpValue, isCodeComplete]);
 
   return (
     <ImageBackground
@@ -91,13 +117,18 @@ export default function Otp({ navigation }: Props) {
           style={styles.logo}
         />
         <Text style={[theme.textStyles.headline1, { textAlign: 'left', width: '100%' }]}>Enter your 6-digit code</Text>
-        <Text style={[theme.textStyles.body, { textAlign: 'left', width: '100%', marginBottom: 32 }]}>We sent your code to {formatPhoneNumber(safePhoneNumber)}</Text>
+        <Text style={[theme.textStyles.body, { textAlign: 'left', width: '100%', marginBottom: 16 }]}>We sent your code to {formatPhoneNumber(safePhoneNumber)}</Text>
+        {error && (
+          <Text style={[theme.textStyles.body, { color: 'red', marginBottom: 16, width: '100%' }]}>
+            {error}
+          </Text>
+        )}
 
         <CodeField
           ref={ref}
           {...props}
-          value={value}
-          onChangeText={setValue}
+          value={otpValue}
+          onChangeText={setOtpValue}
           cellCount={6}
           rootStyle={styles.codeFieldRoot}
           keyboardType="number-pad"
