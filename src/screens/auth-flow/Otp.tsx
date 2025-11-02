@@ -21,7 +21,7 @@ export default function Otp({ navigation }: Props) {
   });
 
 
-  const { phoneNumber, existingUser, handleVerifyOtp , handleSendOtp, setOtpInput, signIn, user} = useAuth();
+  const { phoneNumber, existingUser, handleVerifyOtp , handleSendOtp, setIsOnboarding, setOtpInput, signIn, user} = useAuth();
 
   // We can safely assert that phoneNumber is not null here because this component
   // is only shown after the phone number has been set in the auth flow.
@@ -64,7 +64,7 @@ export default function Otp({ navigation }: Props) {
     if (success) {      
       console.log("OTP entered successfully")
       console.log("existingUser, phone#: ", existingUser, phoneNumber)
-      if (true) {
+      if (false) {
         if (phoneNumber == "4083132757") {
           navigation.navigate('CreateProfile1');
           return;
@@ -74,6 +74,7 @@ export default function Otp({ navigation }: Props) {
       if (existingUser) {
         console.log("User exists... signing in")
         signIn("token")
+        setIsOnboarding(false);
       } else {
         console.log("New User => Going to CreateProfile1")
         navigation.navigate('CreateProfile1');

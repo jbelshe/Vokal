@@ -7,21 +7,21 @@ import AppStack from './AppStack';
 
 function Splash() {
   return (
-    <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
+    <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: 'transparent' }}>
       <ActivityIndicator />
     </View>
   );
 }
 
 export default function RootNavigator() {
-  const { user, loading, isOnboarding } = useAuth();
+  const { user, loading, isOnboarding, session } = useAuth();
 
   return (
     <NavigationContainer>
-      <View style={{ flex: 1, backgroundColor: 'transparent' }}>
+      <View style={{ flex: 1 }}>
         {!!loading ? (
           <Splash />
-        ) : isOnboarding ? (
+        ) : (isOnboarding) ? (
           <AuthStack />
         ) : (
           <AppStack />

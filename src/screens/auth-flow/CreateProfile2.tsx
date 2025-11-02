@@ -11,6 +11,7 @@ import BackIcon from '../../assets/icons/chevron-left.svg';
 import { Birthday } from '../../types/birthday';
 import { useMemo, useState } from 'react';
 import Checkbox from 'expo-checkbox';
+import { Profile } from '../../types/profile';
 
 type Props = NativeStackScreenProps<AuthStackParamList, 'CreateProfile2'>;
 
@@ -63,6 +64,7 @@ export default function CreateProfile2({ navigation }: Props) {
 
   // Sync local state when profile changes
   React.useEffect(() => {
+    console.log('Profile changed:', profile);
     if (profile) {
       setEmail(profile.email || '');
       setZipCode(profile.zipCode || '');
@@ -72,6 +74,7 @@ export default function CreateProfile2({ navigation }: Props) {
       setBirthDay(parsed.day);
       setBirthYear(parsed.year);
       setIsChecked(profile.emailSubscribed || false);
+      
     }
   }, [profile]);
 
@@ -108,23 +111,26 @@ export default function CreateProfile2({ navigation }: Props) {
       return;
     }
 
-    // Save profile data before proceeding
-    const birthdayData: Birthday = {
-      month: birthMonth,
-      day: birthDay,
-      year: birthYear
+    const updatedProfile: Profile = {
+      phoneNumber: profile?.phoneNumber ?? null,
+      firstName: profile?.firstName ?? null,
+      lastName: profile?.lastName ?? null,
+      email: email ?? null,
+      zipCode: zipCode ?? null,
+      gender: selectedGender ?? null,
+      birthday: {
+        month: birthMonth,
+        day: birthDay,
+        year: birthYear
+      } as const,
+      emailSubscribed: isChecked
     };
 
-    updateProfile({
-      email,
-      zipCode,
-      gender: selectedGender,
-      birthday: birthdayData,
-      emailSubscribed: isChecked
-    });
+    updateProfile(updatedProfile);
+
 
     try {
-      const success = await saveProfileToDatabase();
+      const success = await saveProfileToDatabase(updatedProfile);
       if (!success) {
         setContentError('Failed to save profile. Please try again.');
         return;
@@ -137,6 +143,7 @@ export default function CreateProfile2({ navigation }: Props) {
 
     // If date is valid and profile saved, proceed with sign in
     signIn('demo-token');
+    navigation.navigate('Onboarding1');
   };
 
   const genderOptions = [

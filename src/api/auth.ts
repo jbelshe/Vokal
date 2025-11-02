@@ -126,7 +126,7 @@ export async function saveProfile(profile: Profile, session: any): Promise<boole
     console.log('Authenticated user:', user);
 
     let email_val: string;
-    if (profile.email) {
+    if (profile.emailSubscribed) {
       email_val = 'all_emails';
     } else {
       email_val = 'no_emails';

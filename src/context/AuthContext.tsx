@@ -2,17 +2,7 @@ import React, { createContext, useContext, useEffect, useMemo, useState } from '
 import * as SecureStore from 'expo-secure-store';
 import { Birthday } from '../types/birthday';
 import { sendOtp, verifyOtp, checkIfUserExists, saveProfile } from '../api/auth';
-
-type Profile = {
-  phoneNumber: string | null;
-  firstName: string | null;
-  lastName: string | null;
-  email: string | null;
-  zipCode: string | null;
-  gender: string | null;
-  birthday: Birthday | null;
-  emailSubscribed: boolean;
-};
+import { Profile } from '../types/profile';
 
 type AuthContextType = {
   user: any | null;
@@ -24,13 +14,14 @@ type AuthContextType = {
   isOnboarding: boolean;
   setPhoneNumber: (phone: string | null) => void;
   setOtpInput: (otp: string | null) => void;
+  setIsOnboarding: (isOnboarding: boolean) => void;
   handleSendOtp: (phoneNumber: string) => Promise<void>;
   handleVerifyOtp: (otpInput: string) => Promise<boolean>;
   handleCheckIfUserExists: (phoneNumber: string) => Promise<void>;
   signIn: (tokenOrUser: string | any) => Promise<void>;
   signOut: () => Promise<void>;
   updateProfile: (updates: Partial<Profile>) => void;
-  saveProfileToDatabase: () => Promise<boolean>;
+  saveProfileToDatabase: (currProfile : Profile) => Promise<boolean>;
 };
   
 
@@ -99,6 +90,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUser(null);
     setSession(null);
     setExistingUser(false);
+    setIsOnboarding(true);
     setPhoneNumber(null);
     setOtpInput(null);
   };
@@ -112,34 +104,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
-  const updateProfile = (updates: Partial<Profile> | null) => {
-    if (updates === null) {
-      setProfile({
-        phoneNumber: null,
-        firstName: null,
-        lastName: null,
-        email: null,
-        zipCode: null,
-        gender: null,
-        birthday: null,
-        emailSubscribed: false,
-      });
-    } else {
-      setProfile(prev => ({
-        ...(prev || {
-          phoneNumber: null,
-          firstName: null,
-          lastName: null,
-          email: null,
-          zipCode: null,
-          gender: null,
-          birthday: null,
-          emailSubscribed: false,
-        }),
-        ...updates
-      }));
-    }
-  };
+const updateProfile = (updates: Partial<Profile> | null) => {
+  console.log('Updating profile with:', updates); // Debug log
+  if (updates === null) {
+    setProfile({
+      phoneNumber: null,
+      firstName: null,
+      lastName: null,
+      email: null,
+      zipCode: null,
+      gender: null,
+      birthday: null,
+      emailSubscribed: false
+    });
+  } else {
+    setProfile(prev => {
+      const newProfile = { ...prev, ...updates };
+      console.log('New profile state:', newProfile); // Debug log
+      return newProfile;
+    });
+  }
+};
 
   // Type guard to check if an object is a complete Profile
   const isProfile = (obj: any): obj is Profile => {
@@ -186,14 +171,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
-  const saveProfileToDatabase = async (): Promise<boolean> => {
+  const saveProfileToDatabase = async (currProfile: Profile): Promise<boolean> => {
     try {
-      if (!session || !profile) {
-        console.error('Cannot save profile: missing session or profile data');
+      if (!session) {
+        console.error('Cannot save profile: missing session data');
         return false;
       }
 
-      const success = await saveProfile(profile, session);
+      const success = await saveProfile(currProfile, session);
       return success;
     } catch (error) {
       console.error('Error saving profile to database:', error);
@@ -216,6 +201,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     handleCheckIfUserExists,
     signIn,
     signOut,
+    setIsOnboarding,
     updateProfile,
     saveProfileToDatabase,
   }), [user, loading, isOnboarding, phoneNumber, existingUser, profile, session]);

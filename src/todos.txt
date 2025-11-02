@@ -1,0 +1,5 @@
+11/02:
+Update OTP messaging to handle country codes
+    Fix the default +1 that is added currently
+Add zod.dev schema management
+    Replace profiles object
