@@ -8,21 +8,74 @@ import { TextInput, View as RNView, Platform } from 'react-native';
 import { theme } from '../../assets/theme';
 import { Dropdown } from 'react-native-element-dropdown';
 import BackIcon from '../../assets/icons/chevron-left.svg';
+import { Birthday } from '../../types/birthday';
+import { useMemo, useState } from 'react';
+import Checkbox from 'expo-checkbox';
 
 type Props = NativeStackScreenProps<AuthStackParamList, 'CreateProfile2'>;
 
+// Helper function to extract birthday values from Profile's Birthday type
+const parseBirthdayFromProfile = (birthday: Birthday | null | undefined): { month: number | null; day: number | null; year: number | null } => {
+  if (!birthday) {
+    return { month: null, day: null, year: null };
+  }
+  
+  // Handle { isoDate: string } format
+  if ('isoDate' in birthday) {
+    const date = new Date(birthday.isoDate);
+    if (!isNaN(date.getTime())) {
+      return {
+        month: date.getMonth() + 1, // JavaScript months are 0-indexed
+        day: date.getDate(),
+        year: date.getFullYear()
+      };
+    }
+    return { month: null, day: null, year: null };
+  }
+  
+  // Handle { month, day, year } format
+  return {
+    month: birthday.month || null,
+    day: birthday.day || null,
+    year: birthday.year || null
+  };
+};
+
 export default function CreateProfile2({ navigation }: Props) {
-  const { signIn, profile, updateProfile} = useAuth();
-  const [selectedGender, setSelectedGender] = React.useState<string>('');
+  const { signIn, profile, updateProfile, saveProfileToDatabase} = useAuth();
+  const [selectedGender, setSelectedGender] = React.useState<string>(profile?.gender || '');
   const [email, setEmail] = React.useState(profile?.email || '');
   const [zipCode, setZipCode] = React.useState(profile?.zipCode || '');
-  const [birthDay, setBirthDay] = React.useState<string>(profile?.birthday?.day || '');
-  const [birthMonth, setBirthMonth] = React.useState<string>(profile?.birthday?.month || '');
-  const [birthYear, setBirthYear] = React.useState<string>(profile?.birthday?.year || '');
+  const [birthDay, setBirthDay] = React.useState<number | null>(() => {
+    const parsed = parseBirthdayFromProfile(profile?.birthday);
+    return parsed.day;
+  });
+  const [birthMonth, setBirthMonth] = React.useState<number | null>(() => {
+    const parsed = parseBirthdayFromProfile(profile?.birthday);
+    return parsed.month;
+  });
+  const [birthYear, setBirthYear] = React.useState<number | null>(() => {
+    const parsed = parseBirthdayFromProfile(profile?.birthday);
+    return parsed.year;
+  });
   const [contentError, setContentError] = React.useState<string | null>(null);
-  const [birthday, setBirthday] = React.useState<{ month: number; day: number; year: number } | null>(null);
+  const [isChecked, setIsChecked] = useState(false);
 
-  const handleNext = () => {
+  // Sync local state when profile changes
+  React.useEffect(() => {
+    if (profile) {
+      setEmail(profile.email || '');
+      setZipCode(profile.zipCode || '');
+      setSelectedGender(profile.gender || '');
+      const parsed = parseBirthdayFromProfile(profile.birthday);
+      setBirthMonth(parsed.month);
+      setBirthDay(parsed.day);
+      setBirthYear(parsed.year);
+      setIsChecked(profile.emailSubscribed || false);
+    }
+  }, [profile]);
+
+  const handleNext = async () => {
     // Reset previous errors
     setContentError(null);
 
@@ -36,17 +89,18 @@ export default function CreateProfile2({ navigation }: Props) {
       return;
     }
 
-    // Convert string values to numbers
-    const day = parseInt(birthDay, 10);
-    const month = parseInt(birthMonth, 10);
-    const year = parseInt(birthYear, 10);
+    // Check if all birthday fields are filled
+    if (!birthDay || !birthMonth || !birthYear) {
+      setContentError('Please enter a complete date of birth');
+      return;
+    }
 
     // Check if date is valid
-    const date = new Date(year, month - 1, day);
+    const date = new Date(birthYear, birthMonth - 1, birthDay);
     const isValidDate = (
-      date.getFullYear() === year &&
-      date.getMonth() === month - 1 &&
-      date.getDate() === day
+      date.getFullYear() === birthYear &&
+      date.getMonth() === birthMonth - 1 &&
+      date.getDate() === birthDay
     );
 
     if (!isValidDate) {
@@ -54,7 +108,34 @@ export default function CreateProfile2({ navigation }: Props) {
       return;
     }
 
-    // If date is valid, proceed with sign in
+    // Save profile data before proceeding
+    const birthdayData: Birthday = {
+      month: birthMonth,
+      day: birthDay,
+      year: birthYear
+    };
+
+    updateProfile({
+      email,
+      zipCode,
+      gender: selectedGender,
+      birthday: birthdayData,
+      emailSubscribed: isChecked
+    });
+
+    try {
+      const success = await saveProfileToDatabase();
+      if (!success) {
+        setContentError('Failed to save profile. Please try again.');
+        return;
+      }
+    } catch (error) {
+      console.error('Error saving profile:', error);
+      setContentError('Failed to save profile. Please try again.');
+      return;
+    }
+
+    // If date is valid and profile saved, proceed with sign in
     signIn('demo-token');
   };
 
@@ -63,9 +144,6 @@ export default function CreateProfile2({ navigation }: Props) {
     { label: 'Female', value: 'female' },
     { label: 'Other', value: 'other' },
   ];
-
-  const DAYS_IN_MONTH = [31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
-
 
   const months = [
     {label: 'January', value: 1},
@@ -82,10 +160,29 @@ export default function CreateProfile2({ navigation }: Props) {
     {label: 'December', value: 12},
   ]
 
-  const days = Array.from({ length: 31 }, (_, i) => ({
-    label: (i + 1).toString(),
-    value: i + 1
-  }));
+  const days = useMemo(() => {
+    let numDays;
+    if (!birthMonth) {
+      numDays = 31;
+    }
+    else {
+      if (!birthYear) {
+        numDays = new Date(2024, birthMonth, 0).getDate(); // default to year w/ Feb 29
+      }
+      else {
+        numDays = new Date(birthYear, birthMonth, 0).getDate();  // get num of days for year w/ or w/o Feb 29
+      }
+        
+      if (birthDay && birthDay > numDays) {
+        setBirthDay(numDays);
+      }
+    }
+    
+    return Array.from({ length: numDays }, (_, i) => ({
+      label: (i + 1).toString(),
+      value: i + 1
+    }));
+  }, [birthMonth, birthYear]);
 
   const currentYear = new Date().getFullYear() - 13;
   const years = Array.from({ length: 110 }, (_, i) => ({
@@ -94,17 +191,30 @@ export default function CreateProfile2({ navigation }: Props) {
   }));
 
 
-  const getBirthdayForSubmission = (): Birthday | undefined => {
-    if (!birthday) return undefined;
-    return {
-      month: birthday.month,
-      day: birthday.day,
-      year: birthday.year
-    };
-  };
-
-
   const handleBack = () => {
+    // Save current form data before going back
+    if (birthDay && birthMonth && birthYear) {
+      const birthdayData: Birthday = {
+        month: birthMonth,
+        day: birthDay,
+        year: birthYear
+      };
+      updateProfile({
+        email,
+        zipCode,
+        gender: selectedGender,
+        birthday: birthdayData,
+        emailSubscribed: isChecked
+      });
+    } else {
+      // Still save other fields even if birthday is incomplete
+      updateProfile({
+        email,
+        zipCode,
+        gender: selectedGender,
+        emailSubscribed: isChecked
+      });
+    }
     navigation.navigate('CreateProfile1');
   };
 
@@ -122,7 +232,7 @@ export default function CreateProfile2({ navigation }: Props) {
           style={styles.logo}
         />
         <Text style={[theme.textStyles.headline1, { textAlign: 'left', width: '100%', marginBottom: 16 }]}>
-          Let's Create your profile
+          Let's create your profile
         </Text>
         <Text style={[theme.textStyles.body, { textAlign: 'left', width: '100%', marginBottom: 16 }]}>
           This helps improve voting data
@@ -220,6 +330,16 @@ export default function CreateProfile2({ navigation }: Props) {
               activeColor={theme.colors.surface2}
             />
           </View>
+        </View>
+        
+        <View style={styles.checkboxContainer}>
+          <Checkbox
+            value={isChecked}
+            onValueChange={setIsChecked}
+            color={isChecked ? theme.colors.primary_gradient_start : undefined}
+            style={styles.checkbox}
+          />
+          <Text style={theme.textStyles.body}>Keep me in the loop about Vokal</Text>
         </View>
         {contentError && (
           <Text
@@ -339,6 +459,21 @@ dateInput: {
   flex: 1,
   height: 56,
   justifyContent: 'center',
+},
+checkboxContainer: {
+  flexDirection: 'row',
+  alignItems: 'center',
+  marginTop: 10,
+  marginBottom: 10,
+  width: '100%',
+},
+checkbox: {
+  width: 20,
+  height: 20,
+  marginRight: 10,
+  borderRadius: 4,
+  borderColor: theme.colors.primary_gradient_start,
+  color: theme.colors.primary_gradient_start,
 },
 
 });

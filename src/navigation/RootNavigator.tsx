@@ -14,19 +14,21 @@ function Splash() {
 }
 
 export default function RootNavigator() {
-  const { user, loading } = useAuth();
+  const { user, loading, isOnboarding } = useAuth();
 
   return (
     <NavigationContainer>
       <View style={{ flex: 1, backgroundColor: 'transparent' }}>
         {!!loading ? (
           <Splash />
-        ) : user !== null ? (
-          <AppStack />
-        ) : (
+        ) : isOnboarding ? (
           <AuthStack />
+        ) : (
+          <AppStack />
         )}
       </View>
     </NavigationContainer>
   );
 }
+
+

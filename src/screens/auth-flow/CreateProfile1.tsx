@@ -13,6 +13,7 @@ export default function CreateProfile1({ navigation }: Props) {
 
   const [firstName, setFirstName] = React.useState(profile?.firstName || '');
   const [lastName, setLastName] = React.useState(profile?.lastName || '');
+  const [contentError, setContentError] = React.useState<string | null>(null);
 
   // Update local state when profile changes
   React.useEffect(() => {
@@ -23,6 +24,11 @@ export default function CreateProfile1({ navigation }: Props) {
   }, [profile]);
 
   const handleNext = () => {
+    if (!firstName.trim() || !lastName.trim()) {
+      setContentError('Please enter both first and last name');
+      return;
+    }
+    setContentError(null);
     updateProfile({ firstName, lastName });
     navigation.navigate('CreateProfile2');
   };
@@ -55,9 +61,19 @@ export default function CreateProfile1({ navigation }: Props) {
                 onChangeText={setLastName}
                 autoCapitalize="words"
               />
+              {contentError && (
+                        <Text
+                          style={[
+                            theme.textStyles.body,
+                            { color: theme.colors.error, marginTop: 8 },
+                          ]}
+                        >
+                          {contentError}
+                        </Text>
+                      )}
       </View>
               <View style={styles.buttonContainer}>
-                <RoundNextButton onPress={handleNext} disabled={!firstName || !lastName} />
+                <RoundNextButton onPress={handleNext} disabled={!firstName.trim() || !lastName.trim()} />
               </View>
     </ImageBackground>
   );

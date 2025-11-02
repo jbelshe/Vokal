@@ -12,7 +12,6 @@ export const textStyles = {
     fontFamily: typeface.regular,
     fontWeight: fontWeights.medium,
     fontSize: fontSizes.lg,
-    lineHeight: lineHeights.auto,
     letterSpacing: letterSpacings.normal,
   },
   title1: {
@@ -26,7 +25,6 @@ export const textStyles = {
     fontFamily: typeface.regular,
     fontWeight: fontWeights.medium,
     fontSize: fontSizes.sm,
-    lineHeight: lineHeights.auto,
     letterSpacing: letterSpacings.normal,
   },
   caption: {
@@ -47,14 +45,12 @@ export const textStyles = {
     fontFamily: typeface.regular,
     fontWeight: fontWeights.medium,
     fontSize: fontSizes.md,
-    lineHeight: lineHeights.auto,
     letterSpacing: letterSpacings.normal,
   },  
   button2: {
     fontFamily: typeface.regular,
     fontWeight: fontWeights.regular,
     fontSize: fontSizes.sm,
-    lineHeight: lineHeights.auto,
     letterSpacing: letterSpacings.normal,
   },
 };
