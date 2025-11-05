@@ -18,7 +18,6 @@ export const textStyles = {
     fontFamily: typeface.regular,
     fontWeight: fontWeights.semibold,
     fontSize: fontSizes.md,
-    lineHeight: lineHeights.sm,
     letterSpacing: letterSpacings.tight,
   },
   title2: {

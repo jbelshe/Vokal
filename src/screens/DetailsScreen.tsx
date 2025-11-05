@@ -3,6 +3,8 @@ import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView } from 'react-na
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { AppStackParamList } from '../types/navigation';
 import { useAuth } from '../context/AuthContext';
+import BackIcon from '../assets/icons/chevron-left.svg';
+import { theme } from '../assets/theme';
 
 type Props = NativeStackScreenProps<AppStackParamList, 'Details'>;
 
@@ -19,9 +21,16 @@ export default function DetailsScreen({ route, navigation }: Props) {
     }
   };
 
+  const handleBack = () => {
+    navigation.goBack();
+  };
+
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.content}>
+    <View style={styles.container}>
+      <View style={styles.content}>     
+      <TouchableOpacity onPress={handleBack} style={styles.backButton}>
+        <BackIcon width={45} height={45} fill="black" />
+      </TouchableOpacity>
         <Text style={styles.title}>Account Details</Text>
         
         {id && (
@@ -43,7 +52,7 @@ export default function DetailsScreen({ route, navigation }: Props) {
           <Text style={styles.signOutText}>Sign Out</Text>
         </TouchableOpacity>
       </View>
-    </SafeAreaView>
+    </View>
   );
 }
 
@@ -102,4 +111,12 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
   },
+  backButton: {
+      position: 'absolute',
+      color: theme.colors.primary_text,
+      top: 60,
+      left: 20,
+      zIndex: 10,
+      padding: 8,
+    },
 });

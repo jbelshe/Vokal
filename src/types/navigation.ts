@@ -2,13 +2,12 @@ export type AppStackParamList = {
   // Main App Screens
   Home: undefined;
   Details: { id?: string };
+  PropertyDetails: { propertyId: string };
+  SettingsMain: undefined;
+  Profile: undefined;
+  ContactUs: undefined;
+  VoteHistory: undefined;
   
-  // Auth Flow Screens
-  SignIn: undefined;
-  EnterPhoneNumber: undefined;
-  OTP: undefined;
-  CreateProfile1: undefined;
-  CreateProfile2: undefined;
 };
 
 export type AuthStackParamList = {

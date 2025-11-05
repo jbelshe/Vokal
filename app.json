@@ -14,7 +14,14 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.jackbelshe.myapp"
+      "bundleIdentifier": "com.jackbelshe.myapp",
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "We need your location to show it on the map",
+        "ITSAppUsesNonExemptEncryption": false
+      },
+      "config": {
+        "googleMapsApiKey": "$EXPO_PUBLIC_GOOGLE_MAPS_API_KEY"
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -23,7 +30,12 @@
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
-      "package": "com.jackbelshe.myapp"
+      "package": "com.jackbelshe.myapp",
+      "config": {
+        "googleMaps": {
+          "apiKey": "$ANDROID_GOOGLE_MAPS_API_KEY"
+        }
+      }
     },
     "web": {
       "favicon": "./src/assets/icons/favicon.png"
@@ -36,7 +48,30 @@
     "owner": "jackbelshe",
     "plugins": [
       "expo-secure-store",
-      "expo-font"
-    ]
+      "expo-font",
+      [
+        "expo-maps",
+        {
+          "requestLocationPermission": "true",
+          "locationPermission": "Allow Vokal to use your location",
+          "apiKey": {
+            "ios": "$EXPO_PUBLIC_GOOGLE_MAPS_API_KEY",
+            "android": "$ANDROID_GOOGLE_MAPS_API_KEY"
+          }
+        }
+      ],
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Allow MyApp to access your location to show your position on the map."
+        }
+      ]
+    ],
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/abc3787e-7dc3-4e44-a18c-ebf130f332a3"
+    }
   }
 }
