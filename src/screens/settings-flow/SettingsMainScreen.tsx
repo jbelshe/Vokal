@@ -32,8 +32,7 @@ export default function SettingsHomeScreen({ navigation, route }: Props) {
 
   const handleLogout = async () => {
     await signOut();
-    // Navigate to home or sign in screen after logout
-    navigation.navigate('Home');
+    // navigation.navigate('Home');
   };
 
   const handleProfileImagePress = () => {
@@ -41,10 +40,12 @@ export default function SettingsHomeScreen({ navigation, route }: Props) {
   };
 
   const getUserName = () => {
+    console.log("Profile: ", profile);
     if (profile?.firstName && profile?.lastName) {
       return `${profile.firstName} ${profile.lastName}`;
     }
     if (profile?.firstName) {
+      
       return profile.firstName;
     }
     return 'User';

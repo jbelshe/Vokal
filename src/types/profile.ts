@@ -8,4 +8,6 @@ export type Profile = {
   gender: string | null;
   birthday: Birthday | null;
   emailSubscribed: boolean;
+  userId: string | null;
+  role: string | null;
 };

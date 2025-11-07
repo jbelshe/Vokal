@@ -1,11 +1,11 @@
 import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import * as SecureStore from 'expo-secure-store';
 import { Birthday } from '../types/birthday';
-import { sendOtp, verifyOtp, checkIfUserExists, saveProfile } from '../api/auth';
+import { sendOtp, verifyOtp, checkIfUserExists, saveProfile, checkSession, fetchUserProfile } from '../api/auth';
 import { Profile } from '../types/profile';
+import { Session } from '../types/session';
 
 type AuthContextType = {
-  user: any | null;
   loading: boolean;
   phoneNumber: string | null;
   existingUser: boolean;
@@ -21,9 +21,9 @@ type AuthContextType = {
   signIn: (tokenOrUser: string | any) => Promise<void>;
   signOut: () => Promise<void>;
   updateProfile: (updates: Partial<Profile>) => void;
-  saveProfileToDatabase: (currProfile : Profile) => Promise<boolean>;
+  saveProfileToDatabase: (currProfile: Profile) => Promise<boolean>;
 };
-  
+
 
 // Creates context
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -32,36 +32,123 @@ const SESSION_KEY = 'session_user'; // store token or serialized user
 
 // Provider for the context
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
   const [isOnboarding, setIsOnboarding] = useState(true);
   const [phoneNumber, setPhoneNumber] = useState<string | null>(null);
   const [otpInput, setOtpInput] = useState<string | null>(null);
   const [existingUser, setExistingUser] = useState<boolean>(false); // assume user doesn't exist 
-  const [session, setSession] = useState<any | null>(null);
-  const [profile, setProfile] = useState<Profile>({
-      phoneNumber: null,
-      firstName: null,
-      lastName: null,
-      email: null,
-      zipCode: null,
-      gender: null,
-      birthday: null,
-      emailSubscribed: false,
+  const [existingSession, setExistingSession] = useState< "checking" | "pre_existing" | "non_existing" >("checking");
+  const [session, setSession] = useState<Session>({
+    access_token: "",
+    expires_at: 0,
+    refresh_token: "",
+    token_type: "",
   });
+  const [profile, setProfile] = useState<Profile>({
+    phoneNumber: null,
+    firstName: null,
+    lastName: null,
+    email: null,
+    zipCode: null,
+    gender: null,
+    birthday: null,
+    emailSubscribed: false,
+    userId: null,
+    role: null,
+  });
+
+  useEffect(() => {
+    console.log("Updated session:", session.refresh_token);
+  }, [session]);
+
+  useEffect(() => {
+    console.log("Updated profile...", profile.userId);
+  }, [profile]);
+
+  useEffect(() => {    
+    console.log("Updated existing session...", existingSession);
+    console.log("Access token: ", session.access_token);
+    console.log("User ID: ", profile.userId);
+    if (existingSession === "checking") {
+      return;
+    }
+    else if (existingSession === "pre_existing") {
+      setLoading(false);
+      setIsOnboarding(false);
+      console.log("User is logged in and profile is set");
+    }
+    else if (existingSession === "non_existing") {
+      setLoading(false);
+      console.log("User is not logged in or profile is not set");
+    }
+  }, [existingSession]);
 
   useEffect(() => {
     (async () => {
       try {
-        const raw = await SecureStore.getItemAsync(SESSION_KEY);
-        if (raw) {
-          // You can store a token string OR a JSON stringified user. Handle both:
-          setUser(raw.startsWith('{') ? JSON.parse(raw) : { id: 'token', email: undefined });
+        const savedSessionJson = await SecureStore.getItemAsync(SESSION_KEY);
+        if (savedSessionJson) {
+          const savedSession = JSON.parse(savedSessionJson);
+          if (savedSession?.access_token) {
+            try {
+              const sessionValid = await checkSession(savedSession);
+              console.log("Session valid:", sessionValid);
+              await updateSession(parseSessionRaw(sessionValid));
+              if (sessionValid) {
+                console.log("User:", sessionValid.user)
+                try {
+                  if (sessionValid.user.phone) {
+                    const userProfile = await fetchUserProfile(sessionValid.user.id, sessionValid.user.phone);
+                    if (userProfile) {
+                      await updateProfile(userProfile);
+                      setExistingSession('pre_existing');
+                    }
+                    else {
+                      setExistingSession('non_existing');
+                      console.error('Error fetching user profile');
+                    }
+                  } else {
+                    setExistingSession('non_existing');
+                    console.error('Phone number is required to fetch user profile');
+                  }
+                } catch (error) {
+                  setExistingSession('non_existing');
+                  console.error('Error fetching user profile:', error);
+                }
+              }
+              else {
+                setExistingSession('non_existing');
+                console.error('Error retreiving session');
+              }
+
+            } catch (error) {
+              setExistingSession('non_existing');
+              console.error('Error checking session:', error);
+              await SecureStore.deleteItemAsync(SESSION_KEY);
+              return;
+            }
+          }
+
         }
-      } finally {
-        console.log("Setting loading to false")
-        setLoading(false);
+      } 
+      catch (error) {
+        setExistingSession('non_existing');
+        console.error('Error checking session:', error);
+        await SecureStore.deleteItemAsync(SESSION_KEY);
+        return;
       }
+      // finally {
+      //   console.log("Access token: ", session.access_token);
+      //   console.log("User ID: ", profile.userId);
+      //   if (session.access_token && profile.userId) {
+      //     setLoading(false);
+      //     setIsOnboarding(false);
+      //     console.log("User is logged in and profile is set");
+      //   } else {
+      //     console.log("User is not logged in or profile is not set");
+      //     setLoading(false);
+      //   }
+      // }
     })();
   }, []);
 
@@ -71,28 +158,68 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, [phoneNumber]);
 
-  const signIn = async (tokenOrUser: string | any | null) => {
+  const signIn = async (currSession: Session) => {
     console.log("Signing in...")
-    if (typeof tokenOrUser === 'string') {
-      await SecureStore.setItemAsync(SESSION_KEY, tokenOrUser);
-      setUser({ id: 'token' });
-    } else if (tokenOrUser) {
-      const json = JSON.stringify(tokenOrUser);
-      await SecureStore.setItemAsync(SESSION_KEY, json);
-      setUser(tokenOrUser);
+    console.log("tokenOrUser: ", currSession)
+    if (currSession) {
+      const json = JSON.stringify(currSession);
+      console.log("json: ", json)
+      await SecureStore.setItemAsync(SESSION_KEY, json)
+        .catch(error => console.error('Error saving session:', error));
+    }
+  };
+
+  /**
+   * Updates the session state and persists it to secure storage
+   * @param newSession Partial session object or null to clear the session
+   */
+  const updateSession = async (newSession: Partial<Session> | null) => {
+    if (newSession === null) {
+      // Clear session
+      setSession({
+        access_token: "",
+        expires_at: 0,
+        refresh_token: "",
+        token_type: "",
+      });
+    } else {
+      // Update session with new values
+      setSession(prev => {
+        const updatedSession = { ...prev, ...newSession };
+
+        // Only store essential session data in secure storage
+        const sessionToStore = {
+          access_token: updatedSession.access_token,
+          refresh_token: updatedSession.refresh_token,
+          expires_at: updatedSession.expires_at,
+          token_type: updatedSession.token_type,
+        };
+
+        // Persist to secure storage
+
+        console.log("sessionToStore: ", sessionToStore)
+
+        SecureStore.setItemAsync(SESSION_KEY, JSON.stringify(sessionToStore))
+          .catch(error => console.error('Error saving session:', error));
+
+        return updatedSession;
+      });
     }
   };
 
   const signOut = async () => {
-    console.log("Signing out...")
-    await SecureStore.deleteItemAsync(SESSION_KEY);
-    updateProfile(null);
-    setUser(null);
-    setSession(null);
-    setExistingUser(false);
-    setIsOnboarding(true);
-    setPhoneNumber(null);
-    setOtpInput(null);
+    try {
+      console.log("Signing out...");
+      await updateSession(null);
+      await updateProfile(null);
+      setExistingUser(false);
+      setIsOnboarding(true);
+      setPhoneNumber(null);
+      setOtpInput(null);
+      await SecureStore.deleteItemAsync(SESSION_KEY);
+    } catch (error) {
+      console.error('Error signing out:', error);
+    }
   };
 
   const handleSendOtp = async (phoneNumber: string) => {
@@ -104,10 +231,59 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
-const updateProfile = (updates: Partial<Profile> | null) => {
-  console.log('Updating profile with:', updates); // Debug log
-  if (updates === null) {
-    setProfile({
+  const updateProfile = async (updates: Partial<Profile> | null) => {
+    console.log('Updating profile with:', updates); // Debug log
+    if (updates === null) {
+      setProfile({
+        phoneNumber: null,
+        firstName: null,
+        lastName: null,
+        email: null,
+        zipCode: null,
+        gender: null,
+        birthday: null,
+        emailSubscribed: false,
+        userId: null,
+        role: null,
+      });
+    } else {
+      setProfile(prev => {
+        const newProfile = { ...prev, ...updates };
+        console.log('New profile state:', newProfile); // Debug log
+        return newProfile;
+      });
+    }
+  };
+
+  // Type guard to check if an object is a complete Profile
+  const isProfile = (obj: any): obj is Profile => {
+    return obj &&
+      'phoneNumber' in obj &&
+      'firstName' in obj &&
+      'lastName' in obj &&
+      'email' in obj &&
+      'zipCode' in obj &&
+      'gender' in obj &&
+      'birthday' in obj &&
+      'emailSubscribed' in obj;
+    'userId' in obj &&
+      'role' in obj;
+  };
+
+  const parseSessionRaw = (sessionNew: any) => {
+    return {
+      access_token: sessionNew.access_token,
+      expires_at: sessionNew.expires_at,
+      refresh_token: sessionNew.refresh_token,
+      token_type: sessionNew.token_type,
+    };
+  }
+
+  const parseUserMetaRaw = (userNew: any) => {
+    return {
+      userId: userNew.id || null,
+      role: userNew.role || null,
+      // Include all other required Profile fields with default values
       phoneNumber: null,
       firstName: null,
       lastName: null,
@@ -116,40 +292,25 @@ const updateProfile = (updates: Partial<Profile> | null) => {
       gender: null,
       birthday: null,
       emailSubscribed: false
-    });
-  } else {
-    setProfile(prev => {
-      const newProfile = { ...prev, ...updates };
-      console.log('New profile state:', newProfile); // Debug log
-      return newProfile;
-    });
+    };
   }
-};
-
-  // Type guard to check if an object is a complete Profile
-  const isProfile = (obj: any): obj is Profile => {
-    return obj && 
-           'phoneNumber' in obj && 
-           'firstName' in obj && 
-           'lastName' in obj && 
-           'email' in obj && 
-           'zipCode' in obj && 
-           'gender' in obj && 
-           'birthday' in obj && 
-           'emailSubscribed' in obj;
-  };
 
 
   const handleVerifyOtp = async (otpInput: string): Promise<boolean> => {
     try {
       setOtpInput(otpInput);
       const result = await verifyOtp(("1" + phoneNumber!), otpInput!);   // TODO: Handle country codes
-      if (result) { 
-        const { session, user } = result;
-        console.log("session:", session);
-        console.log("user:", user);
-        setUser(user);
-        setSession(session);
+      if (result) {
+        const parsedSession = parseSessionRaw(result.newSession);
+        const parsedUser = parseUserMetaRaw(result.newUser);
+        await updateProfile(parsedUser);
+        await updateSession(parsedSession);
+
+        if (existingUser) {
+          console.log("User exists... signing in")
+          signIn(parsedSession)
+          setIsOnboarding(false);
+        }
         return true;
       }
       console.error('OTP verification failed', result);
@@ -187,7 +348,6 @@ const updateProfile = (updates: Partial<Profile> | null) => {
   }
 
   const value = useMemo(() => ({
-    user,
     loading,
     existingUser,
     isOnboarding,
@@ -204,7 +364,7 @@ const updateProfile = (updates: Partial<Profile> | null) => {
     setIsOnboarding,
     updateProfile,
     saveProfileToDatabase,
-  }), [user, loading, isOnboarding, phoneNumber, existingUser, profile, session]);
+  }), [loading, isOnboarding, phoneNumber, existingUser, profile, session]);
 
   return (
     <AuthContext.Provider value={value}>

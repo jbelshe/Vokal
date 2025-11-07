@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "my-app",
-    "slug": "my-app",
+    "slug": "vokal",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./src/assets/icons/vokal-icon.png",
@@ -35,17 +35,21 @@
         "googleMaps": {
           "apiKey": "$ANDROID_GOOGLE_MAPS_API_KEY"
         }
-      }
+      },
+      "permissions": [
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.ACCESS_FINE_LOCATION"
+      ]
     },
     "web": {
       "favicon": "./src/assets/icons/favicon.png"
     },
     "extra": {
       "eas": {
-        "projectId": "abc3787e-7dc3-4e44-a18c-ebf130f332a3"
+        "projectId": "624b7d5c-5ec8-42de-a406-531f1316b5de"
       }
     },
-    "owner": "jackbelshe",
+    "owner": "vokal",
     "plugins": [
       "expo-secure-store",
       "expo-font",

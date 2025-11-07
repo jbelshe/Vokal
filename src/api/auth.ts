@@ -1,16 +1,18 @@
 import { supabase } from '../lib/supabase';
 import { Birthday } from '../types/birthday';
+import { Session } from '../types/session';
+import { Profile } from '../types/profile';
 
-type Profile = {
-  phoneNumber: string | null;
-  firstName: string | null;
-  lastName: string | null;
-  email: string | null;
-  zipCode: string | null;
-  gender: string | null;
-  birthday: Birthday | null;
-  emailSubscribed: boolean;
-};
+// type Profile = {
+//   phoneNumber: string | null;
+//   firstName: string | null;
+//   lastName: string | null;
+//   email: string | null;
+//   zipCode: string | null;
+//   gender: string | null;
+//   birthday: Birthday | null;
+//   emailSubscribed: boolean;
+// };
 
 /**
  * Sends an OTP to the given phone number using Supabase Auth.
@@ -49,6 +51,41 @@ export async function checkIfUserExists(phone: string) {
     return data["exists"];
 }
 
+export async function checkSession(savedSession: Session) {
+    const { data: { session }, error } = await supabase.auth.setSession({
+      access_token: savedSession.access_token,
+      refresh_token: savedSession.refresh_token || ''
+    });
+    if (error) throw error;
+    return session;
+}
+
+export async function fetchUserProfile(userId: string, phoneNumber: string) {
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', userId)
+      .single();
+
+    console.log(data)
+
+    if (data) {
+      return {
+        firstName: data.first_name,
+        lastName: data.last_name,
+        email: data.email,
+        zipCode: data.zip_code,
+        gender: data.gender,
+        birthday: data.date_of_birth,
+        emailSubscribed: data.email_subscription,
+        userId: userId,
+        role: data.role,
+        phoneNumber: phoneNumber,
+      }
+    }
+    if (error) throw error;
+    return data;
+}
 
 /**
  * Verifies an OTP code sent via SMS using Supabase Auth.
@@ -70,12 +107,12 @@ export async function verifyOtp(phone: string, token: string) {
 
     if (error) throw error;
 
-    const session = data.session;
-    const user = data.user;
+    const newSession = data.session;
+    const newUser = data.user;
 
-    if (session && user) {
-      console.log(' OTP verified for user:', user.id);
-      return { session, user };
+    if (newSession && newUser) {
+      console.log(' OTP verified for user:', newUser.id);
+      return { newSession, newUser };
     } else {
       console.warn('TP verification failed — no session returned');
       return null;
@@ -133,7 +170,8 @@ export async function saveProfile(profile: Profile, session: any): Promise<boole
     }
     const payload = {
       id: user.id, // Use the auth user's ID
-      display_name: profile.firstName + ' ' + profile.lastName,
+      first_name: profile.firstName,
+      last_name: profile.lastName,
       role: 'user',
       email: profile.email,
       zip_code: profile.zipCode,

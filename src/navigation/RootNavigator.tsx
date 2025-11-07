@@ -14,7 +14,7 @@ function Splash() {
 }
 
 export default function RootNavigator() {
-  const { user, loading, isOnboarding, session } = useAuth();
+  const {loading, isOnboarding } = useAuth();
 
   return (
     <NavigationContainer>

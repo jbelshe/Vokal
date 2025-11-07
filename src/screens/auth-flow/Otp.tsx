@@ -21,7 +21,7 @@ export default function Otp({ navigation }: Props) {
   });
 
 
-  const { phoneNumber, existingUser, handleVerifyOtp , handleSendOtp, setIsOnboarding, setOtpInput, signIn, user} = useAuth();
+  const { phoneNumber, existingUser, profile, session, handleVerifyOtp , handleSendOtp, setIsOnboarding, setOtpInput, signIn} = useAuth();
 
   // We can safely assert that phoneNumber is not null here because this component
   // is only shown after the phone number has been set in the auth flow.
@@ -58,27 +58,10 @@ export default function Otp({ navigation }: Props) {
     if (!isCodeComplete) return;
     
     setError(null);
-    await setOtpInput(otpValue);
     const success = await handleVerifyOtp(otpValue);
     
     if (success) {      
-      console.log("OTP entered successfully")
-      console.log("existingUser, phone#: ", existingUser, phoneNumber)
-      if (false) {
-        if (phoneNumber == "4083132757") {
-          navigation.navigate('CreateProfile1');
-          return;
-        }
-      }
-      console.log("Is user here? ", user)
-      if (existingUser) {
-        console.log("User exists... signing in")
-        signIn("token")
-        setIsOnboarding(false);
-      } else {
-        console.log("New User => Going to CreateProfile1")
-        navigation.navigate('CreateProfile1');
-      }
+      navigation.navigate('CreateProfile1'); // if user exists, AuthContext sends them to HomeScreen
     } else {
       setError('Incorrect OTP. Please try again.');
     }

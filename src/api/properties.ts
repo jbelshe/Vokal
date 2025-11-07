@@ -138,7 +138,7 @@ export async function fetchPropertiesInBounds(bounds: {
       last_edited: property.last_edited
     }));
 
-    console.log('Mapped properties:', properties);
+    //console.log('Mapped properties:', properties);
     return properties;
   } catch (err) {
     console.error('fetchPropertiesInBounds exception:', err);
