@@ -29,7 +29,7 @@ export default function HomeScreen({ navigation }: Props) {
 
   const [searchQuery, setSearchQuery] = useState('');
   const { properties, setProperties, mapRegion, setMapRegion } = useAppContext();
-  const [loading, setLoading] = useState(false);
+  const [loadingProperties, setLoadingProperties] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'map' | 'list'>('map');
   const [selectedProperty, setSelectedProperty] = useState<Property | null>(null);
@@ -72,7 +72,7 @@ export default function HomeScreen({ navigation }: Props) {
    */
   const loadPropertiesForRegion = useCallback(async (region: Region) => {
     try {
-      setLoading(true);
+      setLoadingProperties(true);
       setError(null);
 
       // Calculate bounds with 50% buffer to include neighboring off-screen locations
@@ -80,12 +80,14 @@ export default function HomeScreen({ navigation }: Props) {
       const data = await fetchPropertiesInBounds(bounds);
       setProperties(data);
       setMapRegion(region);
+      console.log("Properties loaded for region1:", data.length);
     } catch (err) {
       console.error('Error loading properties for region:', err);
       setError('Failed to load properties. Please try again.');
       setProperties([]);
     } finally {
-      setLoading(false);
+      setLoadingProperties(false);
+      console.log("Properties loaded for region2:", properties.length);
     }
   }, [calculateBounds]);
 
@@ -145,6 +147,7 @@ export default function HomeScreen({ navigation }: Props) {
     };
     lastRegionRef.current = initialRegion;
     loadPropertiesForRegion(initialRegion);
+    console.log("Initial region loaded", initialRegion);
   }, [loadPropertiesForRegion]);
 
   /**
@@ -256,7 +259,7 @@ export default function HomeScreen({ navigation }: Props) {
 
       {viewMode === 'map' ? (
         <>
-          {loading && properties.length === 0 ? (
+          {loadingProperties && properties.length === 0 ? (
             <View style={styles.loadingContainer}>
               <ActivityIndicator size="large" color="#6247AA" />
               <Text style={styles.loadingText}>Loading properties...</Text>
@@ -334,15 +337,10 @@ export default function HomeScreen({ navigation }: Props) {
               ))}
             </MapView>
           )}
-          {loading && (
-            <View style={styles.loadingIndicator}>
-              <ActivityIndicator size="small" color="#6247AA" />
-            </View>
-          )}
         </>
       ) : (
         <View style={styles.listContainer}>
-          {loading && properties.length === 0 ? (
+          {loadingProperties && properties.length === 0 ? (
             <View style={styles.loadingContainer}>
               <ActivityIndicator size="large" color="#6247AA" />
               <Text style={styles.loadingText}>Loading properties...</Text>

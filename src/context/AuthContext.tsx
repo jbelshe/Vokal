@@ -3,16 +3,19 @@ import * as SecureStore from 'expo-secure-store';
 import { Birthday } from '../types/birthday';
 import { sendOtp, verifyOtp, checkIfUserExists, saveProfile, checkSession, fetchUserProfile } from '../api/auth';
 import { Profile } from '../types/profile';
-import { Session } from '../types/session';
+import { Session } from '@supabase/supabase-js';
+import { supabase } from '../lib/supabase';
+import { AppState, AppStateStatus } from 'react-native';
 
 type AuthContextType = {
   loading: boolean;
   phoneNumber: string | null;
   existingUser: boolean;
   profile: Profile | null;
-  session: any | null;
+  session: Session | null;
   isOnboarding: boolean;
   setPhoneNumber: (phone: string | null) => void;
+  setSession: React.Dispatch<React.SetStateAction<Session | null>>;
   setOtpInput: (otp: string | null) => void;
   setIsOnboarding: (isOnboarding: boolean) => void;
   handleSendOtp: (phoneNumber: string) => Promise<void>;
@@ -30,6 +33,27 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 const SESSION_KEY = 'session_user'; // store token or serialized user
 
+
+/*
+function reducer(state, action) {
+  switch (action.type) {
+    case 'accept': return { ...state, hasAccepted: true };
+    case 'complete': return { ...state, isComplete: true };
+    case 'pay': return { ...state, hasPaid: true };
+    default: return state;
+  }
+}
+
+const [state, dispatch] = useReducer(reducer, {
+  hasAccepted: false,
+  isComplete: false,
+  hasPaid: false
+});
+
+const canAdvance = Object.values(state).every(Boolean);
+
+*/ 
+
 // Provider for the context
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
@@ -37,13 +61,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [phoneNumber, setPhoneNumber] = useState<string | null>(null);
   const [otpInput, setOtpInput] = useState<string | null>(null);
   const [existingUser, setExistingUser] = useState<boolean>(false); // assume user doesn't exist 
-  const [existingSession, setExistingSession] = useState< "checking" | "pre_existing" | "non_existing" >("checking");
-  const [session, setSession] = useState<Session>({
-    access_token: "",
-    expires_at: 0,
-    refresh_token: "",
-    token_type: "",
-  });
+  const [existingSession, setExistingSession] = useState<"checking" | "pre_existing" | "non_existing">("checking");
+  const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<Profile>({
     phoneNumber: null,
     firstName: null,
@@ -57,17 +76,179 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     role: null,
   });
 
+
+  const [initialized, setInitialized] = useState(false);
+
+  const isAuthConfirmed = (p: Profile | null) => {
+    console.log("isProfile:", !!p?.firstName)
+    return !!p?.firstName;
+  }
+
+  const shouldBypassOTP = (session: Session | null, p: Profile | null) => {
+    console.log("isAuthConfirmed:", !!session && isAuthConfirmed(p), !!session, isAuthConfirmed(p));
+    return !!session && isAuthConfirmed(p);
+  }
+
   useEffect(() => {
-    console.log("Updated session:", session.refresh_token);
+    console.log("Session:", session?.refresh_token)
   }, [session]);
+
+  useEffect(() => {
+    console.log("Initialized:", initialized)
+  }, [initialized]);
 
   useEffect(() => {
     console.log("Updated profile...", profile.userId);
   }, [profile]);
 
-  useEffect(() => {    
+
+  useEffect(() => {
+    // (1) Rehydrate on app launch
+    let mounted = true;
+    (async () => { // call async so we can await the getSession() call
+      try {
+        const { data } = await supabase.auth.getSession(); // reads persisted session if any
+        if (!mounted) return;  // prevent setting state on unmounted component
+
+        const initialSession = data.session ?? null;
+        console.log("Initialization Session:", initialSession?.refresh_token, "User:", initialSession?.user?.id, )
+        setSession(initialSession);
+        setInitialized(true);
+
+        const initialUser = initialSession?.user ?? null;
+        console.log("Initialization User:", initialUser)
+        if (initialUser) {
+          try {
+            const userProfile = await fetchUserProfile(initialUser.id, "");
+            if (!mounted) return;
+            console.log("User profile fetched:", userProfile);
+            updateProfile(userProfile);
+            const bypass = shouldBypassOTP(initialSession, userProfile);
+            console.log("On Rehydrate Should bypass OTP:", bypass);
+            setIsOnboarding(!bypass);
+          } catch (error) {
+            if (!mounted) return;
+            console.error('Error fetching profile:', error);
+            updateProfile(null);
+          }
+        } else {
+          updateProfile(null);
+        }
+      } finally {
+        if (mounted) setLoading(false);
+      }
+    })();
+
+    // (2) Global auth subscription: keep session in sync + handle sign-out
+    const { data: sub } = supabase.auth.onAuthStateChange(
+      async (event, currentSession) => {
+        try {
+          if (!mounted) return;
+          console.log("App Level Event:", event, "Current Session:", currentSession?.refresh_token, "User:", currentSession?.user?.id)
+          setSession(currentSession); // reflect SIGNED_IN/TOKEN_REFRESHED/SIGNED_OUT
+          if (event === 'SIGNED_OUT') {
+            setSession(null);
+            setInitialized(false);
+            updateProfile(null);
+            // signOut();
+          }
+          
+
+          const user = currentSession?.user ?? null;
+          if (!user) {
+            updateProfile(null);
+            return;
+          }
+          // Fetch/refresh profile whenever we know we have a user
+          const userProfile = await fetchUserProfile(user.id, "");
+          if (!mounted) return;
+          updateProfile(userProfile);
+          const bypass = shouldBypassOTP(currentSession, userProfile);
+          console.log("On Auth State Change Should bypass OTP:", bypass);
+          setIsOnboarding(!bypass);
+          // Prefer logging from local variables to avoid stale closures
+          console.log("Profile userId:", userProfile?.userId, "Session userId:", user.id);
+
+        } catch (error) {
+          if (!mounted) return;
+          console.error("Auth handler error:", error);
+          updateProfile(null);
+        } finally {
+          if (mounted) setLoading(false);
+        }
+
+
+      });
+
+    // (3) App lifecycle: start/stop auto-refresh on foreground/background
+    const handleAppState = (state: AppStateStatus) => {
+      if (state === 'active') {
+        supabase.auth.startAutoRefresh();
+      } else if (state === 'background') {
+        supabase.auth.stopAutoRefresh();
+      }
+    };
+
+    // Kick once on mount based on current state
+    handleAppState(AppState.currentState);
+    const appStateSub = AppState.addEventListener('change', handleAppState);
+
+    // Initial check
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      console.log("Initial session:", session?.refresh_token, "User:", session?.user?.id);
+      setSession(session);
+      setLoading(false);
+    });
+
+    return () => { // this runs on cleanup
+      mounted = false;
+      sub.subscription.unsubscribe();
+      appStateSub.remove();
+    }
+
+  }, []);
+
+
+
+  // useEffect(() => {
+  //   const { data: { subscription } } = supabase.auth.onAuthStateChange(
+  //     async (event, currentSession) => {
+  //       console.log("Auth state changed:", event);
+  //       setSession(currentSession);
+
+  //       if (currentSession?.user) {
+  //         try {
+  //           const userProfile = await fetchUserProfile(
+  //             currentSession.user.id,
+  //             currentSession.user.phone!
+  //           );
+  //           console.log("User profile fetched:", userProfile);
+  //           updateProfile(userProfile);
+  //         } catch (error) {
+  //           console.error('Error fetching profile:', error);
+  //           updateProfile(null);
+  //         }
+  //       } else {
+  //         updateProfile(null);
+  //       }
+  //       console.log("Setting Loading to false");
+  //       setLoading(false);
+  //       const { data } = await supabase.auth.getSession()
+  //       console.log("GetSession:", data.session?.access_token);
+  //       console.log("Profile:", profile.userId, "Session:", session?.user?.id);
+  //     }
+  //   );
+
+
+
+  //   return () => subscription.unsubscribe();
+  // }, []);
+
+
+
+  useEffect(() => {
     console.log("Updated existing session...", existingSession);
-    console.log("Access token: ", session.access_token);
+    console.log("Access token: ", session?.access_token);
     console.log("User ID: ", profile.userId);
     if (existingSession === "checking") {
       return;
@@ -83,74 +264,74 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, [existingSession]);
 
-  useEffect(() => {
-    (async () => {
-      try {
-        const savedSessionJson = await SecureStore.getItemAsync(SESSION_KEY);
-        if (savedSessionJson) {
-          const savedSession = JSON.parse(savedSessionJson);
-          if (savedSession?.access_token) {
-            try {
-              const sessionValid = await checkSession(savedSession);
-              console.log("Session valid:", sessionValid);
-              await updateSession(parseSessionRaw(sessionValid));
-              if (sessionValid) {
-                console.log("User:", sessionValid.user)
-                try {
-                  if (sessionValid.user.phone) {
-                    const userProfile = await fetchUserProfile(sessionValid.user.id, sessionValid.user.phone);
-                    if (userProfile) {
-                      await updateProfile(userProfile);
-                      setExistingSession('pre_existing');
-                    }
-                    else {
-                      setExistingSession('non_existing');
-                      console.error('Error fetching user profile');
-                    }
-                  } else {
-                    setExistingSession('non_existing');
-                    console.error('Phone number is required to fetch user profile');
-                  }
-                } catch (error) {
-                  setExistingSession('non_existing');
-                  console.error('Error fetching user profile:', error);
-                }
-              }
-              else {
-                setExistingSession('non_existing');
-                console.error('Error retreiving session');
-              }
+  // useEffect(() => {
+  //   (async () => {
+  //     try {
+  //       const savedSessionJson = await SecureStore.getItemAsync(SESSION_KEY);
+  //       if (savedSessionJson) {
+  //         const savedSession = JSON.parse(savedSessionJson);
+  //         if (savedSession?.access_token) {
+  //           try {
+  //             const sessionValid = await checkSession(savedSession);
+  //             console.log("Session valid:", sessionValid);
+  //             await updateSession(parseSessionRaw(sessionValid));
+  //             if (sessionValid) {
+  //               console.log("User:", sessionValid.user)
+  //               try {
+  //                 if (sessionValid.user.phone) {
+  //                   const userProfile = await fetchUserProfile(sessionValid.user.id, sessionValid.user.phone);
+  //                   if (userProfile) {
+  //                     await updateProfile(userProfile);
+  //                     setExistingSession('pre_existing');
+  //                   }
+  //                   else {
+  //                     setExistingSession('non_existing');
+  //                     console.error('Error fetching user profile');
+  //                   }
+  //                 } else {
+  //                   setExistingSession('non_existing');
+  //                   console.error('Phone number is required to fetch user profile');
+  //                 }
+  //               } catch (error) {
+  //                 setExistingSession('non_existing');
+  //                 console.error('Error fetching user profile:', error);
+  //               }
+  //             }
+  //             else {
+  //               setExistingSession('non_existing');
+  //               console.error('Error retreiving session');
+  //             }
 
-            } catch (error) {
-              setExistingSession('non_existing');
-              console.error('Error checking session:', error);
-              await SecureStore.deleteItemAsync(SESSION_KEY);
-              return;
-            }
-          }
+  //           } catch (error) {
+  //             setExistingSession('non_existing');
+  //             console.error('Error checking session:', error);
+  //             await SecureStore.deleteItemAsync(SESSION_KEY);
+  //             return;
+  //           }
+  //         }
 
-        }
-      } 
-      catch (error) {
-        setExistingSession('non_existing');
-        console.error('Error checking session:', error);
-        await SecureStore.deleteItemAsync(SESSION_KEY);
-        return;
-      }
-      // finally {
-      //   console.log("Access token: ", session.access_token);
-      //   console.log("User ID: ", profile.userId);
-      //   if (session.access_token && profile.userId) {
-      //     setLoading(false);
-      //     setIsOnboarding(false);
-      //     console.log("User is logged in and profile is set");
-      //   } else {
-      //     console.log("User is not logged in or profile is not set");
-      //     setLoading(false);
-      //   }
-      // }
-    })();
-  }, []);
+  //       }
+  //     } 
+  //     catch (error) {
+  //       setExistingSession('non_existing');
+  //       console.error('Error checking session:', error);
+  //       await SecureStore.deleteItemAsync(SESSION_KEY);
+  //       return;
+  //     }
+  //     // finally {
+  //     //   console.log("Access token: ", session.access_token);
+  //     //   console.log("User ID: ", profile.userId);
+  //     //   if (session.access_token && profile.userId) {
+  //     //     setLoading(false);
+  //     //     setIsOnboarding(false);
+  //     //     console.log("User is logged in and profile is set");
+  //     //   } else {
+  //     //     console.log("User is not logged in or profile is not set");
+  //     //     setLoading(false);
+  //     //   }
+  //     // }
+  //   })();
+  // }, []);
 
   useEffect(() => {
     if (phoneNumber) {
@@ -158,14 +339,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, [phoneNumber]);
 
-  const signIn = async (currSession: Session) => {
-    console.log("Signing in...")
-    console.log("tokenOrUser: ", currSession)
+  const signIn = async (currSession: any) => {
+    console.log("Signing in...");
+    console.log("tokenOrUser: ", currSession);
+
     if (currSession) {
-      const json = JSON.stringify(currSession);
-      console.log("json: ", json)
+      // Handle both Supabase Session and our custom Session type
+      const sessionToSave: Session = {
+        access_token: currSession.access_token || '',
+        refresh_token: currSession.refresh_token || '',
+        token_type: currSession.token_type || 'bearer',
+        expires_in: currSession.expires_in || 0,
+        user: currSession.user || null,
+      };
+      supabase.auth.setSession(sessionToSave);
+      const json = JSON.stringify(sessionToSave);
+      console.log("Saving session: ", json);
       await SecureStore.setItemAsync(SESSION_KEY, json)
         .catch(error => console.error('Error saving session:', error));
+
+      // Update the session state with the properly typed session
+      setSession(sessionToSave);
     }
   };
 
@@ -178,31 +372,41 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // Clear session
       setSession({
         access_token: "",
-        expires_at: 0,
         refresh_token: "",
-        token_type: "",
+        token_type: "bearer" as const,
+        expires_in: 0,
+        expires_at: 0,
+        user: { id: "", app_metadata: {}, aud: "", created_at: "", user_metadata: {} }
       });
     } else {
       // Update session with new values
       setSession(prev => {
-        const updatedSession = { ...prev, ...newSession };
-
-        // Only store essential session data in secure storage
-        const sessionToStore = {
-          access_token: updatedSession.access_token,
-          refresh_token: updatedSession.refresh_token,
-          expires_at: updatedSession.expires_at,
-          token_type: updatedSession.token_type,
+        if (!prev) {
+          return {
+            access_token: newSession.access_token || "",
+            refresh_token: newSession.refresh_token || "",
+            expires_at: newSession.expires_at || 0,
+            token_type: newSession.token_type || "bearer",
+            expires_in: 3600, // Default expiry time
+            user: { id: "", app_metadata: {}, aud: "", created_at: "", user_metadata: {} }
+          };
+        }
+        return {
+          ...prev,
+          ...newSession,
+          token_type: newSession.token_type || "bearer",
+          user: newSession.user ? { ...prev.user, ...newSession.user } : prev.user
+          // token_type: updatedSession.token_type,
         };
 
-        // Persist to secure storage
+        // // Persist to secure storage
 
-        console.log("sessionToStore: ", sessionToStore)
+        // console.log("sessionToStore: ", sessionToStore)
 
-        SecureStore.setItemAsync(SESSION_KEY, JSON.stringify(sessionToStore))
-          .catch(error => console.error('Error saving session:', error));
+        // SecureStore.setItemAsync(SESSION_KEY, JSON.stringify(sessionToStore))
+        //   .catch(error => console.error('Error saving session:', error));
 
-        return updatedSession;
+        // return updatedSession;
       });
     }
   };
@@ -216,7 +420,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setIsOnboarding(true);
       setPhoneNumber(null);
       setOtpInput(null);
-      await SecureStore.deleteItemAsync(SESSION_KEY);
+      await supabase.auth.signOut();
     } catch (error) {
       console.error('Error signing out:', error);
     }
@@ -232,7 +436,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   const updateProfile = async (updates: Partial<Profile> | null) => {
-    console.log('Updating profile with:', updates); // Debug log
+    // console.log('Updating profile with:', updates); // Debug log
     if (updates === null) {
       setProfile({
         phoneNumber: null,
@@ -249,7 +453,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } else {
       setProfile(prev => {
         const newProfile = { ...prev, ...updates };
-        console.log('New profile state:', newProfile); // Debug log
         return newProfile;
       });
     }
@@ -357,6 +560,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setPhoneNumber,
     setOtpInput,
     handleSendOtp,
+    setSession,
     handleVerifyOtp,
     handleCheckIfUserExists,
     signIn,

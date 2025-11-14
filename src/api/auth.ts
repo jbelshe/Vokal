@@ -1,7 +1,8 @@
 import { supabase } from '../lib/supabase';
 import { Birthday } from '../types/birthday';
-import { Session } from '../types/session';
+// import { Session } from '../types/session';
 import { Profile } from '../types/profile';
+import { Session } from '@supabase/supabase-js';
 
 // type Profile = {
 //   phoneNumber: string | null;

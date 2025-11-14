@@ -42,3 +42,5 @@ eas.json
 # generated native folders
 /ios
 /android
+
+.githelper.txt
