@@ -22,7 +22,6 @@ export default function RootNavigator() {
 
 
 
-
   return (
     <NavigationContainer>
       <View style={{ flex: 1 }}>

@@ -1,19 +1,6 @@
 import { supabase } from '../lib/supabase';
-import { Birthday } from '../types/birthday';
-// import { Session } from '../types/session';
 import { Profile } from '../types/profile';
 import { Session } from '@supabase/supabase-js';
-
-// type Profile = {
-//   phoneNumber: string | null;
-//   firstName: string | null;
-//   lastName: string | null;
-//   email: string | null;
-//   zipCode: string | null;
-//   gender: string | null;
-//   birthday: Birthday | null;
-//   emailSubscribed: boolean;
-// };
 
 /**
  * Sends an OTP to the given phone number using Supabase Auth.
