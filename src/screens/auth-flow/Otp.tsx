@@ -21,11 +21,11 @@ export default function Otp({ navigation }: Props) {
   });
 
 
-  const { phoneNumber, existingUser, profile, session, handleVerifyOtp , handleSendOtp, setIsOnboarding, setOtpInput, signIn} = useAuth();
+  const {state, handleVerifyOtp , handleSendOtp} = useAuth();
 
   // We can safely assert that phoneNumber is not null here because this component
   // is only shown after the phone number has been set in the auth flow.
-  const safePhoneNumber = phoneNumber!;
+  const safePhoneNumber = state.profile?.phoneNumber!;
 
   const isCodeComplete = otpValue.length === 6;
 
@@ -50,7 +50,6 @@ export default function Otp({ navigation }: Props) {
       });
     }, 1000);
 
-    // TODO: Implement actual resend code logic here
     console.log('Resending verification code...');
   };
 

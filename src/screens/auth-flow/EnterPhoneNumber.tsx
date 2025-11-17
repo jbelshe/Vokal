@@ -9,7 +9,7 @@ import { useAuth } from '../../context/AuthContext';
 type Props = NativeStackScreenProps<AuthStackParamList, 'EnterPhoneNumber'>;
 
 export default function EnterPhoneNumber({ navigation }: Props) {
-  const { setPhoneNumber, handleSendOtp, handleCheckIfUserExists } = useAuth();
+  const { handleSendOtp } = useAuth();
 
   const [phoneNumberLocal, setPhoneNumberLocal] = React.useState('');
   const [isValid, setIsValid] = React.useState(false);
@@ -35,9 +35,7 @@ export default function EnterPhoneNumber({ navigation }: Props) {
 
   const handleNext = () => {
     if (isValid) {
-      setPhoneNumber(phoneNumberLocal);
       try {
-        handleCheckIfUserExists(phoneNumberLocal);
         handleSendOtp(phoneNumberLocal);
       } catch (error) {
         console.error('Error checking if user exists:', error);

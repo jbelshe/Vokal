@@ -14,9 +14,9 @@ function Splash() {
 }
 
 export default function RootNavigator() {
-  const {loading, isOnboarding } = useAuth();
+  const {state} = useAuth();
 
-  if (loading) {
+  if (state.loading) {
     return <Splash />;
   }
 
@@ -26,7 +26,7 @@ export default function RootNavigator() {
   return (
     <NavigationContainer>
       <View style={{ flex: 1 }}>
-        {isOnboarding ? (
+        {!state.isAuthenticated ? (
           <AuthStack />
         ) : (
           <AppStack />
