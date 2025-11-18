@@ -8,10 +8,10 @@ import { TextInput, View as RNView, Platform } from 'react-native';
 import { theme } from '../../assets/theme';
 import { Dropdown } from 'react-native-element-dropdown';
 import BackIcon from '../../assets/icons/chevron-left.svg';
-import { Birthday } from '../../types/birthday';
 import { useMemo, useState } from 'react';
 import Checkbox from 'expo-checkbox';
 import { Profile } from '../../types/profile';
+import { Birthday } from '../../types/birthday';
 
 type Props = NativeStackScreenProps<AuthStackParamList, 'CreateProfile2'>;
 
@@ -43,20 +43,20 @@ const parseBirthdayFromProfile = (birthday: Birthday | null | undefined): { mont
 };
 
 export default function CreateProfile2({ navigation }: Props) {
-  const { signIn, profile, updateProfile, saveProfileToDatabase} = useAuth();
-  const [selectedGender, setSelectedGender] = React.useState<string>(profile?.gender || '');
-  const [email, setEmail] = React.useState(profile?.email || '');
-  const [zipCode, setZipCode] = React.useState(profile?.zipCode || '');
+  const { signIn, state, dispatch, saveProfileToDatabase} = useAuth();
+  const [selectedGender, setSelectedGender] = React.useState<string>(state.profile?.gender || '');
+  const [email, setEmail] = React.useState(state.profile?.email || '');
+  const [zipCode, setZipCode] = React.useState(state.profile?.zipCode || '');
   const [birthDay, setBirthDay] = React.useState<number | null>(() => {
-    const parsed = parseBirthdayFromProfile(profile?.birthday);
+    const parsed = parseBirthdayFromProfile(state.profile?.birthday);
     return parsed.day;
   });
   const [birthMonth, setBirthMonth] = React.useState<number | null>(() => {
-    const parsed = parseBirthdayFromProfile(profile?.birthday);
+    const parsed = parseBirthdayFromProfile(state.profile?.birthday);
     return parsed.month;
   });
   const [birthYear, setBirthYear] = React.useState<number | null>(() => {
-    const parsed = parseBirthdayFromProfile(profile?.birthday);
+    const parsed = parseBirthdayFromProfile(state.profile?.birthday);
     return parsed.year;
   });
   const [contentError, setContentError] = React.useState<string | null>(null);
@@ -64,21 +64,22 @@ export default function CreateProfile2({ navigation }: Props) {
 
   // Sync local state when profile changes
   React.useEffect(() => {
-    console.log('Profile changed:', profile);
-    if (profile) {
-      setEmail(profile.email || '');
-      setZipCode(profile.zipCode || '');
-      setSelectedGender(profile.gender || '');
-      const parsed = parseBirthdayFromProfile(profile.birthday);
+    console.log('Profile changed:', state.profile);
+    if (state.profile) {
+      setEmail(state.profile.email || '');
+      setZipCode(state.profile.zipCode || '');
+      setSelectedGender(state.profile.gender || '');
+      const parsed = parseBirthdayFromProfile(state.profile.birthday);
       setBirthMonth(parsed.month);
       setBirthDay(parsed.day);
       setBirthYear(parsed.year);
-      setIsChecked(profile.emailSubscribed || false);
+      setIsChecked(state.profile.emailSubscribed || false);
       
     }
-  }, [profile]);
+  }, [state.profile]);
 
   const handleNext = async () => {
+    console.log("Navigating to next")
     // Reset previous errors
     setContentError(null);
 
@@ -112,9 +113,9 @@ export default function CreateProfile2({ navigation }: Props) {
     }
 
     const updatedProfile: Profile = {
-      phoneNumber: profile?.phoneNumber ?? null,
-      firstName: profile?.firstName ?? null,
-      lastName: profile?.lastName ?? null,
+      phoneNumber: state.profile?.phoneNumber ?? null,
+      firstName: state.profile?.firstName ?? null,
+      lastName: state.profile?.lastName ?? null,
       email: email ?? null,
       zipCode: zipCode ?? null,
       gender: selectedGender ?? null,
@@ -123,12 +124,12 @@ export default function CreateProfile2({ navigation }: Props) {
         day: birthDay,
         year: birthYear
       } as const,
-      emailSubscribed: isChecked
+      emailSubscribed: isChecked,
+      userId: state.profile?.userId ?? null, 
+      role: state.profile?.role ?? null  
     };
 
-    updateProfile(updatedProfile);
-
-
+    dispatch({type: "SET_PROFILE", payload: updatedProfile, msg: "CreateProfile Call"});
     try {
       const success = await saveProfileToDatabase(updatedProfile);
       if (!success) {
@@ -140,9 +141,10 @@ export default function CreateProfile2({ navigation }: Props) {
       setContentError('Failed to save profile. Please try again.');
       return;
     }
-
+    console.log("FUCK")
     // If date is valid and profile saved, proceed with sign in
-    signIn('demo-token');
+    signIn(state.session?.access_token!);
+    console.log("Navigating to onboarding...")
     navigation.navigate('Onboarding1');
   };
 
@@ -206,22 +208,23 @@ export default function CreateProfile2({ navigation }: Props) {
         day: birthDay,
         year: birthYear
       };
-      updateProfile({
+      dispatch({type: 'SET_PROFILE', payload: {
         email,
         zipCode,
         gender: selectedGender,
         birthday: birthdayData,
         emailSubscribed: isChecked
-      });
+      }});
     } else {
       // Still save other fields even if birthday is incomplete
-      updateProfile({
+      dispatch({type: 'SET_PROFILE', payload: {
         email,
         zipCode,
         gender: selectedGender,
         emailSubscribed: isChecked
-      });
+      }});
     }
+    console.log("Navigating back to CreateProfile1")
     navigation.navigate('CreateProfile1');
   };
 

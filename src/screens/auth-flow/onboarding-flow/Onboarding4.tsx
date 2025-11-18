@@ -14,10 +14,10 @@ type Props = NativeStackScreenProps<AuthStackParamList, 'Onboarding4'>;
 const styles = onboardingStyles;
 
 export default function Onboarding4({ navigation }: Props) {
-    const { setIsOnboarding } = useAuth();
+    const { dispatch } = useAuth();
 
     const handleNext = () => {
-        setIsOnboarding(false);
+        dispatch({ type: 'SET_ONBOARDING', payload: false });
     }
     return (<
         ImageBackground

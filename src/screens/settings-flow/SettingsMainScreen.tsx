@@ -5,7 +5,7 @@ import { AppStackParamList } from '../../types/navigation';
 import { theme } from '../../assets/theme';
 import { useAuth } from '../../context/AuthContext';
 import { PurpleButtonLarge } from '../../components/PurpleButtonLarge';
-import { ProfileSectionButton } from '../../components/ProfileSectionButton';
+import { SectionOptionsButton } from '../../components/SectionOptionsButton';
 import { ProfileIconButton } from '../../components/ProfileIconButton';
 
 import ChevronLeftIcon from '../../assets/icons/chevron-left.svg';
@@ -24,7 +24,7 @@ type Props = NativeStackScreenProps<AppStackParamList, 'SettingsMain'>;
 export default function SettingsHomeScreen({ navigation, route }: Props) {
   const [remindersEnabled, setRemindersEnabled] = useState(true);
 
-  const { profile, signOut } = useAuth();
+  const { state, signOut } = useAuth();
 
   const handleBack = () => {
     navigation.goBack(); //('Home');
@@ -40,13 +40,13 @@ export default function SettingsHomeScreen({ navigation, route }: Props) {
   };
 
   const getUserName = () => {
-    console.log("Profile: ", profile);
-    if (profile?.firstName && profile?.lastName) {
-      return `${profile.firstName} ${profile.lastName}`;
+    console.log("Profile: ", state.profile);
+    if (state.profile?.firstName && state.profile?.lastName) {
+      return `${state.profile.firstName} ${state.profile.lastName}`;
     }
-    if (profile?.firstName) {
+    if (state.profile?.firstName) {
       
-      return profile.firstName;
+      return state.profile.firstName;
     }
     return 'User';
   };
@@ -86,7 +86,7 @@ export default function SettingsHomeScreen({ navigation, route }: Props) {
 
         {/* Profile Buttons */}
         <View style={styles.buttonsContainer}>
-          <ProfileSectionButton
+          <SectionOptionsButton
             title="Voted Properties"
             subtext="All your votes in one place"
             image={Icons.voted}
@@ -100,7 +100,7 @@ export default function SettingsHomeScreen({ navigation, route }: Props) {
             }}
           />
 
-          <ProfileSectionButton
+          <SectionOptionsButton
             title="Personal Info"
             subtext="View or update personal information"
             image={Icons.profile}
@@ -114,7 +114,8 @@ export default function SettingsHomeScreen({ navigation, route }: Props) {
             }}
           />
 
-          <ProfileSectionButton
+          { /* TODO:  Determine how we want to do notifications */}
+          <SectionOptionsButton
             title="Reminders"
             subtext="First to know when spaces become vacant, are occupied, and when they open"
             image={Icons.reminders}
@@ -129,7 +130,7 @@ export default function SettingsHomeScreen({ navigation, route }: Props) {
             }}
           />
 
-          <ProfileSectionButton
+          <SectionOptionsButton
             title="Contact Us"
             subtext="To provide feedback, contact support, or partner with us"
             image={Icons.contact}

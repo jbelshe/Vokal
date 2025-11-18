@@ -71,8 +71,8 @@ export async function fetchUserProfile(userId: string, phoneNumber: string) {
         phoneNumber: phoneNumber,
       }
     }
-    if (error) throw error;
-    return data;
+    if (error) console.error("SAFE ERROR:", error);
+    return data;  // data is None
 }
 
 /**
@@ -119,17 +119,18 @@ export async function saveProfile(profile: Profile, session: any): Promise<boole
   try {
     console.log('Saving profile to database:', profile);
     
-    // Set the session so we're authenticated when making database calls
-    const { error: sessionError } = await supabase.auth.setSession({
-      access_token: session.access_token,
-      refresh_token: session.refresh_token,
-    });
+    // // Set the session so we're authenticated when making database calls
+    // const { error: sessionError } = await supabase.auth.setSession({
+    //   access_token: session.access_token,
+    //   refresh_token: session.refresh_token,
+    // });
+    // console.log("SESSION ERROR:", sessionError)
+    // if (sessionError) {
+    //   console.error('Error setting session:', sessionError);
+    //   return false;
+    // }
 
-    if (sessionError) {
-      console.error('Error setting session:', sessionError);
-      return false;
-    }
-
+    console.log("\n\n\n\n\n")
     // Convert birthday to ISO date format for database
     let birthdayDate: string | null = null;
     if (profile.birthday) {
@@ -169,9 +170,12 @@ export async function saveProfile(profile: Profile, session: any): Promise<boole
       updated_at: new Date().toISOString(),
     }
 
+    console.log("\n\n\n\n\n")
+    
+    
     // Insert or update profile in the database
     // Assuming a 'profiles' table exists with these columns
-    console.log(payload)
+    console.log("PAYLOAD:", payload)
     const { error: dbError } = await supabase
       .from('profiles')
       .insert(payload);

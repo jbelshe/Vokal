@@ -9,6 +9,7 @@ import { useReducer } from 'react';
 
 type AuthContextType = {
   state : AuthState;
+  dispatch: React.Dispatch<AuthAction>;
   handleSendOtp: (phoneNumber: string) => Promise<void>;
   handleVerifyOtp: (otpInput: string) => Promise<boolean>;
   signIn: (tokenOrUser: string | any) => Promise<void>;
@@ -28,6 +29,7 @@ type AuthState = {
   session: Session | null;
   profile: Profile | null;
   otpInput: string | null;
+  isOnboarding: boolean;
 };
 
 
@@ -35,9 +37,10 @@ type AuthAction =
   | { type: 'SET_LOADING'; payload: boolean, msg?: string }
   | { type: 'SET_SESSION'; payload: Partial<Session> | null, msg?: string }
   | { type: 'SET_PROFILE'; payload: Partial<Profile> | null, msg?: string }
-  | { type: 'RESET_PROFILE', msg?: string }
-  | { type: 'RESET_SESSION', msg?: string }
-  | { type: 'SIGN_OUT', msg?: string };
+  | { type: 'RESET_PROFILE'; msg?: string }
+  | { type: 'RESET_SESSION'; msg?: string }
+  | { type: 'SIGN_OUT'; msg?: string }
+  | { type: 'SET_ONBOARDING'; payload: boolean, msg?: string };
 
 
 function authReducer(state : AuthState, action : AuthAction) : AuthState {
@@ -78,6 +81,9 @@ function authReducer(state : AuthState, action : AuthAction) : AuthState {
     case 'RESET_SESSION':
       console.log("RESET_SESSION", action.msg)
       return {...state, session: emptySession}
+    case 'SET_ONBOARDING':
+      console.log("SET_ONBOARDING", action.msg, action.payload)
+      return {...state, isOnboarding: action.payload}
     case 'SIGN_OUT':
       console.log("SIGN_OUT", action.msg)
       return {
@@ -119,6 +125,7 @@ const initialAuthState: AuthState = {
   otpInput: null,
   session: null,
   profile: emptyProfile,
+  isOnboarding: false
 };
 
 
@@ -150,14 +157,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             const userProfile = await fetchUserProfile(initialUser.id, "");
             if (!mounted) return;
             console.log("User profile fetched:", userProfile);
-            dispatch({ type: 'SET_PROFILE', payload: userProfile, msg: "Call1"});
+            if (userProfile) {
+              dispatch({ type: 'SET_PROFILE', payload: userProfile, msg: "Call1"});
+            } else {
+              dispatch({ type: 'SET_ONBOARDING', payload: true, msg: "Call1"});
+            }
           } catch (error) {
             if (!mounted) return;
             console.error('Error fetching profile:', error);
-            dispatch({ type: 'RESET_PROFILE' , msg: "Call1"});
+            signOut()
           }
         } else {
-          dispatch({ type: 'RESET_PROFILE' , msg: "Call2"});
+          signOut()
         }
       } finally {
         if (mounted) dispatch({ type: 'SET_LOADING', payload: false });
@@ -183,12 +194,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           }
           // Fetch/refresh profile whenever we know we have a user
           const userProfile = await fetchUserProfile(user.id, "");
+          console.log("USER PROF:", userProfile)
           if (!mounted) return;
           dispatch({ type: 'SET_PROFILE', payload: userProfile, msg: "Call2" });
         } catch (error) {
           if (!mounted) return;
           console.error("Auth handler error:", error);
-          dispatch({ type: 'RESET_PROFILE' });
+          dispatch({ type: 'RESET_PROFILE'})
+          dispatch({ type: 'RESET_SESSION'})
         } finally {
           if (mounted) dispatch({ type: 'SET_LOADING', payload: false });
         }
@@ -307,6 +320,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
 
       const success = await saveProfile(currProfile, state.session);
+      console.log("Profile saved successfully", success);
       return success;
     } catch (error) {
       console.error('Error saving profile to database:', error);
@@ -316,6 +330,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const value = useMemo(() => ({
     state,
+    dispatch,
     handleSendOtp,
     handleVerifyOtp,
     signIn,

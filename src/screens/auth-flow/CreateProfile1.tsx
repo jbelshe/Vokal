@@ -9,19 +9,19 @@ import { useAuth } from '../../context/AuthContext';
 type Props = NativeStackScreenProps<AuthStackParamList, 'CreateProfile1'>;
 
 export default function CreateProfile1({ navigation }: Props) {
-  const { profile, updateProfile } = useAuth();
+  const { state, dispatch } = useAuth();
 
-  const [firstName, setFirstName] = React.useState(profile?.firstName || '');
-  const [lastName, setLastName] = React.useState(profile?.lastName || '');
+  const [firstName, setFirstName] = React.useState(state.profile?.firstName || '');
+  const [lastName, setLastName] = React.useState(state.profile?.lastName || '');
   const [contentError, setContentError] = React.useState<string | null>(null);
 
   // Update local state when profile changes
   React.useEffect(() => {
-    if (profile) {
-      setFirstName(profile.firstName || '');
-      setLastName(profile.lastName || '');
+    if (state.profile) {
+      setFirstName(state.profile.firstName || '');
+      setLastName(state.profile.lastName || '');
     }
-  }, [profile]);
+  }, [state.profile]);
 
   const handleNext = () => {
     if (!firstName.trim() || !lastName.trim()) {
@@ -29,7 +29,8 @@ export default function CreateProfile1({ navigation }: Props) {
       return;
     }
     setContentError(null);
-    updateProfile({ firstName, lastName });
+    dispatch({ type: 'SET_PROFILE', payload: { firstName, lastName }, msg: "CreateProfile1 Call" });
+    console.log("Navigating to CreateProfile2")
     navigation.navigate('CreateProfile2');
   };
 

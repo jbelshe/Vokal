@@ -17,7 +17,7 @@ interface ProfileButtonProps {
   onPress?: () => void;
 }
 
-export const ProfileSectionButton: React.FC<ProfileButtonProps> = ({
+export const SectionOptionsButton: React.FC<ProfileButtonProps> = ({
   title,
   subtext,
   image,

@@ -25,7 +25,7 @@ export default function RootNavigator() {
   return (
     <NavigationContainer>
       <View style={{ flex: 1 }}>
-        {!state.isAuthenticated ? (
+        {!state.isAuthenticated || state.isOnboarding ? (
           <AuthStack />
         ) : (
           <AppStack />

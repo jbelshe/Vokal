@@ -13,15 +13,8 @@ export default function ProfileScreen({ navigation, route }: Props) {
         navigation.goBack();
     };
 
-  const { profile, session, loading } = useAuth();
+  const { state, session } = useAuth();
 
-  if (loading) {
-    return (
-      <View style={styles.loadingContainer}>
-        <Text>Loading user data...</Text>
-      </View>
-    );
-  }
 
   return (
       <ImageBackground
@@ -40,35 +33,35 @@ export default function ProfileScreen({ navigation, route }: Props) {
               <Text style={styles.sectionTitle}>User Information</Text>
               <View style={styles.infoRow}>
                 <Text style={styles.label}>User ID:</Text>
-                <Text style={styles.value}>{profile?.userId || 'N/A'}</Text>
+                <Text style={styles.value}>{state.profile?.userId || 'N/A'}</Text>
               </View>
               <View style={styles.infoRow}>
                 <Text style={styles.label}>First Name:</Text>
-                <Text style={styles.value}>{profile?.firstName || 'N/A'}</Text>
+                <Text style={styles.value}>{state.profile?.firstName || 'N/A'}</Text>
               </View>
               <View style={styles.infoRow}>
                 <Text style={styles.label}>Last Name:</Text>
-                <Text style={styles.value}>{profile?.lastName || 'N/A'}</Text>
+                <Text style={styles.value}>{state.profile?.lastName || 'N/A'}</Text>
               </View>
               <View style={styles.infoRow}>
                 <Text style={styles.label}>Email:</Text>
-                <Text style={styles.value}>{profile?.email || 'N/A'}</Text>
+                <Text style={styles.value}>{state.profile?.email || 'N/A'}</Text>
               </View>
               <View style={styles.infoRow}>
                 <Text style={styles.label}>Phone:</Text>
-                <Text style={styles.value}>{profile?.phoneNumber || 'N/A'}</Text>
+                <Text style={styles.value}>{state.profile?.phoneNumber || 'N/A'}</Text>
               </View>
               <View style={styles.infoRow}>
                 <Text style={styles.label}>Zip Code:</Text>
-                <Text style={styles.value}>{profile?.zipCode || 'N/A'}</Text>
+                <Text style={styles.value}>{state.profile?.zipCode || 'N/A'}</Text>
               </View>
               <View style={styles.infoRow}>
                 <Text style={styles.label}>Gender:</Text>
-                <Text style={styles.value}>{profile?.gender || 'N/A'}</Text>
+                <Text style={styles.value}>{state.profile?.gender || 'N/A'}</Text>
               </View>
               <View style={styles.infoRow}>
                 <Text style={styles.label}>Email Subscribed:</Text>
-                <Text style={styles.value}>{profile?.emailSubscribed ? 'Yes' : 'No'}</Text>
+                <Text style={styles.value}>{state.profile?.emailSubscribed ? 'Yes' : 'No'}</Text>
               </View>
             </View>
 
