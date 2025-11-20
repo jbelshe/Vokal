@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useRef } from 'react';
-import { View, Text, StyleSheet, TextInput, Platform, ActivityIndicator, TouchableOpacity, ScrollView, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, TextInput, Platform, ActivityIndicator, TouchableOpacity, ScrollView, Dimensions, FlatList } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { AppStackParamList } from '../types/navigation';
@@ -12,7 +12,8 @@ import ListIcon from '../assets/icons/list-icon.svg';
 import AccountIcon from '../assets/icons/account-icon.svg';
 import { Image } from 'react-native';
 import { useAppContext } from '../context/AppContext';
-//import { PROVIDER_GOOGLE } from 'react-native-maps';
+import { fetchCoverImage } from '../api/images';
+import { getImageURL } from '../api/images';
 
 type Props = NativeStackScreenProps<AppStackParamList, 'Home'>;
 
@@ -91,48 +92,90 @@ export default function HomeScreen({ navigation }: Props) {
     }
   }, [calculateBounds]);
 
-  const handleMarkerPress = (property: Property) => {
-    console.log("Selected property:", {
+  const lastPressTimeRef = useRef<number>(0);
+  const handleMarkerPress = async(property: Property) => {
+    const now = Date.now();
+    if (now - lastPressTimeRef.current < 300) {
+      return; // ignore very fast repeat presses
+    }
+    lastPressTimeRef.current = now;
+    console.log("marker press, selected property:", {
       id: property.id,
-      title: property.title,
-      images: property.images,
-      hasImages: property.images && property.images.length > 0
+      title: property.address_1 + ' ' + property.address_2,
     });
+    // try {
+    //   // const coverImage = await fetchCoverImage(property.id);
+    //   // console.log("Cover Image:", coverImage);
+    //   // const image_url = await getImageUrl(coverImage.bucket, coverImage.path);
+    //   // console.log("Image URL:", image_url);
+    //   // console.log("Property Images:", property.images);
+    //   // property.images = [{
+    //   //   source: image_url,
+    //   //   alt: ""
+    //   // }];
+    //   // console.log("Property Images:", property.images);  
+    // } catch (err) {
+    //   console.error('Error loading cover image:', err);
+    //   // TODO:  Handle with default Image
+    // }
     setSelectedProperty(prev => prev?.id === property.id ? null : property);
   };
 
 
   const handleCalloutPress = (property: Property) => {
-    console.log("Selected property:", {
+    console.log("Callout Press, Selected property:", {
       id: property.id,
-      title: property.title,
-      images: property.images,
-      hasImages: property.images && property.images.length > 0
+      title: property.address_1 + ' ' + property.address_2,
     });
     navigation.navigate('PropertyDetails', { propertyId: property.id });
   };
 
 
-
-
-
-  /**
-   * Handles map region changes with debouncing to avoid too many API calls.
-   */
   const handleRegionChangeComplete = useCallback((region: Region) => {
-    // Store the last region for retry functionality
+    // If we have a previous region, only refetch if movement is significant
+    if (lastRegionRef.current) {
+      const prev = lastRegionRef.current;
+      const latDiff = Math.abs(prev.latitude - region.latitude);
+      const lngDiff = Math.abs(prev.longitude - region.longitude);
+
+      // tweak these thresholds as needed
+      const MIN_MOVE = 0.0005;
+
+      if (latDiff < MIN_MOVE && lngDiff < MIN_MOVE) {
+        lastRegionRef.current = region;
+        return; // ignore tiny region change (like callout/marker selection)
+      }
+    }
+
     lastRegionRef.current = region;
 
-    // Clear any pending timeout
     if (loadingTimeoutRef.current) {
       clearTimeout(loadingTimeoutRef.current);
     }
 
-    // Debounce the API call to avoid excessive requests while user is panning
     loadingTimeoutRef.current = setTimeout(() => {
       loadPropertiesForRegion(region);
-    }, 300); // 300ms debounce
+    }, 300);
   }, [loadPropertiesForRegion]);
+
+
+  // /**
+  //  * Handles map region changes with debouncing to avoid too many API calls.
+  //  */
+  // const handleRegionChangeComplete = useCallback((region: Region) => {
+  //   // Store the last region for retry functionality
+  //   lastRegionRef.current = region;
+
+  //   // Clear any pending timeout
+  //   if (loadingTimeoutRef.current) {
+  //     clearTimeout(loadingTimeoutRef.current);
+  //   }
+
+  //   // Debounce the API call to avoid excessive requests while user is panning
+  //   loadingTimeoutRef.current = setTimeout(() => {
+  //     loadPropertiesForRegion(region);
+  //   }, 300); // 300ms debounce
+  // }, [loadPropertiesForRegion]);
 
   /**
    * Initial load when map is ready - triggers load for initial region.
@@ -296,6 +339,7 @@ export default function HomeScreen({ navigation }: Props) {
                   }}
                   title={property.address_1}
                   onPress={() => handleMarkerPress(property)}
+                  pointerEvents="auto"
                 >
                   <Image
                     source={property.status === 'vacant' ?
@@ -308,9 +352,9 @@ export default function HomeScreen({ navigation }: Props) {
                   <Callout tooltip={false} style={styles.calloutContainer} onPress={() => {handleCalloutPress(property)}}>
                     <View style={styles.calloutContent}>
                       <View style={styles.markerImageContainer}>
-                        {property.images?.[0]?.source ? (
+                        {property.cover_image_path ? (
                           <Image
-                            source={property.images[1].source}
+                            source={{ uri: property.cover_image_url }}
                             style={styles.propertyImage}
                           />
                         ) : (
@@ -367,14 +411,15 @@ export default function HomeScreen({ navigation }: Props) {
                   onPress={() => navigation.navigate('PropertyDetails', { propertyId: property.id })}
                   activeOpacity={0.7}
                 >
-                  <ScrollView 
-                    horizontal 
+                  <FlatList
+                    data={property.images || []}
+                    horizontal
+                    keyExtractor={(_, index) => index.toString()}
                     showsHorizontalScrollIndicator={false}
                     style={styles.imageScrollView}
                     contentContainerStyle={styles.imageScrollContent}
-                  >
-                    {property.images?.map((imgKey, index) => (
-                      <View key={index} style={styles.imageContainer}>
+                    renderItem={({ item: imgKey }) => (
+                      <View style={styles.imageContainer}>
                         <Image
                           source={imgKey.source}
                           style={styles.propertyImage}
@@ -382,8 +427,8 @@ export default function HomeScreen({ navigation }: Props) {
                           alt={imgKey.alt}
                         />
                       </View>
-                    ))}
-                  </ScrollView>
+                    )}
+                  />
                   <View style={styles.listItemContent}>
                     <Image
                       source={property.status === 'vacant' ?
