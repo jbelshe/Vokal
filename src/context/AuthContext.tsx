@@ -56,7 +56,7 @@ function authReducer(state : AuthState, action : AuthAction) : AuthState {
         ...action.payload 
 
       };
-      console.log("CHECK:", !!updatedSession.access_token, !!state.profile?.firstName, '=>',!!updatedSession.access_token && !!state.profile?.firstName)
+      console.log("LOAD CHECK:", !!updatedSession.access_token, !!state.profile?.firstName, '=>',!!updatedSession.access_token && !!state.profile?.firstName)
       return {
         ...state,
         session: updatedSession,
@@ -69,7 +69,7 @@ function authReducer(state : AuthState, action : AuthAction) : AuthState {
         ...currentProfile,
         ...action.payload 
       };
-      console.log("CHECK:", !!state.session?.access_token, !!updatedProfile?.firstName, '=>',!!state.session?.access_token && !!updatedProfile?.firstName)
+      console.log("LOAD CHECK:", !!state.session?.access_token, !!updatedProfile?.firstName, '=>',!!state.session?.access_token && !!updatedProfile?.firstName)
       return {
         ...state,
         profile: updatedProfile,
@@ -186,7 +186,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             return;
           }
           
-          dispatch({ type: 'SET_SESSION', payload: currentSession });      
+          try {
+            dispatch({ type: 'SET_SESSION', payload: currentSession });   
+          } catch (error) {
+            if (!mounted) return;
+            console.error('Error setting session:', error);
+            signOut()
+          }
+          console.log("SESSION SET, now here")   
           const user = currentSession?.user ?? null;
           if (!user) {
             dispatch({ type: 'RESET_PROFILE' });
@@ -203,6 +210,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           dispatch({ type: 'RESET_PROFILE'})
           dispatch({ type: 'RESET_SESSION'})
         } finally {
+          console.log('CHECK ME onAuthStateChange finally', { event, mounted })
           if (mounted) dispatch({ type: 'SET_LOADING', payload: false });
         }
 

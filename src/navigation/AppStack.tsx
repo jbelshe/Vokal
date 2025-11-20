@@ -2,7 +2,7 @@ import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import HomeScreen from '../screens/HomeScreen';
 import DetailsScreen from '../screens/DetailsScreen';
-import PropertyDetailsScreen from '../screens/settings-flow/PropertyDetailsScreen';
+import PropertyDetailsScreen from '../screens/PropertyDetailsScreen';
 import ProfileScreen from '../screens/settings-flow/ProfileScreen';
 import SettingsMainScreen from '../screens/settings-flow/SettingsMainScreen';
 import ContactUsScreen from '../screens/settings-flow/ContactUsScreen';

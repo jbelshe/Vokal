@@ -14,6 +14,7 @@ import { Image } from 'react-native';
 import { useAppContext } from '../context/AppContext';
 import { fetchCoverImage } from '../api/images';
 import { getImageURL } from '../api/images';
+import { ImageWithLoader } from '../components/ImageWithLoader';
 
 type Props = NativeStackScreenProps<AppStackParamList, 'Home'>;
 
@@ -412,21 +413,25 @@ export default function HomeScreen({ navigation }: Props) {
                   activeOpacity={0.7}
                 >
                   <FlatList
-                    data={property.images || []}
+                    // data={property.images || []}
+                    data = { property.image_urls || [] }
                     horizontal
                     keyExtractor={(_, index) => index.toString()}
+                    initialNumToRender={3}
                     showsHorizontalScrollIndicator={false}
                     style={styles.imageScrollView}
                     contentContainerStyle={styles.imageScrollContent}
                     renderItem={({ item: imgKey }) => (
-                      <View style={styles.imageContainer}>
-                        <Image
-                          source={imgKey.source}
-                          style={styles.propertyImage}
-                          resizeMode="cover"
-                          alt={imgKey.alt}
-                        />
-                      </View>
+                      // <View style={styles.imageContainer}>
+                      <ImageWithLoader uri={imgKey} resizeMode="cover" containerStyle={styles.imageContainer} imageStyle={styles.propertyImage}/>
+                        // { <Image
+                          // source={imgKey.source}
+                          // source={{ uri: imgKey }}
+                          // style={styles.propertyImage}
+                          // resizeMode="cover"
+                          // alt={imgKey.alt}
+                        // /> */}
+                      // </View>
                     )}
                   />
                   <View style={styles.listItemContent}>

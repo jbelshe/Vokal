@@ -1,12 +1,14 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Image, Dimensions, Platform } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { AppStackParamList } from '../../types/navigation';
-import CloseIcon from '../../assets/icons/close.svg';
-import { theme } from '../../assets/theme';
-import { useAppContext } from '../../context/AppContext';
+import { AppStackParamList } from '../types/navigation';
+import CloseIcon from '../assets/icons/close.svg';
+import { theme } from '../assets/theme';
+import { useAppContext } from '../context/AppContext';
 import { PurpleButtonLarge } from '@/components/PurpleButtonLarge';
 import { Linking } from 'react-native';
+import { ImageWithLoader } from '../components/ImageWithLoader';
+import { FlatList } from 'react-native';
 
 type Props = NativeStackScreenProps<AppStackParamList, 'PropertyDetails'>;
 
@@ -62,7 +64,12 @@ export default function PropertyDetailsScreen({ route, navigation }: Props) {
             style={styles.imageScrollView}
             contentContainerStyle={styles.imageScrollContent}
           >
-            {property.images?.map((img, index) => (
+            {property.image_urls?.map((url, index) => (
+              <ImageWithLoader uri={url} resizeMode="cover" containerStyle={styles.imageContainer} imageStyle={styles.propertyImage}/>
+            ))}
+            {/* <View key={index} style={styles.imageContainer}>
+            
+            {/* {property.images?.map((img, index) => (
               <View key={index} style={styles.imageContainer}>
                 <Image
                   source={img.source}
@@ -71,7 +78,7 @@ export default function PropertyDetailsScreen({ route, navigation }: Props) {
                   alt={img.alt}
                 />
               </View>
-            ))}
+            ))} */}
           </ScrollView>
           { /* Text Container */}
           <View style={styles.contentContainer}>
@@ -86,8 +93,8 @@ export default function PropertyDetailsScreen({ route, navigation }: Props) {
             <View style={styles.headerRow}>
               <Image
                 source={property?.status === 'vacant'
-                  ? require('../../assets/icons/location-purple-icon.png')
-                  : require('../../assets/icons/location-blue-icon.png')
+                  ? require('../assets/icons/location-purple-icon.png')
+                  : require('../assets/icons/location-blue-icon.png')
                 }
                 style={styles.statusIcon}
               />

@@ -1,7 +1,7 @@
 import { supabase } from '../lib/supabase';
 import { Image } from 'react-native'
 import { DatabaseImage } from '../schemas/images';
-import { getImageURL } from './images';
+import { buildImageURL, getImageURL } from './images';
 
 export type PropertyStatus = 'active' | 'pending' | 'sold' | 'draft' | 'archived';
 export type PropertySiteStatus = 'published' | 'unpublished' | 'featured';
@@ -31,7 +31,11 @@ export interface Property {
   instagram_link?: string;
   estimated_open?: string;
   cover_image?: DatabaseImage;
+  cover_image_path?: string;
+  cover_image_url?: string;
   images?: Array<PropertyImage>;
+  image_paths?: Array<string>;
+  image_urls?: Array<string>;
   created_at: string; // ISO date string
   last_edited: string; // ISO date string
   [key: string]: any; // Allow for additional properties from the database
@@ -103,12 +107,39 @@ export async function fetchPropertiesInBounds(bounds: {
       .lte('latitude', bounds.maxLat)
       .gte('longitude', bounds.minLng)
       .lte('longitude', bounds.maxLng)
-      .eq('property_image_links.is_cover', true);
+      .order('is_cover', { referencedTable: 'property_image_links', ascending: false })
+      .order('order_index', { referencedTable: 'property_image_links', ascending: true });
+      // .eq('property_image_links.is_cover', true);
 
-    if (error) {
-      console.error('Error fetching properties in bounds:', error);
-      throw error;
-    }
+
+    // const { data: moreData, error: moreError } = await supabase
+    //   .from('properties')
+    //   .select(`
+    //     *,
+    //     property_image_links!inner (
+    //       is_cover,
+    //       images (
+    //         id,
+    //         bucket,
+    //         path
+    //       )
+    //     )`)
+    //   .eq('site_status', 'active')
+    //   .gte('latitude', bounds.minLat)
+    //   .lte('latitude', bounds.maxLat)
+    //   .gte('longitude', bounds.minLng)
+    //   .lte('longitude', bounds.maxLng)
+    //   .order('is_cover', { referencedTable: 'property_image_links', ascending: false })
+    //   .order('order_index', { referencedTable: 'property_image_links', ascending: true });
+
+
+
+    // console.log("CHECK MY DATA", moreData);
+
+        // if (moreError) {
+        //   console.error('Error fetching properties in bounds:', moreError);
+        //   throw moreError;
+        // }
 
     if (!data) {
       console.warn('No properties data returned from Supabase');
@@ -138,7 +169,15 @@ export async function fetchPropertiesInBounds(bounds: {
 
         const cover_image_path = path || "../assets/images/fillers/mc-shop-image1.png";
         const cover_image_url =
-          bucket && path ? await getImageURL(bucket, path) : '';
+          bucket && path ? buildImageURL(bucket, path) : '';
+        
+        const image_paths = bucket && property.property_image_links ? property.property_image_links.map((link: { images: { path: string } }) => {
+          const path = link.images.path;
+          return path;
+        }) : [];
+        const image_urls = image_paths ? image_paths.map((path: string) => {
+          return path ? buildImageURL(bucket, path) : '';
+        }) : [];
 
         return {
           id: property.id,
@@ -160,6 +199,8 @@ export async function fetchPropertiesInBounds(bounds: {
           instagram_link: property.instagram_link,
           cover_image_path,
           cover_image_url,
+          image_paths,
+          image_urls,
           images: my_images.map((img, index) => ({
             source: img,
             alt: `Property image ${index + 1}`,
@@ -171,7 +212,7 @@ export async function fetchPropertiesInBounds(bounds: {
       })
     );
 
-    // console.log('Mapped properties:', properties);
+    console.log('Mapped properties:', properties);
     return properties;
   } catch (err) {
     console.error('fetchPropertiesInBounds exception:', err);
