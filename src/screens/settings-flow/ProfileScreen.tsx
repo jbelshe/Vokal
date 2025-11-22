@@ -13,7 +13,7 @@ export default function ProfileScreen({ navigation, route }: Props) {
         navigation.goBack();
     };
 
-  const { state, session } = useAuth();
+  const { state } = useAuth();
 
 
   return (
@@ -65,19 +65,19 @@ export default function ProfileScreen({ navigation, route }: Props) {
               </View>
             </View>
 
-            {session && (
+            {state.session && (
               <View style={styles.section}>
                 <Text style={styles.sectionTitle}>Session Information</Text>
                 <View style={styles.infoRow}>
                   <Text style={styles.label}>Access Token:</Text>
                   <Text style={[styles.value, styles.smallText]} numberOfLines={1} ellipsizeMode="tail">
-                    {session.access_token ? `${session.access_token.substring(0, 15)}...` : 'N/A'}
+                    {state.session.access_token ? `${state.session.access_token.substring(0, 15)}...` : 'N/A'}
                   </Text>
                 </View>
                 <View style={styles.infoRow}>
                   <Text style={styles.label}>Expires At:</Text>
                   <Text style={styles.value}>
-                    {session.expires_at ? new Date(session.expires_at * 1000).toLocaleString() : 'N/A'}
+                    {state.session.expires_at ? new Date(state.session.expires_at * 1000).toLocaleString() : 'N/A'}
                   </Text>
                 </View>
               </View>

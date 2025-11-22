@@ -185,15 +185,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             dispatch({ type: 'SIGN_OUT' });
             return;
           }
-          
+          else if (event === 'TOKEN_REFRESHED') {
+            try {
+                // This ensures the client has the latest session
+                console.log("Token Refreshed")
+                await supabase.auth.getSession();
+                console.log("Token Refreshed2")
+            } catch (error) {
+                console.error('Error refreshing auth state:', error);
+                // Handle error (e.g., sign out user)
+            }
+          }
+          console.log("Now we're here")
           try {
             dispatch({ type: 'SET_SESSION', payload: currentSession });   
           } catch (error) {
             if (!mounted) return;
             console.error('Error setting session:', error);
             signOut()
-          }
-          console.log("SESSION SET, now here")   
+          }  
           const user = currentSession?.user ?? null;
           if (!user) {
             dispatch({ type: 'RESET_PROFILE' });

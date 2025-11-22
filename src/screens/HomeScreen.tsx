@@ -27,7 +27,7 @@ export default function HomeScreen({ navigation }: Props) {
     });
   }, [navigation]);
 
-
+  const { currentPropertyId, setCurrentPropertyId } = useAppContext();
 
   const [searchQuery, setSearchQuery] = useState('');
   const { properties, setProperties, mapRegion, setMapRegion } = useAppContext();
@@ -104,21 +104,6 @@ export default function HomeScreen({ navigation }: Props) {
       id: property.id,
       title: property.address_1 + ' ' + property.address_2,
     });
-    // try {
-    //   // const coverImage = await fetchCoverImage(property.id);
-    //   // console.log("Cover Image:", coverImage);
-    //   // const image_url = await getImageUrl(coverImage.bucket, coverImage.path);
-    //   // console.log("Image URL:", image_url);
-    //   // console.log("Property Images:", property.images);
-    //   // property.images = [{
-    //   //   source: image_url,
-    //   //   alt: ""
-    //   // }];
-    //   // console.log("Property Images:", property.images);  
-    // } catch (err) {
-    //   console.error('Error loading cover image:', err);
-    //   // TODO:  Handle with default Image
-    // }
     setSelectedProperty(prev => prev?.id === property.id ? null : property);
   };
 
@@ -128,6 +113,7 @@ export default function HomeScreen({ navigation }: Props) {
       id: property.id,
       title: property.address_1 + ' ' + property.address_2,
     });
+    setCurrentPropertyId(property.id);
     navigation.navigate('PropertyDetails', { propertyId: property.id });
   };
 

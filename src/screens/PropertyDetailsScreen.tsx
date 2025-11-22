@@ -6,7 +6,6 @@ import CloseIcon from '../assets/icons/close.svg';
 import { theme } from '../assets/theme';
 import { useAppContext } from '../context/AppContext';
 import { PurpleButtonLarge } from '@/components/PurpleButtonLarge';
-import { Linking } from 'react-native';
 import { ImageWithLoader } from '../components/ImageWithLoader';
 import { FlatList } from 'react-native';
 
@@ -17,8 +16,16 @@ const screenWidth = Dimensions.get('window').width;
 export default function PropertyDetailsScreen({ route, navigation }: Props) {
   const { propertyId } = route.params;
   const { properties } = useAppContext();
+  const { currentPropertyId } = useAppContext();
 
-  const property = properties.find(p => p.id === propertyId);
+
+  const property = properties.find(p => p.id === currentPropertyId);
+
+
+  const handleSubmitSuggestion = ( ) => {
+    navigation.push('VotingFlow');
+    //navigation.navigate('Category', { propertyId });
+  };
 
   // Early return if property is not found
   if (!property) {
@@ -56,8 +63,30 @@ export default function PropertyDetailsScreen({ route, navigation }: Props) {
         showsVerticalScrollIndicator={false}
       >
         <View>
+          <FlatList
+            data={property.image_urls || []}
+            horizontal
+            pagingEnabled
+            showsHorizontalScrollIndicator={false}
+            style={styles.imageScrollView}
+            contentContainerStyle={styles.imageScrollContent}
+            keyExtractor={(url, index) => url || index.toString()}
+            renderItem={({ item: url }) => (
+              <ImageWithLoader
+                uri={url}
+                resizeMode="cover"
+                containerStyle={styles.imageContainer}
+                imageStyle={styles.propertyImage}
+              />
+            )}
+            getItemLayout={(data, index) => ({
+              length: 300, // Width of each image container
+              offset: 300 * index,
+              index,
+            })}
+          />
           {/* Horizontal Image Scroll */}
-          <ScrollView
+          {/* <ScrollView
             horizontal
             pagingEnabled
             showsHorizontalScrollIndicator={false}
@@ -66,7 +95,7 @@ export default function PropertyDetailsScreen({ route, navigation }: Props) {
           >
             {property.image_urls?.map((url, index) => (
               <ImageWithLoader uri={url} resizeMode="cover" containerStyle={styles.imageContainer} imageStyle={styles.propertyImage}/>
-            ))}
+            ))} */}
             {/* <View key={index} style={styles.imageContainer}>
             
             {/* {property.images?.map((img, index) => (
@@ -79,7 +108,7 @@ export default function PropertyDetailsScreen({ route, navigation }: Props) {
                 />
               </View>
             ))} */}
-          </ScrollView>
+          {/* </ScrollView> */}
           { /* Text Container */}
           <View style={styles.contentContainer}>
 
@@ -147,7 +176,9 @@ export default function PropertyDetailsScreen({ route, navigation }: Props) {
               property.status==='vacant' ? 
               <PurpleButtonLarge
               title="Submit Suggestions"
-              onPress={() => {}}
+              onPress={() => {
+                handleSubmitSuggestion();
+              }}
               />
               :
               <PurpleButtonLarge

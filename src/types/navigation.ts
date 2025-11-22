@@ -1,5 +1,6 @@
+import { NavigatorScreenParams } from "@react-navigation/native";
+
 export type AppStackParamList = {
-  // Main App Screens
   Home: undefined;
   Details: { id?: string };
   PropertyDetails: { propertyId: string };
@@ -7,7 +8,10 @@ export type AppStackParamList = {
   Profile: undefined;
   ContactUs: undefined;
   VoteHistory: undefined;
-  
+  // Category: { propertyId: string };
+  // SubCategory: { propertyId: string };
+  // AdditionalNote: { propertyId: string };
+  VotingFlow: undefined;
 };
 
 export type AuthStackParamList = {
@@ -20,4 +24,10 @@ export type AuthStackParamList = {
   Onboarding2: undefined;
   Onboarding3: undefined;
   Onboarding4: undefined;
+};
+
+export type VotingStackParamList = {
+  Category: undefined;
+  SubCategory: { selectedCategory: string };
+  AdditionalNote: undefined;
 };

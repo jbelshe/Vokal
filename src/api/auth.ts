@@ -40,21 +40,48 @@ export async function checkIfUserExists(phone: string) {
 }
 
 export async function checkSession(savedSession: Session) {
-    const { data: { session }, error } = await supabase.auth.setSession({
-      access_token: savedSession.access_token,
-      refresh_token: savedSession.refresh_token || ''
-    });
-    if (error) throw error;
-    return session;
+    try {
+        const { data: { session }, error } = await supabase.auth.setSession({
+            access_token: savedSession.access_token,
+            refresh_token: savedSession.refresh_token || ''
+        });
+        
+        if (error) {
+            console.error('Session refresh error:', error);
+            throw error;
+        }
+
+        if (!session) {
+            console.error('No session after refresh');
+            throw new Error('No session after refresh');
+        }
+
+        await supabase.auth.getSession();
+        
+        return session;
+    } catch (error) {
+        console.error('Error in checkSession:', error);
+        throw error;
+    }
 }
 
 export async function fetchUserProfile(userId: string, phoneNumber: string) {
-    const { data, error } = await supabase
-      .from('profiles')
+  try {
+    console.log("Fetching user profile for user:", userId)
+    const { data, error } = await supabase.from('profiles')
       .select('*')
       .eq('id', userId)
       .single();
-
+    console.log("NOW IM HERE")
+    if (error) {
+      console.error("Supabase error:", {
+        message: error.message,
+        details: error.details,
+        hint: error.hint,
+        code: error.code
+      });
+      throw error;
+    }
     console.log(data)
 
     if (data) {
@@ -73,6 +100,10 @@ export async function fetchUserProfile(userId: string, phoneNumber: string) {
     }
     if (error) console.error("SAFE ERROR:", error);
     return data;  // data is None
+  } catch (error) {
+    console.error("Error fetching user profile:", error);
+    return null;
+  }
 }
 
 /**

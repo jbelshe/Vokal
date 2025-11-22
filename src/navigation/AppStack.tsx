@@ -8,6 +8,7 @@ import SettingsMainScreen from '../screens/settings-flow/SettingsMainScreen';
 import ContactUsScreen from '../screens/settings-flow/ContactUsScreen';
 import VoteHistoryScreen from '../screens/settings-flow/VoteHistoryScreen';
 import { AppStackParamList } from '../types/navigation';
+import VotingStack from './VotingStack';
 
 const Stack = createNativeStackNavigator<AppStackParamList>();
 
@@ -24,6 +25,15 @@ export default function AppStack() {
       <Stack.Screen name="Profile" component={ProfileScreen} />
       <Stack.Screen name="ContactUs" component={ContactUsScreen} />
       <Stack.Screen name="VoteHistory" component={VoteHistoryScreen} />
+      <Stack.Screen 
+        name="VotingFlow" 
+        component={VotingStack} 
+        options={{ 
+          headerShown: false ,
+          presentation: 'modal',
+          animation: 'slide_from_bottom',
+        }}
+      />
     </Stack.Navigator>
   );
 }
