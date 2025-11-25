@@ -36,7 +36,7 @@ export default function EnterPhoneNumber({ navigation }: Props) {
   const handleNext = () => {
     if (isValid) {
       try {
-        handleSendOtp(phoneNumberLocal);
+        handleSendOtp("1" + phoneNumberLocal);
       } catch (error) {
         console.error('Error checking if user exists:', error);
       }

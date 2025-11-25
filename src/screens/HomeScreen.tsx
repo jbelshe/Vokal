@@ -395,7 +395,7 @@ export default function HomeScreen({ navigation }: Props) {
                 <TouchableOpacity
                   key={property.id}
                   style={styles.listItem}
-                  onPress={() => navigation.navigate('PropertyDetails', { propertyId: property.id })}
+                  onPress={() => handleCalloutPress(property)}
                   activeOpacity={0.7}
                 >
                   <FlatList

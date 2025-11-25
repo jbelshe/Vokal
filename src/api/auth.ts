@@ -8,20 +8,62 @@ import { Session } from '@supabase/supabase-js';
  */
 export async function sendOtp(phone: string) {
   try {
+    console.log('Raw phone input:', phone, 'Type:', typeof phone);
+    const cleanedPhone = phone.replace(/\D/g, '');
+    const formattedPhone = `+${cleanedPhone}`;
+    console.log("Formatted Phone:", formattedPhone)
     console.log(`Sending OTP to ${phone}`);
     const { error } = await supabase.auth.signInWithOtp({
-      phone: "1" + phone,
+      phone: formattedPhone,
       options: { shouldCreateUser: true }, 
     });
 
     if (error) throw error;
     console.log(`OTP sent successfully to ${phone}`);
   } catch (err) {
-    console.error('Error sending OTP:', err);
+    console.error(`Error sending OTP to ${phone}:`, err);
     throw err;
   }
 }
 
+
+/**
+ * Verifies an OTP code sent via SMS using Supabase Auth.
+ * Returns the user's session if successful, otherwise throws.
+ */
+export async function verifyOtp(phone: string, token: string) {
+  console.log(`Verifying OTP for ${phone} with token ${token}`);
+  if (!phone || !token) {
+    console.warn('verifyOtp: missing phone or token');
+    return null;
+  }
+  const cleanedPhone = phone.replace(/\D/g, '');
+  const formattedPhone = `+${cleanedPhone}`;
+  console.log("Formatted Phone:", formattedPhone)
+  try {
+    const { data, error } = await supabase.auth.verifyOtp({
+      phone: formattedPhone,
+      token,
+      type: 'sms', 
+    });
+
+    if (error) throw error;
+
+    const newSession = data.session;
+    const newUser = data.user;
+
+    if (newSession && newUser) {
+      console.log(' OTP verified for user:', newUser.id);
+      return { newSession, newUser };
+    } else {
+      console.warn('TP verification failed — no session returned');
+      return null;
+    }
+  } catch (err) {
+    console.error('verifyOtp exception:', err);
+    throw err;
+  }
+}
 
 export async function checkIfUserExists(phone: string) {
     const url = "https://wjhnxvtqvehvhvhlwosk.supabase.co/functions/v1/check-user";
@@ -65,16 +107,43 @@ export async function checkSession(savedSession: Session) {
     }
 }
 
-export async function fetchUserProfile(userId: string, phoneNumber: string) {
+export async function doesUserExist(userId: string) : Promise<boolean> {
+    try {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("id")
+        .eq("id", userId)
+        .single();
+
+      if (error && error.code === "PGRST116") {
+        console.log("User does NOT exist");
+        return false;
+      } else {
+        console.log("User exists:", data);
+        return true;
+      }
+    } catch (error) {
+        console.error('Error getting authenticated user:', error);
+        return false;
+    }
+}
+
+export async function fetchUserProfile(userId: string) {
   try {
     console.log("Fetching user profile for user:", userId)
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    console.log("USER:", user)
+    const phone = user?.phone;
+    console.log("PHONE:", phone)
+    console.log("Fetching user profile for user:", userId)
     const { data, error } = await supabase.from('profiles')
-      .select('*')
+      .select(`*`)
       .eq('id', userId)
       .single();
-    console.log("NOW IM HERE")
+
+      
     if (error) {
-      console.error("Supabase error:", {
+      console.log("ERROR:  Supabase error token refresh check:", {
         message: error.message,
         details: error.details,
         hint: error.hint,
@@ -82,8 +151,6 @@ export async function fetchUserProfile(userId: string, phoneNumber: string) {
       });
       throw error;
     }
-    console.log(data)
-
     if (data) {
       return {
         firstName: data.first_name,
@@ -95,52 +162,93 @@ export async function fetchUserProfile(userId: string, phoneNumber: string) {
         emailSubscribed: data.email_subscription,
         userId: userId,
         role: data.role,
-        phoneNumber: phoneNumber,
+        phoneNumber: phone,
       }
     }
-    if (error) console.error("SAFE ERROR:", error);
+    if (error) console.log("SAFE ERROR (user doesn't exist yet):", error);
     return data;  // data is None
   } catch (error) {
     console.error("Error fetching user profile:", error);
-    return null;
+    throw error;
   }
 }
 
-/**
- * Verifies an OTP code sent via SMS using Supabase Auth.
- * Returns the user's session if successful, otherwise throws.
- */
-export async function verifyOtp(phone: string, token: string) {
-  console.log(`Verifying OTP for ${phone} with token ${token}`);
-  if (!phone || !token) {
-    console.warn('verifyOtp: missing phone or token');
-    return null;
+
+function convertProfileToDatabaseFormat(profile: Partial<Profile>): any {
+  console.log("Converting profile to database format:", profile);
+  const result: any = {};
+
+  // Only include the userId if it exists
+  if (profile.userId) {
+    result.id = profile.userId;
   }
 
-  try {
-    const { data, error } = await supabase.auth.verifyOtp({
-      phone,
-      token,
-      type: 'sms', 
-    });
+  // Only include fields that are actually present in the partial
+  if ('firstName' in profile) {
+    result.first_name = profile.firstName ?? null;
+  }
+  if ('lastName' in profile) {
+    result.last_name = profile.lastName ?? null;
+  }
+  if ('email' in profile) {
+    result.email = profile.email ?? null;
+  }
+  if ('zipCode' in profile) {
+    result.zip_code = profile.zipCode ?? null;
+  }
+  if ('gender' in profile) {
+    result.gender = profile.gender ?? null;
+  }
+  if ('role' in profile && profile.role) {
+    result.role = profile.role;
+  }
 
-    if (error) throw error;
-
-    const newSession = data.session;
-    const newUser = data.user;
-
-    if (newSession && newUser) {
-      console.log(' OTP verified for user:', newUser.id);
-      return { newSession, newUser };
-    } else {
-      console.warn('TP verification failed — no session returned');
-      return null;
+  // Handle birthday if it exists in the partial
+  if ('birthday' in profile && profile.birthday) {
+    if ('isoDate' in profile.birthday && profile.birthday.isoDate) {
+      result.date_of_birth = profile.birthday.isoDate;
+    } else if ('year' in profile.birthday) {
+      const { year, month, day } = profile.birthday;
+      result.date_of_birth = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
     }
-  } catch (err) {
-    console.error('verifyOtp exception:', err);
-    throw err;
   }
+
+  // Handle email subscription if it exists in the partial
+  if ('emailSubscribed' in profile) {
+    result.email_subscription = profile.emailSubscribed ? 'all_emails' : 'no_emails';
+  }
+
+  // Always update the updated_at timestamp
+  result.updated_at = new Date().toISOString();
+
+  console.log("Converted profile:", result);
+  return result;
 }
+
+
+
+
+
+export async function updateProfile(profile: Partial<Profile>, session: any): Promise<boolean> {
+
+  const payload = convertProfileToDatabaseFormat(profile);
+  console.log("Updating profile to:", payload)
+  const { error } = await supabase.from('profiles').update(payload).eq('id', profile.userId);
+  
+  if (error) {
+    console.error('Error updating profile:', error);
+    return false;
+  }
+
+
+
+  return true;
+}
+
+
+
+
+
 
 /**
  * Saves profile data to Supabase database after user completes profile creation.
@@ -148,31 +256,7 @@ export async function verifyOtp(phone: string, token: string) {
  */
 export async function saveProfile(profile: Profile, session: any): Promise<boolean> {
   try {
-    console.log('Saving profile to database:', profile);
-    
-    // // Set the session so we're authenticated when making database calls
-    // const { error: sessionError } = await supabase.auth.setSession({
-    //   access_token: session.access_token,
-    //   refresh_token: session.refresh_token,
-    // });
-    // console.log("SESSION ERROR:", sessionError)
-    // if (sessionError) {
-    //   console.error('Error setting session:', sessionError);
-    //   return false;
-    // }
-
-    console.log("\n\n\n\n\n")
-    // Convert birthday to ISO date format for database
-    let birthdayDate: string | null = null;
-    if (profile.birthday) {
-      if ('isoDate' in profile.birthday) {
-        birthdayDate = profile.birthday.isoDate;
-      } else if (profile.birthday.month && profile.birthday.day && profile.birthday.year) {
-        // Format as YYYY-MM-DD
-        birthdayDate = `${profile.birthday.year}-${String(profile.birthday.month).padStart(2, '0')}-${String(profile.birthday.day).padStart(2, '0')}`;
-      }
-    }
-
+    profile.role = 'user'; // Default user to role 'user'
     // Get the authenticated user
     const { data: { user }, error: userError } = await supabase.auth.getUser();
     
@@ -181,32 +265,15 @@ export async function saveProfile(profile: Profile, session: any): Promise<boole
       return false;
     }
     console.log('Authenticated user:', user);
-
-    let email_val: string;
-    if (profile.emailSubscribed) {
-      email_val = 'all_emails';
-    } else {
-      email_val = 'no_emails';
-    }
-    const payload = {
-      id: user.id, // Use the auth user's ID
-      first_name: profile.firstName,
-      last_name: profile.lastName,
-      role: 'user',
-      email: profile.email,
-      zip_code: profile.zipCode,
-      gender: profile.gender,
-      date_of_birth: birthdayDate,
-      email_subscription: email_val,
-      updated_at: new Date().toISOString(),
-    }
+    profile.userId = user.id;
+    
+    const payload = convertProfileToDatabaseFormat(profile);
 
     console.log("\n\n\n\n\n")
-    
-    
+    console.log('Saving profile to database:', profile);
+    console.log("PAYLOAD:", payload)
     // Insert or update profile in the database
     // Assuming a 'profiles' table exists with these columns
-    console.log("PAYLOAD:", payload)
     const { error: dbError } = await supabase
       .from('profiles')
       .insert(payload);

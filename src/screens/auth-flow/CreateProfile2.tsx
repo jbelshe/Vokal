@@ -43,7 +43,7 @@ const parseBirthdayFromProfile = (birthday: Birthday | null | undefined): { mont
 };
 
 export default function CreateProfile2({ navigation }: Props) {
-  const { signIn, state, dispatch, saveProfileToDatabase} = useAuth();
+  const { signIn, state, dispatch, saveNewProfileToDatabase} = useAuth();
   const [selectedGender, setSelectedGender] = React.useState<string>(state.profile?.gender || '');
   const [email, setEmail] = React.useState(state.profile?.email || '');
   const [zipCode, setZipCode] = React.useState(state.profile?.zipCode || '');
@@ -131,7 +131,7 @@ export default function CreateProfile2({ navigation }: Props) {
 
     dispatch({type: "SET_PROFILE", payload: updatedProfile, msg: "CreateProfile Call"});
     try {
-      const success = await saveProfileToDatabase(updatedProfile);
+      const success = await saveNewProfileToDatabase(updatedProfile);
       if (!success) {
         setContentError('Failed to save profile. Please try again.');
         return;
@@ -141,10 +141,9 @@ export default function CreateProfile2({ navigation }: Props) {
       setContentError('Failed to save profile. Please try again.');
       return;
     }
-    console.log("FUCK")
     // If date is valid and profile saved, proceed with sign in
     signIn(state.session?.access_token!);
-    console.log("Navigating to onboarding...")
+    console.log("Navigating to onboarding...");
     navigation.navigate('Onboarding1');
   };
 
@@ -435,7 +434,7 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.surface1,
     borderRadius: 20,
     paddingHorizontal: 16,
-    marginBottom: 16,
+    marginBottom: 32,
     justifyContent: 'center',
   },
   dropdownOption: {
@@ -449,10 +448,10 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
   },
   dropdownOptionContainer: {
+    borderRadius: 12,
     backgroundColor: 'transparent',
     paddingHorizontal: 8,
   },
-
   placeholderStyle: {
     fontSize: 16,
     color: theme.colors.secondary_text,
@@ -461,29 +460,29 @@ const styles = StyleSheet.create({
     fontSize: 16, color: theme.colors.primary_text,
   },
   dateContainer: {
-  flexDirection: 'row',
-  width: '100%',
-  marginBottom: 16,
-},
-dateInput: {
-  flex: 1,
-  height: 56,
-  justifyContent: 'center',
-},
-checkboxContainer: {
-  flexDirection: 'row',
-  alignItems: 'center',
-  marginTop: 10,
-  marginBottom: 10,
-  width: '100%',
-},
-checkbox: {
-  width: 20,
-  height: 20,
-  marginRight: 10,
-  borderRadius: 4,
-  borderColor: theme.colors.primary_gradient_start,
-  color: theme.colors.primary_gradient_start,
-},
+    flexDirection: 'row',
+    width: '100%',
+    marginBottom: 16,
+  },
+  dateInput: {
+    flex: 1,
+    height: 56,
+    justifyContent: 'center',
+  },
+  checkboxContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 10,
+    marginBottom: 10,
+    width: '100%',
+  },
+  checkbox: {
+    width: 20,
+    height: 20,
+    marginRight: 10,
+    borderRadius: 4,
+    borderColor: theme.colors.primary_gradient_start,
+    color: theme.colors.primary_gradient_start,
+  },
 
 });

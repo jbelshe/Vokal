@@ -35,7 +35,7 @@ export async function loadCategoriesAll() : Promise<{ categoriesData: CategoryWi
         `)
         .order('index_order', { ascending: true })
         .order('index_order', { referencedTable: 'property_subcategories', ascending: true });
-    console.log("Subcategories Data:", data);
+    // console.log("Subcategories Data:", data);
     if (error) throw error;
 
     const categoryMap: CategoryMap = {};
@@ -46,7 +46,7 @@ export async function loadCategoriesAll() : Promise<{ categoriesData: CategoryWi
         code: category.code,
         subcategories: category.property_subcategories
     }));
-    console.log("CAT DATA:", categoriesData)
+    // console.log("CAT DATA:", categoriesData)
 
     
     data?.forEach(category => {
@@ -56,7 +56,7 @@ export async function loadCategoriesAll() : Promise<{ categoriesData: CategoryWi
         code: sub.code
         }));
     });
-    console.log("Category Map:", categoryMap)
-    console.log("Categories Data:", categoriesData)
+    // console.log("Category Map:", categoryMap)
+    // console.log("Categories Data:", categoriesData)
     return { categoriesData, categoryMap };
 }

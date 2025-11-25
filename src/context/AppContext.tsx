@@ -35,15 +35,15 @@ export function AppProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        console.log("Fetching Categories...")
+        // console.log("Fetching Categories...")
         const { categoriesData, categoryMap } = await loadCategoriesAll();  // async function but non-blocking 
         const allSubcategoryCodes = categoriesData.flatMap(category => 
             category.subcategories.map(sub => sub.code)
         );
-        console.log("All subcategory codes:", allSubcategoryCodes);
+        // console.log("All subcategory codes:", allSubcategoryCodes);
         setCategories(categoriesData);
         setCategoryMap(categoryMap);
-        console.log("Categories Fetched")
+        // console.log("Categories Fetched")
       } catch (error) {
         console.error('Error fetching categories:', error);
       }

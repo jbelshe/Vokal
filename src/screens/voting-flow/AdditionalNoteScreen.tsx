@@ -14,7 +14,7 @@ import { useVotingContext } from '../../context/VotingContext';
 type Props = NativeStackScreenProps<VotingStackParamList, 'AdditionalNote'>;
 
 export default function AdditionalNoteScreen({ navigation, route }: Props) {
-  const maxLength = 150;
+  const maxLength = 50;
 
   const { currentPropertyId } = useAppContext();
   const { additionalNote, setAdditionalNote } = useVotingContext();

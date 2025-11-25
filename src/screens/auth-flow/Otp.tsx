@@ -59,8 +59,13 @@ export default function Otp({ navigation }: Props) {
     setError(null);
     const success = await handleVerifyOtp(otpValue);
     console.log("handleVerifyOtp success: ", success);
-    if (success) {      
-      navigation.navigate('CreateProfile1'); // if user exists, AuthContext sends them to HomeScreen
+    if (success) {     
+      if (state.isOnboarding) {
+        navigation.navigate('CreateProfile1'); // if user exists, AuthContext sends them to HomeScreen
+      } else {
+        console.log("handleVerifyOtp success, no onboarding: ", success);
+        return;
+      }
     } else {
       setError('Incorrect OTP. Please try again.');
     }
