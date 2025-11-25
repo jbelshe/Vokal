@@ -11,4 +11,8 @@ export const colors = {
   border: '#DBDBDA',
   error: '#EB4335',
   success: '#388E3C',
+  donut1: "#FFBB6A",
+  donut2: "#50DEF3",
+  donut3: "#7AC1F8",
+  donut4: "#F67B7B",
 };

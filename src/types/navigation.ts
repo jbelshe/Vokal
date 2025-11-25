@@ -15,6 +15,7 @@ export type AppStackParamList = {
 };
 
 export type AuthStackParamList = {
+  VotingResults: undefined;
   SignIn: undefined;
   EnterPhoneNumber: undefined;
   OTP: undefined;

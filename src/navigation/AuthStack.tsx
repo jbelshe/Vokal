@@ -9,8 +9,7 @@ import Onboarding1 from '../screens/auth-flow/onboarding-flow/Onboarding1';
 import Onboarding2 from '../screens/auth-flow/onboarding-flow/Onboarding2';
 import Onboarding3 from '../screens/auth-flow/onboarding-flow/Onboarding3';
 import Onboarding4 from '../screens/auth-flow/onboarding-flow/Onboarding4';
-import { theme } from '../assets/theme';
-import { Image } from 'react-native';
+import VotingResults from '../screens/VotingResultsScreen';
 
 const Stack = createNativeStackNavigator<AuthStackParamList>();
 
@@ -18,7 +17,7 @@ export default function AuthStack() {
   
   return (
     <Stack.Navigator
-      // initialRouteName="Onboarding1"
+      // initialRouteName="VotingResults"
       initialRouteName="EnterPhoneNumber"
       screenOptions={{
         headerShown: false,
@@ -29,7 +28,7 @@ export default function AuthStack() {
         gestureDirection: 'horizontal',
       }}
     >
-      
+      <Stack.Screen name="VotingResults" component={VotingResults} />
       <Stack.Screen name="EnterPhoneNumber" component={EnterPhoneNumber} />
       <Stack.Screen name="OTP" component={Otp} />
       <Stack.Screen name="CreateProfile1" component={CreateProfile1} />
