@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { View, Image, Text, ImageBackground, StyleSheet, TouchableOpacity, Alert } from 'react-native';
 import { CodeField, Cursor, useBlurOnFulfill, useClearByFocusCell } from 'react-native-confirmation-code-field';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -57,17 +57,33 @@ export default function Otp({ navigation }: Props) {
     if (!isCodeComplete) return;
     
     setError(null);
-    const success = await handleVerifyOtp(otpValue);
-    console.log("handleVerifyOtp success: ", success);
-    if (success) {     
-      if (state.isOnboarding) {
-        navigation.navigate('CreateProfile1'); // if user exists, AuthContext sends them to HomeScreen
+    try {
+      const success = await handleVerifyOtp(otpValue);
+      console.log("handleVerifyOtp success: ", success);
+      
+      if (success) {     
+        console.log("handleVerifyOtp success, onboarding: ", state.isOnboarding);
+        if (state.isOnboarding) {
+          navigation.navigate('CreateProfile1'); // if user exists, AuthContext sends them to HomeScreen
+        } else {
+          console.log("handleVerifyOtp success, no onboarding: ", success);
+          setTimeout(() => {
+            // wait until the auth context has updated the state.  Navigation will automatically switch to AppContext
+          }, 5000);
+        }
       } else {
-        console.log("handleVerifyOtp success, no onboarding: ", success);
-        return;
+        Alert.alert(
+          'Incorrect Code',
+          'The verification code you entered is incorrect. Please try again.',
+          [{ text: 'OK', onPress: () => setOtpValue('') }]
+        );
       }
-    } else {
-      setError('Incorrect OTP. Please try again.');
+    } catch (error) {
+      console.error('Error verifying OTP:', error);
+      Alert.alert(
+        'Error',
+        'There was a problem verifying your code. Please try again.'
+      );
     }
   };
 
@@ -89,7 +105,8 @@ export default function Otp({ navigation }: Props) {
     return formatted;
   };
 
-  React.useEffect(() => {
+
+  useEffect(() => {
     if (isCodeComplete) {
       handleNext();
     }

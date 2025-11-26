@@ -144,6 +144,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
    * Wrapped in useCallback to maintain stable reference
    */
   const handleSessionChange = useCallback(async (session: Session | null, source: string) => {
+    console.log(`[${source}] handleSessionChange called from ${source}`);
     // Prevent concurrent processing
     if (isProcessingSession.current) {
       console.log(`[${source}] Skipping - already processing session`);
@@ -159,34 +160,51 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
 
     isProcessingSession.current = true;
-    dispatch({ type: 'SET_LOADING', payload: true, msg: source });
+    // dispatch({ type: 'SET_LOADING', payload: true, msg: source });
 
     try {
       const userId = session.user.id;
+      const userPhone = session.user.phone!;
       console.log(`[${source}] Processing session for user:`, userId);
 
-      // Set session first
-      dispatch({ type: 'SET_SESSION', payload: session, msg: source });
+      // For INIT: explicitly set session (Supabase may not have loaded it from storage yet)
+      // For AUTH_* events: Supabase already has the session active (that's why the event fired)
+      if (source === 'INIT') {
+        console.log(`[${source}] Setting session for initialization...`);
+        const { error: sessionError } = await supabase.auth.setSession({
+          access_token: session.access_token,
+          refresh_token: session.refresh_token || '',
+        });
+        if (sessionError) {
+          console.error(`[${source}] Error setting session:`, sessionError);
+          throw sessionError;
+        }
+      }
 
-      // Check if user has a profile
+      // Do async operations first (before React state updates to prevent re-render interference)
+      console.log(`[${source}] Checking if user exists...`);
       const userExists = await doesUserExist(userId);
+      console.log(`[${source}] User exists:`, userExists);
+      
+      let userProfile = null;
+      if (userExists) {
+        console.log(`[${source}] Fetching user profile...`);
+        userProfile = await fetchUserProfile(userId, userPhone);
+        console.log(`[${source}] Profile fetched:`, !!userProfile?.firstName);
+      }
+
+      // NOW batch all state updates together after async operations complete
+      // This prevents deadlocks from React re-renders during async calls
+      dispatch({ type: 'SET_SESSION', payload: session, msg: source });
       
       if (!userExists) {
         console.log(`[${source}] User does not have profile, setting onboarding`);
         dispatch({ type: 'SET_ONBOARDING', payload: true, msg: source });
-        dispatch({ type: 'SET_LOADING', payload: false });
-        isProcessingSession.current = false;
-        return;
-      }
-
-      // Fetch and set profile
-      const userProfile = await fetchUserProfile(userId);
-      
-      if (userProfile && userProfile.firstName) {
+      } else if (userProfile && userProfile.firstName) {
         console.log(`[${source}] Profile found, setting profile`);
         dispatch({ type: 'SET_PROFILE', payload: userProfile, msg: source });
         dispatch({ type: 'SET_ONBOARDING', payload: false, msg: source });
-      } else { // shoudln't be possible
+      } else {
         console.error(`[${source}] Profile incomplete, setting onboarding`);
         dispatch({ type: 'SET_ONBOARDING', payload: true, msg: source });
       }
@@ -249,15 +267,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           console.log("[AUTH_EVENT] Skipping INITIAL_SESSION - handled by init");
           return;
         }
-
-        if (currentSession) {
-          await handleSessionChange(currentSession, `AUTH_${event}`);
-        } else {
-          // Session is null but event is not SIGNED_OUT - reset state
-          dispatch({ type: 'RESET_SESSION' });
-          dispatch({ type: 'RESET_PROFILE' });
-          dispatch({ type: 'SET_ONBOARDING', payload: false });
-        }
+        dispatch({ type: 'SET_SESSION', payload: currentSession, msg: "handleAuthStateChange" });
       }
     );
 
@@ -337,14 +347,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           refresh_token: result.newSession.refresh_token,
         });
 
-        // // Optionally save to SecureStore for persistence
-        // try {
-        //   await SecureStore.setItemAsync(SESSION_KEY, JSON.stringify(result.newSession));
-        // } catch (error) {
-        //   console.error('[VERIFY_OTP] Error saving session:', error);
-        //   // Non-critical error, continue anyway
-        // }
-
+        dispatch({ type: "SET_PROFILE", payload: result.profile, msg: "handleVerifyOtp" })
+        // dispatch({ type: 'SET_SESSION', payload: result.newSession, msg: "handleVerifyOtp" });r
         // onAuthStateChange will handle the rest (profile loading, onboarding state, etc.)
         return true;
       }

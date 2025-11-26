@@ -51,13 +51,15 @@ export async function verifyOtp(phone: string, token: string) {
 
     const newSession = data.session;
     const newUser = data.user;
-
-    if (newSession && newUser) {
-      console.log(' OTP verified for user:', newUser.id);
-      return { newSession, newUser };
-    } else {
-      console.warn('TP verification failed — no session returned');
-      return null;
+    console.log("New User:", newUser)
+    if (newUser && newUser.phone) {
+      const profile = await fetchUserProfile(newUser.id, newUser.phone!);
+      console.log("Profile:", profile)
+      return { newSession, profile };
+    }
+    else {
+      console.warn('OTP verification failed — no user returned');
+      return { newSession, profile: null };
     }
   } catch (err) {
     console.error('verifyOtp exception:', err);
@@ -65,7 +67,8 @@ export async function verifyOtp(phone: string, token: string) {
   }
 }
 
-export async function checkIfUserExists(phone: string) {
+export async function checkIfUserExists(phone: string)  : Promise<boolean>{
+    console.log("Checking if user exists for phone:", phone)
     const url = "https://wjhnxvtqvehvhvhlwosk.supabase.co/functions/v1/check-user";
     const response = await fetch(url, {
         method: 'POST',
@@ -76,7 +79,7 @@ export async function checkIfUserExists(phone: string) {
         body: JSON.stringify({ phone: "1" + phone }),    // TODO: Handle country codes
     });
     const data = await response.json();
-    console.log(data)
+    console.log("User exists:", data)
     console.log(data["exists"])
     return data["exists"];
 }
@@ -108,33 +111,44 @@ export async function checkSession(savedSession: Session) {
 }
 
 export async function doesUserExist(userId: string) : Promise<boolean> {
-    try {
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("id")
-        .eq("id", userId)
-        .single();
+  console.log("[doesUserExist] Checking if user exists - userId:", userId);
+  
+  try {
+    // Supabase automatically uses the active session for queries
+    // No need to check/getSession - if session is missing, query will fail with auth error
+    const { data, error } = await supabase
+      .from("profiles")
+      .select("id")
+      .eq("id", userId)
+      .single();
 
-      if (error && error.code === "PGRST116") {
-        console.log("User does NOT exist");
-        return false;
-      } else {
-        console.log("User exists:", data);
-        return true;
+    if (error && error.code === "PGRST116") {
+      console.log("[doesUserExist] User does NOT exist (PGRST116)");
+      return false;
+    } else if (error) {
+      console.error("[doesUserExist] Query error:", error.code, error.message);
+      // If it's an auth error, throw it so caller can handle
+      if (error.message?.includes('JWT') || error.message?.includes('auth')) {
+        throw new Error(`Authentication error: ${error.message}`);
       }
-    } catch (error) {
-        console.error('Error getting authenticated user:', error);
-        return false;
+      throw error;
     }
+    
+    console.log("[doesUserExist] User exists:", !!data);
+    return true;
+  } catch (error) {
+    console.error('[doesUserExist] Exception:', error);
+    throw error;
+  }
 }
 
-export async function fetchUserProfile(userId: string) {
+export async function fetchUserProfile(userId: string, phone: string) {
   try {
     console.log("Fetching user profile for user:", userId)
-    const { data: { user }, error: userError } = await supabase.auth.getUser();
-    console.log("USER:", user)
-    const phone = user?.phone;
-    console.log("PHONE:", phone)
+    // const { data: { user }, error: userError } = await supabase.auth.getUser();
+    // console.log("USER:", user)
+    // const phone = user?.phone;
+    // console.log("PHONE:", phone)
     console.log("Fetching user profile for user:", userId)
     const { data, error } = await supabase.from('profiles')
       .select(`*`)
@@ -143,13 +157,13 @@ export async function fetchUserProfile(userId: string) {
 
       
     if (error) {
-      console.log("ERROR:  Supabase error token refresh check:", {
+      console.log("ERROR:  Valid Token, but no user profile found", {
         message: error.message,
         details: error.details,
         hint: error.hint,
         code: error.code
       });
-      throw error;
+      // throw error;
     }
     if (data) {
       return {

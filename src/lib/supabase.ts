@@ -31,16 +31,3 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey,
     }
 );
 
-
-
-supabase.auth.onAuthStateChange(async (event, session) => {
-  console.log('Auth state changed:', event);
-  
-  if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
-    // Session is being set automatically by Supabase
-    console.log('Session updated', event);
-  } else if (event === 'SIGNED_OUT') {
-    // Clear any sensitive data
-    await SecureStore.deleteItemAsync('session_user');
-  }
-});

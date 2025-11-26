@@ -32,7 +32,6 @@ export default function SettingsHomeScreen({ navigation, route }: Props) {
 
   const handleLogout = async () => {
     await signOut();
-    // navigation.navigate('Home');
   };
 
   const handleProfileImagePress = () => {
@@ -91,7 +90,7 @@ export default function SettingsHomeScreen({ navigation, route }: Props) {
             subtext="All your votes in one place"
             image={Icons.voted}
             icon={
-              <ProfileIconButton onPress={() => {}}>
+              <ProfileIconButton onPress={() => {navigation.navigate('VoteHistory')}}>
                 <ChevronRightIcon width={24} height={24} fill={theme.colors.secondary_text} />
               </ProfileIconButton>
             }
@@ -105,7 +104,7 @@ export default function SettingsHomeScreen({ navigation, route }: Props) {
             subtext="View or update personal information"
             image={Icons.profile}
             icon={
-              <ProfileIconButton onPress={() => {}}>
+              <ProfileIconButton onPress={() => {navigation.navigate('Profile')}}>
                 <ChevronRightIcon width={24} height={24} fill={theme.colors.secondary_text} />
               </ProfileIconButton>
             }
@@ -135,7 +134,7 @@ export default function SettingsHomeScreen({ navigation, route }: Props) {
             subtext="To provide feedback, contact support, or partner with us"
             image={Icons.contact}
             icon={
-              <ProfileIconButton onPress={() => {}}>
+              <ProfileIconButton onPress={() => {navigation.navigate('ContactUs')}}>
                 <ChevronRightIcon width={24} height={24} fill={theme.colors.secondary_text} />
               </ProfileIconButton>
             }

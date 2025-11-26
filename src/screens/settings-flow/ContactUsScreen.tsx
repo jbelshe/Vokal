@@ -76,7 +76,7 @@ export default function ContactUsScreen({ navigation, route }: Props) {
                         title="Provide Feedback"
                         image={Icons.notes}
                         icon={
-                            <ProfileIconButton onPress={() => { }}>
+                            <ProfileIconButton onPress={() => { handleEmailPress('feedback')}}>
                                 <ChevronRightIcon width={24} height={24} fill={theme.colors.secondary_text} />
                             </ProfileIconButton>
                         }
@@ -88,7 +88,7 @@ export default function ContactUsScreen({ navigation, route }: Props) {
                         title="Contact Support"
                         image={Icons.headphones}
                         icon={
-                            <ProfileIconButton onPress={() => { }}>
+                            <ProfileIconButton onPress={() => { handleEmailPress('support')}}>
                                 <ChevronRightIcon width={24} height={24} fill={theme.colors.secondary_text} />
                             </ProfileIconButton>
                         }
@@ -100,7 +100,7 @@ export default function ContactUsScreen({ navigation, route }: Props) {
                         title="Partner With Us"
                         image={Icons.preach}
                         icon={
-                            <ProfileIconButton onPress={() => { }}>
+                            <ProfileIconButton onPress={() => { handleEmailPress('partner')}}>
                                 <ChevronRightIcon width={24} height={24} fill={theme.colors.secondary_text} />
                             </ProfileIconButton>
                         }

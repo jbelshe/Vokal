@@ -9,7 +9,7 @@ import { useAuth } from '../../context/AuthContext';
 type Props = NativeStackScreenProps<AuthStackParamList, 'EnterPhoneNumber'>;
 
 export default function EnterPhoneNumber({ navigation }: Props) {
-  const { handleSendOtp } = useAuth();
+  const { state,  handleSendOtp } = useAuth();
 
   const [phoneNumberLocal, setPhoneNumberLocal] = React.useState('');
   const [isValid, setIsValid] = React.useState(false);
