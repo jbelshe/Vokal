@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, memo, useCallback } from "react";
 import { View, Image, ActivityIndicator, StyleSheet, StyleProp, ImageStyle, ViewStyle } from "react-native";
 
 type Props = {
@@ -8,8 +8,18 @@ type Props = {
   containerStyle?: StyleProp<ViewStyle>;
 };
 
-export function ImageWithLoader({ uri, resizeMode, imageStyle, containerStyle}: Props) {
+// In ImageWithLoader.tsx
+const ImageWithLoaderComponent = React.memo(({ 
+  uri, 
+  resizeMode = 'cover', 
+  imageStyle, 
+  containerStyle 
+}: Props) => {
   const [loading, setLoading] = useState(true);
+
+  const handleLoadEnd = useCallback(() => {
+    setLoading(false);
+  }, []);
 
   return (
     <View style={containerStyle}>
@@ -17,10 +27,8 @@ export function ImageWithLoader({ uri, resizeMode, imageStyle, containerStyle}: 
         source={{ uri }}
         style={[{ width: "100%", height: "100%" }, imageStyle]}
         resizeMode={resizeMode}
-        // onLoadStart={() => setLoading(true)}
-        onLoadEnd={() => setLoading(false)}
+        onLoadEnd={handleLoadEnd}
       />
-
       {loading && (
         <View style={styles.loaderOverlay}>
           <ActivityIndicator />
@@ -28,7 +36,12 @@ export function ImageWithLoader({ uri, resizeMode, imageStyle, containerStyle}: 
       )}
     </View>
   );
-}
+}, (prevProps, nextProps) => {
+  // Only re-render if the uri changes
+  return prevProps.uri === nextProps.uri;
+});
+
+export { ImageWithLoaderComponent as ImageWithLoader };
 
 const styles = StyleSheet.create({
   loaderOverlay: {

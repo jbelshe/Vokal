@@ -1,10 +1,11 @@
 import React from 'react';
-import { View, Image, Text, ImageBackground, StyleSheet, TextInput } from 'react-native';
+import { View, Image, Text, ImageBackground, StyleSheet, TextInput, TouchableWithoutFeedback, Keyboard } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { AuthStackParamList } from '../../types/navigation';
 import { theme } from '../../assets/theme';
 import { RoundNextButton } from '../../components/RoundNextButton';
 import { useAuth } from '../../context/AuthContext';
+import { useRef } from 'react';
 
 type Props = NativeStackScreenProps<AuthStackParamList, 'CreateProfile1'>;
 
@@ -14,6 +15,9 @@ export default function CreateProfile1({ navigation }: Props) {
   const [firstName, setFirstName] = React.useState(state.profile?.firstName || '');
   const [lastName, setLastName] = React.useState(state.profile?.lastName || '');
   const [contentError, setContentError] = React.useState<string | null>(null);
+
+  const input1Ref = useRef<TextInput>(null);
+  const input2Ref = useRef<TextInput>(null);
 
   // Update local state when profile changes
   React.useEffect(() => {
@@ -35,48 +39,56 @@ export default function CreateProfile1({ navigation }: Props) {
   };
 
   return (
-    <ImageBackground 
-    source={require('../../assets/images/bg-top-gradient.png')} 
-    style={styles.background}>
-    <View style={styles.topContainer}>
-            <Image
-              source={require('../../assets/icons/vokal-icon-no-bg.png')}
-              style={styles.logo}
-            />
-              <Text style={[theme.textStyles.headline1, { textAlign: 'left', width: '100%', marginBottom: 16 }]}>
-                What's your name?
-              </Text>
-              <TextInput
-                style={styles.input}
-                placeholder="First Name"
-                placeholderTextColor={theme.colors.secondary_text}
-                value={firstName}
-                onChangeText={setFirstName}
-                autoCapitalize="words"
-              />
-              <TextInput
-                style={[styles.input, { marginTop: 12 }]}
-                placeholder="Last Name"
-                placeholderTextColor={theme.colors.secondary_text}
-                value={lastName}
-                onChangeText={setLastName}
-                autoCapitalize="words"
-              />
-              {contentError && (
-                        <Text
-                          style={[
-                            theme.textStyles.body,
-                            { color: theme.colors.error, marginTop: 8 },
-                          ]}
-                        >
-                          {contentError}
-                        </Text>
-                      )}
-      </View>
-              <View style={styles.buttonContainer}>
-                <RoundNextButton onPress={handleNext} disabled={!firstName.trim() || !lastName.trim()} />
-              </View>
-    </ImageBackground>
+    <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+      <ImageBackground
+        source={require('../../assets/images/bg-top-gradient.png')}
+        style={styles.background}>
+        <View style={styles.topContainer}>
+          <Image
+            source={require('../../assets/icons/vokal-icon-no-bg.png')}
+            style={styles.logo}
+          />
+          <Text style={[theme.textStyles.headline1, { textAlign: 'left', width: '100%', marginBottom: 16 }]}>
+            What's your name?
+          </Text>
+          <TextInput
+            ref={input1Ref}
+            style={styles.input}
+            placeholder="First Name"
+            placeholderTextColor={theme.colors.secondary_text}
+            value={firstName}
+            returnKeyType="next"
+            onChangeText={setFirstName}
+            autoCapitalize="words"
+            onSubmitEditing={() => input2Ref.current?.focus()}
+          />
+          <TextInput
+            ref={input2Ref}
+            style={[styles.input, { marginTop: 12 }]}
+            placeholder="Last Name"
+            placeholderTextColor={theme.colors.secondary_text}
+            value={lastName}
+            returnKeyType={firstName ? "done" : "previous"}
+            onChangeText={setLastName}
+            autoCapitalize="words"
+            onSubmitEditing={firstName ? handleNext : () => input1Ref.current?.focus()}
+          />
+          {contentError && (
+            <Text
+              style={[
+                theme.textStyles.body,
+                { color: theme.colors.error, marginTop: 8 },
+              ]}
+            >
+              {contentError}
+            </Text>
+          )}
+        </View>
+        <View style={styles.buttonContainer}>
+          <RoundNextButton onPress={handleNext} disabled={!firstName.trim() || !lastName.trim()} />
+        </View>
+      </ImageBackground>
+    </TouchableWithoutFeedback>
   );
 }
 12347
@@ -92,7 +104,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     alignItems: 'center',
     paddingTop: 80,
-  },  
+  },
   logo: {
     width: '40%',
     height: undefined,

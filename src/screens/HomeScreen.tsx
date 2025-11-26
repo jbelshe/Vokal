@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useRef } from 'react';
-import { View, Text, StyleSheet, TextInput, Platform, ActivityIndicator, TouchableOpacity, ScrollView, Dimensions, FlatList } from 'react-native';
+import { View, Text, StyleSheet, TextInput, Platform, ActivityIndicator, TouchableOpacity, ScrollView, Dimensions, FlatList, Keyboard, TouchableWithoutFeedback } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { AppStackParamList } from '../types/navigation';
@@ -145,25 +145,6 @@ export default function HomeScreen({ navigation }: Props) {
     }, 300);
   }, [loadPropertiesForRegion]);
 
-
-  // /**
-  //  * Handles map region changes with debouncing to avoid too many API calls.
-  //  */
-  // const handleRegionChangeComplete = useCallback((region: Region) => {
-  //   // Store the last region for retry functionality
-  //   lastRegionRef.current = region;
-
-  //   // Clear any pending timeout
-  //   if (loadingTimeoutRef.current) {
-  //     clearTimeout(loadingTimeoutRef.current);
-  //   }
-
-  //   // Debounce the API call to avoid excessive requests while user is panning
-  //   loadingTimeoutRef.current = setTimeout(() => {
-  //     loadPropertiesForRegion(region);
-  //   }, 300); // 300ms debounce
-  // }, [loadPropertiesForRegion]);
-
   /**
    * Initial load when map is ready - triggers load for initial region.
    */
@@ -195,6 +176,7 @@ export default function HomeScreen({ navigation }: Props) {
   }, [loadPropertiesForRegion]);
 
   return (
+    <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
     <View style={styles.container}>
       <View style={styles.topContainer}>
         <View style={styles.headerContainer}>
@@ -408,17 +390,12 @@ export default function HomeScreen({ navigation }: Props) {
                     style={styles.imageScrollView}
                     contentContainerStyle={styles.imageScrollContent}
                     renderItem={({ item: imgKey }) => (
-                      // <View style={styles.imageContainer}>
-                      <ImageWithLoader uri={imgKey} resizeMode="cover" containerStyle={styles.imageContainer} imageStyle={styles.propertyImage}/>
-                        // { <Image
-                          // source={imgKey.source}
-                          // source={{ uri: imgKey }}
-                          // style={styles.propertyImage}
-                          // resizeMode="cover"
-                          // alt={imgKey.alt}
-                        // /> */}
-                      // </View>
-                    )}
+                      <ImageWithLoader 
+                        uri={imgKey} 
+                        resizeMode="cover" 
+                        containerStyle={styles.imageContainer} 
+                        imageStyle={styles.propertyImage}/>
+                    )}  
                   />
                   <View style={styles.listItemContent}>
                     <Image
@@ -442,6 +419,7 @@ export default function HomeScreen({ navigation }: Props) {
         </View>
       )}
     </View>
+    </TouchableWithoutFeedback>
   );
 }
 

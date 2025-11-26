@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, TextInput, Platform } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, TextInput, TouchableWithoutFeedback, Keyboard } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { theme } from '../../assets/theme';
 import CloseIcon from '../../assets/icons/close.svg';
@@ -42,6 +42,7 @@ export default function AdditionalNoteScreen({ navigation, route }: Props) {
   };
 
   return (
+    <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
     <View style={styles.container}>
       {/* Header */}
       <View style={styles.topBarContainer}>
@@ -92,6 +93,7 @@ export default function AdditionalNoteScreen({ navigation, route }: Props) {
         />
       </View>
     </View>
+    </TouchableWithoutFeedback>
   );
 }
 

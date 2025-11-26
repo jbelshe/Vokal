@@ -1,15 +1,16 @@
 import React from 'react';
-import { View, Button, Text, Image, ImageBackground, StyleSheet, TextInput, TouchableOpacity } from 'react-native';
+import { View, Button, Text, Image, ImageBackground, StyleSheet, TextInput, TouchableOpacity, Keyboard } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { AuthStackParamList } from '../../types/navigation';
 import { theme } from '../../assets/theme';
 import { RoundNextButton } from '../../components/RoundNextButton';
 import { useAuth } from '../../context/AuthContext';
+import { TouchableWithoutFeedback } from 'react-native';
 
 type Props = NativeStackScreenProps<AuthStackParamList, 'EnterPhoneNumber'>;
 
 export default function EnterPhoneNumber({ navigation }: Props) {
-  const { state,  handleSendOtp } = useAuth();
+  const { state, handleSendOtp } = useAuth();
 
   const [phoneNumberLocal, setPhoneNumberLocal] = React.useState('');
   const [isValid, setIsValid] = React.useState(false);
@@ -45,47 +46,52 @@ export default function EnterPhoneNumber({ navigation }: Props) {
   };
 
   return (
-    <ImageBackground
-      source={require('../../assets/images/bg-top-gradient.png')}
-      style={styles.background}
-      resizeMode="cover"
-    >
-      <View style={styles.topContainer}>
-        <Image
-          source={require('../../assets/icons/vokal-icon-no-bg.png')}
-          style={styles.logo}
-        />
-        <View style={styles.content}>
-          <Text style={[theme.textStyles.headline1, { textAlign: 'left' }]}>
-            What's your mobile number?
-          </Text>
 
-          <Text style={[theme.textStyles.body, { textAlign: 'left', marginBottom: 24 }]}>
-            We'll text you a verification code
-          </Text>
+    <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+      <ImageBackground
+        source={require('../../assets/images/bg-top-gradient.png')}
+        style={styles.background}
+        resizeMode="cover"
+      >
+        <View style={styles.topContainer}>
+          <Image
+            source={require('../../assets/icons/vokal-icon-no-bg.png')}
+            style={styles.logo}
+          />
+          <View style={styles.content}>
+            <Text style={[theme.textStyles.headline1, { textAlign: 'left' }]}>
+              What's your mobile number?
+            </Text>
 
-          <View style={styles.inputContainer}>
-            <Text style={styles.countryCode}>+1</Text>
-            <TextInput
-              style={[styles.input, !isValid && phoneNumberLocal.length > 0 && styles.inputError]}
-              placeholder="(555) 123-4567"
-              placeholderTextColor={theme.colors.secondary_text}
-              keyboardType="phone-pad"
-              value={formatPhoneNumber(phoneNumberLocal)}
-              onChangeText={handlePhoneChange}
-              maxLength={14} // (XXX) XXX-XXXX
-              autoFocus
-            />
+            <Text style={[theme.textStyles.body, { textAlign: 'left', marginBottom: 24 }]}>
+              We'll text you a verification code
+            </Text>
+
+            <View style={styles.inputContainer}>
+              <Text style={styles.countryCode}>+1</Text>
+              <TextInput
+                style={[styles.input, !isValid && phoneNumberLocal.length > 0 && styles.inputError]}
+                placeholder="(555) 123-4567"
+                placeholderTextColor={theme.colors.secondary_text}
+                keyboardType="phone-pad"
+                onSubmitEditing={handleNext}
+                returnKeyLabel="Done"
+                value={formatPhoneNumber(phoneNumberLocal)}
+                onChangeText={handlePhoneChange}
+                maxLength={14} // (XXX) XXX-XXXX
+                autoFocus
+              />
+            </View>
+            {!isValid && phoneNumberLocal.length > 0 && (
+              <Text style={styles.errorText}>Please enter a valid 10-digit phone number</Text>
+            )}
           </View>
-          {!isValid && phoneNumberLocal.length > 0 && (
-            <Text style={styles.errorText}>Please enter a valid 10-digit phone number</Text>
-          )}
         </View>
-      </View>
-      <View style={styles.buttonContainer}>
-        <RoundNextButton onPress={handleNext} disabled={!isValid} />
-      </View>
+        <View style={styles.buttonContainer}>
+          <RoundNextButton onPress={handleNext} disabled={!isValid} />
+        </View>
     </ImageBackground>
+    </TouchableWithoutFeedback>
   );
 }
 const styles = StyleSheet.create({

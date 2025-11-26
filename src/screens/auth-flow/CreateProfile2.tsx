@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Image, Text, ImageBackground, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Image, Text, ImageBackground, StyleSheet, TouchableOpacity, KeyboardAvoidingView, Keyboard, TouchableWithoutFeedback } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { AuthStackParamList } from '../../types/navigation';
 import { useAuth } from '../../context/AuthContext';
@@ -20,7 +20,7 @@ const parseBirthdayFromProfile = (birthday: Birthday | null | undefined): { mont
   if (!birthday) {
     return { month: null, day: null, year: null };
   }
-  
+
   // Handle { isoDate: string } format
   if ('isoDate' in birthday) {
     const date = new Date(birthday.isoDate);
@@ -33,7 +33,7 @@ const parseBirthdayFromProfile = (birthday: Birthday | null | undefined): { mont
     }
     return { month: null, day: null, year: null };
   }
-  
+
   // Handle { month, day, year } format
   return {
     month: birthday.month || null,
@@ -43,7 +43,7 @@ const parseBirthdayFromProfile = (birthday: Birthday | null | undefined): { mont
 };
 
 export default function CreateProfile2({ navigation }: Props) {
-  const { signIn, state, dispatch, saveNewProfileToDatabase} = useAuth();
+  const { signIn, state, dispatch, saveNewProfileToDatabase } = useAuth();
   const [selectedGender, setSelectedGender] = React.useState<string>(state.profile?.gender || '');
   const [email, setEmail] = React.useState(state.profile?.email || '');
   const [zipCode, setZipCode] = React.useState(state.profile?.zipCode || '');
@@ -74,7 +74,7 @@ export default function CreateProfile2({ navigation }: Props) {
       setBirthDay(parsed.day);
       setBirthYear(parsed.year);
       setIsChecked(state.profile.emailSubscribed || false);
-      
+
     }
   }, [state.profile]);
 
@@ -125,11 +125,11 @@ export default function CreateProfile2({ navigation }: Props) {
         year: birthYear
       } as const,
       emailSubscribed: isChecked,
-      userId: state.profile?.userId ?? null, 
-      role: state.profile?.role ?? null  
+      userId: state.profile?.userId ?? null,
+      role: state.profile?.role ?? null
     };
 
-    dispatch({type: "SET_PROFILE", payload: updatedProfile, msg: "CreateProfile Call"});
+    dispatch({ type: "SET_PROFILE", payload: updatedProfile, msg: "CreateProfile Call" });
     try {
       const success = await saveNewProfileToDatabase(updatedProfile);
       if (!success) {
@@ -154,18 +154,18 @@ export default function CreateProfile2({ navigation }: Props) {
   ];
 
   const months = [
-    {label: 'January', value: 1},
-    {label: 'February', value: 2},
-    {label: 'March', value: 3},
-    {label: 'April', value: 4},
-    {label: 'May', value: 5},
-    {label: 'June', value: 6},
-    {label: 'July', value: 7},
-    {label: 'August', value: 8},
-    {label: 'September', value: 9},
-    {label: 'October', value: 10},
-    {label: 'November', value: 11},
-    {label: 'December', value: 12},
+    { label: 'January', value: 1 },
+    { label: 'February', value: 2 },
+    { label: 'March', value: 3 },
+    { label: 'April', value: 4 },
+    { label: 'May', value: 5 },
+    { label: 'June', value: 6 },
+    { label: 'July', value: 7 },
+    { label: 'August', value: 8 },
+    { label: 'September', value: 9 },
+    { label: 'October', value: 10 },
+    { label: 'November', value: 11 },
+    { label: 'December', value: 12 },
   ]
 
   const days = useMemo(() => {
@@ -180,12 +180,12 @@ export default function CreateProfile2({ navigation }: Props) {
       else {
         numDays = new Date(birthYear, birthMonth, 0).getDate();  // get num of days for year w/ or w/o Feb 29
       }
-        
+
       if (birthDay && birthDay > numDays) {
         setBirthDay(numDays);
       }
     }
-    
+
     return Array.from({ length: numDays }, (_, i) => ({
       label: (i + 1).toString(),
       value: i + 1
@@ -207,174 +207,180 @@ export default function CreateProfile2({ navigation }: Props) {
         day: birthDay,
         year: birthYear
       };
-      dispatch({type: 'SET_PROFILE', payload: {
-        email,
-        zipCode,
-        gender: selectedGender,
-        birthday: birthdayData,
-        emailSubscribed: isChecked
-      }});
+      dispatch({
+        type: 'SET_PROFILE', payload: {
+          email,
+          zipCode,
+          gender: selectedGender,
+          birthday: birthdayData,
+          emailSubscribed: isChecked
+        }
+      });
     } else {
       // Still save other fields even if birthday is incomplete
-      dispatch({type: 'SET_PROFILE', payload: {
-        email,
-        zipCode,
-        gender: selectedGender,
-        emailSubscribed: isChecked
-      }});
+      dispatch({
+        type: 'SET_PROFILE', payload: {
+          email,
+          zipCode,
+          gender: selectedGender,
+          emailSubscribed: isChecked
+        }
+      });
     }
     console.log("Navigating back to CreateProfile1")
     navigation.navigate('CreateProfile1');
   };
 
   return (
-    <ImageBackground
-      source={require('../../assets/images/bg-top-gradient.png')}
-      style={styles.background}>
-      <TouchableOpacity onPress={handleBack} style={styles.backButton}>
-        <BackIcon width={45} height={45} fill="black" />
-      </TouchableOpacity>
-      
-      <View style={styles.topContainer}>
-        <Image
-          source={require('../../assets/icons/vokal-icon-no-bg.png')}
-          style={styles.logo}
-        />
-        <Text style={[theme.textStyles.headline1, { textAlign: 'left', width: '100%', marginBottom: 16 }]}>
-          Let's create your profile
-        </Text>
-        <Text style={[theme.textStyles.body, { textAlign: 'left', width: '100%', marginBottom: 16 }]}>
-          This helps improve voting data
-        </Text>
-        <TextInput
-          style={styles.input}
-          placeholder="Email Address"
-          placeholderTextColor={theme.colors.secondary_text}
-          value={email}
-          onChangeText={setEmail}
-          autoCapitalize="none"
-          keyboardType="email-address"
-        />
-        <TextInput
-          style={styles.input}
-          placeholder="Zip Code"
-          placeholderTextColor={theme.colors.secondary_text}
-          value={zipCode}
-          onChangeText={(text) => {
-            // Only allow numbers
-            const formattedText = text.replace(/[^0-9]/g, '');
-            // Limit to 5 digits
-            if (formattedText.length <= 5) {
-              setZipCode(formattedText);
-            }
-          }}
-          keyboardType="number-pad"
-          maxLength={5}
-        />
-        <Dropdown
-          style={styles.dropdown}
-          placeholderStyle={styles.placeholderStyle}
-          selectedTextStyle={!selectedGender ? styles.placeholderStyle : styles.selectedTextStyle}
-          data={genderOptions}
-          maxHeight={200}
-          labelField="label"
-          valueField="value"
-          placeholder="Select Gender"
-          value={selectedGender}
-          onChange={item => setSelectedGender(item.value)}
-          itemTextStyle={styles.selectedTextStyle}
-          itemContainerStyle={styles.dropdownOptionContainer}
-          containerStyle={styles.dropdownOption}
-          activeColor={theme.colors.surface2}
-        />
-        <View style={styles.dateContainer}>
-          <View style={[styles.dateInput, { flex: 2 }]}>
-            <Dropdown
-              style={styles.dropdown}
-              placeholderStyle={styles.placeholderStyle}
-              selectedTextStyle={styles.selectedTextStyle}
-              data={months}
-              labelField="label"
-              valueField="value"
-              placeholder="Month"
-              value={birthMonth}
-              onChange={item => setBirthMonth(item.value)}
-              itemTextStyle={styles.selectedTextStyle}
-              itemContainerStyle={styles.dropdownOptionContainer}
-              containerStyle={styles.dropdownOption}
-              activeColor={theme.colors.surface2}
-            />
-          </View>
-          <View style={[styles.dateInput, { marginHorizontal: 5, flex: 1.3 }]}>
-            <Dropdown
-              style={styles.dropdown}
-              placeholderStyle={styles.placeholderStyle}
-              selectedTextStyle={styles.selectedTextStyle}
-              data={days}
-              labelField="label"
-              valueField="value"
-              placeholder="Day"
-              value={birthDay}
-              onChange={item => setBirthDay(item.value)}
-              itemTextStyle={styles.selectedTextStyle}
-              itemContainerStyle={styles.dropdownOptionContainer}
-              containerStyle={styles.dropdownOption}
-              activeColor={theme.colors.surface2}
-            />
-          </View>
-          <View style={[styles.dateInput, { flex: 1.5 }]}>
-            <Dropdown
-              style={styles.dropdown}
-              placeholderStyle={styles.placeholderStyle}
-              selectedTextStyle={styles.selectedTextStyle}
-              data={years}
-              labelField="label"
-              valueField="value"
-              placeholder="Year"
-              value={birthYear}
-              onChange={item => setBirthYear(item.value)}
-              itemTextStyle={styles.selectedTextStyle}
-              itemContainerStyle={styles.dropdownOptionContainer}
-              containerStyle={styles.dropdownOption}
-              activeColor={theme.colors.surface2}
-            />
-          </View>
-        </View>
-        
-        <View style={styles.checkboxContainer}>
-          <Checkbox
-            value={isChecked}
-            onValueChange={setIsChecked}
-            color={isChecked ? theme.colors.primary_gradient_start : undefined}
-            style={styles.checkbox}
+    <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+      <ImageBackground
+        source={require('../../assets/images/bg-top-gradient.png')}
+        style={styles.background}>
+        <TouchableOpacity onPress={handleBack} style={styles.backButton}>
+          <BackIcon width={45} height={45} fill="black" />
+        </TouchableOpacity>
+
+        <KeyboardAvoidingView style={styles.topContainer}>
+          <Image
+            source={require('../../assets/icons/vokal-icon-no-bg.png')}
+            style={styles.logo}
           />
-          <Text style={theme.textStyles.body}>Keep me in the loop about Vokal</Text>
-        </View>
-        {contentError && (
-          <Text
-            style={[
-              theme.textStyles.body,
-              { color: theme.colors.error, marginTop: 8 },
-            ]}
-          >
-            {contentError}
+          <Text style={[theme.textStyles.headline1, { textAlign: 'left', width: '100%', marginBottom: 16 }]}>
+            Let's create your profile
           </Text>
-        )}
-      </View>
-      <View style={styles.buttonContainer}>
-        <RoundNextButton
-          onPress={handleNext}
-          disabled={
-            !birthMonth ||
-            !birthDay ||
-            !birthYear ||
-            !selectedGender ||
-            !email ||
-            !zipCode
-          }
-        />
-      </View>
-    </ImageBackground>
+          <Text style={[theme.textStyles.body, { textAlign: 'left', width: '100%', marginBottom: 16 }]}>
+            This helps improve voting data
+          </Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Email Address"
+            placeholderTextColor={theme.colors.secondary_text}
+            value={email}
+            onChangeText={setEmail}
+            autoCapitalize="none"
+            keyboardType="email-address"
+          />
+          <TextInput
+            style={styles.input}
+            placeholder="Zip Code"
+            placeholderTextColor={theme.colors.secondary_text}
+            value={zipCode}
+            onChangeText={(text) => {
+              // Only allow numbers
+              const formattedText = text.replace(/[^0-9]/g, '');
+              // Limit to 5 digits
+              if (formattedText.length <= 5) {
+                setZipCode(formattedText);
+              }
+            }}
+            keyboardType="number-pad"
+            maxLength={5}
+          />
+          <Dropdown
+            style={styles.dropdown}
+            placeholderStyle={styles.placeholderStyle}
+            selectedTextStyle={!selectedGender ? styles.placeholderStyle : styles.selectedTextStyle}
+            data={genderOptions}
+            maxHeight={200}
+            labelField="label"
+            valueField="value"
+            placeholder="Select Gender"
+            value={selectedGender}
+            onChange={item => setSelectedGender(item.value)}
+            itemTextStyle={styles.selectedTextStyle}
+            itemContainerStyle={styles.dropdownOptionContainer}
+            containerStyle={styles.dropdownOption}
+            activeColor={theme.colors.surface2}
+          />
+          <View style={styles.dateContainer}>
+            <View style={[styles.dateInput, { flex: 2 }]}>
+              <Dropdown
+                style={styles.dropdown}
+                placeholderStyle={styles.placeholderStyle}
+                selectedTextStyle={styles.selectedTextStyle}
+                data={months}
+                labelField="label"
+                valueField="value"
+                placeholder="Month"
+                value={birthMonth}
+                onChange={item => setBirthMonth(item.value)}
+                itemTextStyle={styles.selectedTextStyle}
+                itemContainerStyle={styles.dropdownOptionContainer}
+                containerStyle={styles.dropdownOption}
+                activeColor={theme.colors.surface2}
+              />
+            </View>
+            <View style={[styles.dateInput, { marginHorizontal: 5, flex: 1.3 }]}>
+              <Dropdown
+                style={styles.dropdown}
+                placeholderStyle={styles.placeholderStyle}
+                selectedTextStyle={styles.selectedTextStyle}
+                data={days}
+                labelField="label"
+                valueField="value"
+                placeholder="Day"
+                value={birthDay}
+                onChange={item => setBirthDay(item.value)}
+                itemTextStyle={styles.selectedTextStyle}
+                itemContainerStyle={styles.dropdownOptionContainer}
+                containerStyle={styles.dropdownOption}
+                activeColor={theme.colors.surface2}
+              />
+            </View>
+            <View style={[styles.dateInput, { flex: 1.5 }]}>
+              <Dropdown
+                style={styles.dropdown}
+                placeholderStyle={styles.placeholderStyle}
+                selectedTextStyle={styles.selectedTextStyle}
+                data={years}
+                labelField="label"
+                valueField="value"
+                placeholder="Year"
+                value={birthYear}
+                onChange={item => setBirthYear(item.value)}
+                itemTextStyle={styles.selectedTextStyle}
+                itemContainerStyle={styles.dropdownOptionContainer}
+                containerStyle={styles.dropdownOption}
+                activeColor={theme.colors.surface2}
+              />
+            </View>
+          </View>
+
+          <View style={styles.checkboxContainer}>
+            <Checkbox
+              value={isChecked}
+              onValueChange={setIsChecked}
+              color={isChecked ? theme.colors.primary_gradient_start : undefined}
+              style={styles.checkbox}
+            />
+            <Text style={theme.textStyles.body}>Keep me in the loop about Vokal</Text>
+          </View>
+          {contentError && (
+            <Text
+              style={[
+                theme.textStyles.body,
+                { color: theme.colors.error, marginTop: 8 },
+              ]}
+            >
+              {contentError}
+            </Text>
+          )}
+        </KeyboardAvoidingView>
+        <View style={styles.buttonContainer}>
+          <RoundNextButton
+            onPress={handleNext}
+            disabled={
+              !birthMonth ||
+              !birthDay ||
+              !birthYear ||
+              !selectedGender ||
+              !email ||
+              !zipCode
+            }
+          />
+        </View>
+      </ImageBackground>
+    </TouchableWithoutFeedback>
   );
 }
 

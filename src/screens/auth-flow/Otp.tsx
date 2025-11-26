@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { View, Image, Text, ImageBackground, StyleSheet, TouchableOpacity, Alert } from 'react-native';
+import { View, Image, Text, ImageBackground, StyleSheet, TouchableOpacity, Alert, Keyboard, TouchableWithoutFeedback } from 'react-native';
 import { CodeField, Cursor, useBlurOnFulfill, useClearByFocusCell } from 'react-native-confirmation-code-field';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { AuthStackParamList } from '../../types/navigation';
@@ -113,6 +113,8 @@ export default function Otp({ navigation }: Props) {
   }, [otpValue, isCodeComplete]);
 
   return (
+
+    <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
     <ImageBackground
       source={require('../../assets/images/bg-top-gradient.png')}
       style={styles.background}>
@@ -137,6 +139,7 @@ export default function Otp({ navigation }: Props) {
           cellCount={6}
           rootStyle={styles.codeFieldRoot}
           keyboardType="number-pad"
+          returnKeyLabel="Done"
           textContentType="oneTimeCode"
           renderCell={({ index, symbol, isFocused }) => (
             <Text
@@ -165,6 +168,7 @@ export default function Otp({ navigation }: Props) {
         <RoundNextButton onPress={handleNext} disabled={!isCodeComplete} />
       </View>
     </ImageBackground>
+    </TouchableWithoutFeedback>
   );
 }
 

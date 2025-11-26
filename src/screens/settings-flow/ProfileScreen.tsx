@@ -1,6 +1,7 @@
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { AppStackParamList } from '../../types/navigation';
-import { View, Text, ImageBackground, StyleSheet, Platform, TouchableOpacity, ScrollView, TextInput, Alert } from 'react-native';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
+import { View, Text, ImageBackground, StyleSheet, Platform, TouchableOpacity, ScrollView, TextInput, Alert, TouchableWithoutFeedback, Keyboard } from 'react-native';
 import ChevronLeftIcon from '../../assets/icons/chevron-left.svg';
 import { theme } from '../../assets/theme';
 import React, { useState, useMemo, useEffect } from 'react';
@@ -285,167 +286,168 @@ export default function ProfileScreen({ navigation, route }: Props) {
 
 
     return (
-      <ImageBackground
-        source={require('../../assets/images/bg-bottom-gradient.png')}
-        style={styles.background}>
-        <View style={styles.container}>
-          <View style={styles.topBarContainer}>
-            <TouchableOpacity onPress={handleBack} style={styles.backButton}>
-              <ChevronLeftIcon width={40} height={40} fill={theme.colors.primary_text} />
-            </TouchableOpacity>
-            <Text style={[styles.headerTitle, theme.textStyles.title1]}>Personal Info</Text>
-          </View>
-
-          <ScrollView style={styles.contentContainer} contentContainerStyle={styles.scrollContent}>
-            <Text style={styles.fieldLabel}>First Name*</Text>
-            <TextInput
-              style={[styles.input, !isEditing ? styles.placeholderInput : styles.filledInput]}
-              placeholder="First Name"
-              placeholderTextColor={theme.colors.secondary_text}
-              value={firstName}
-              onChangeText={setFirstName}
-              autoCapitalize="words"
-              editable={isEditing}
-            />
-
-            <Text style={styles.fieldLabel}>Last Name*</Text>
-            <TextInput
-              style={[styles.input, !isEditing ? styles.placeholderInput : styles.filledInput]}
-              placeholder="Last Name"
-              placeholderTextColor={theme.colors.secondary_text}
-              value={lastName}
-              onChangeText={setLastName}
-              autoCapitalize="words"
-              editable={isEditing}
-            />
-
-            <Text style={styles.fieldLabel}>Gender*</Text>
-            <Dropdown
-              style={[styles.dropdown, !isEditing && styles.disabledDropdown]}
-              placeholderStyle={styles.placeholderStyle}
-              selectedTextStyle={!selectedGender ? styles.placeholderStyle : styles.selectedTextStyle}
-              data={genderOptions}
-              maxHeight={200}
-              labelField="label"
-              valueField="value"
-              placeholder="Select Gender"
-              value={selectedGender}
-              onChange={item => setSelectedGender(item.value)}
-              itemTextStyle={styles.selectedTextStyle}
-              itemContainerStyle={styles.dropdownOptionContainer}
-              containerStyle={styles.dropdownOption}
-              activeColor={theme.colors.surface2}
-              disable={!isEditing}
-            />
-
-            <Text style={styles.fieldLabel}>Date of Birth*</Text>
-            <View style={styles.dateContainer}>
-              {/* TODO: Figure out why values are snapping back */}
-              <View style={[styles.dateInput, { flex: 2.1 }]}>
-                <Dropdown
-                  style={[styles.dropdown, !isEditing && styles.disabledDropdown]}
-                  placeholderStyle={styles.placeholderStyle}
-                  selectedTextStyle={styles.selectedTextStyle}
-                  data={months}
-                  labelField="label"
-                  valueField="value"
-                  placeholder="Month"
-                  value={birthMonth}
-                  onChange={item => setBirthMonth(item.value)}
-                  itemTextStyle={styles.selectedTextStyle}
-                  itemContainerStyle={styles.dropdownOptionContainer}
-                  containerStyle={styles.dropdownOption}
-                  activeColor={theme.colors.surface2}
-                  disable={!isEditing}
-                />
-              </View>
-              <View style={[styles.dateInput, { marginHorizontal: 5, flex: 1.2 }]}>
-                <Dropdown
-                  style={[styles.dropdown, !isEditing && styles.disabledDropdown]}
-                  placeholderStyle={styles.placeholderStyle}
-                  selectedTextStyle={styles.selectedTextStyle}
-                  data={days}
-                  labelField="label"
-                  valueField="value"
-                  placeholder="Day"
-                  value={birthDay}
-                  onChange={item => setBirthDay(item.value)}
-                  itemTextStyle={styles.selectedTextStyle}
-                  itemContainerStyle={styles.dropdownOptionContainer}
-                  containerStyle={styles.dropdownOption}
-                  activeColor={theme.colors.surface2}
-                  disable={!isEditing}
-                />
-              </View>
-              <View style={[styles.dateInput, { flex: 1.5 }]}>
-                <Dropdown
-                  style={[styles.dropdown, !isEditing && styles.disabledDropdown]}
-                  placeholderStyle={styles.placeholderStyle}
-                  selectedTextStyle={styles.selectedTextStyle}
-                  data={years}
-                  labelField="label"
-                  valueField="value"
-                  placeholder="Year"
-                  value={birthYear}
-                  onChange={item => setBirthYear(item.value)}
-                  itemTextStyle={styles.selectedTextStyle}
-                  itemContainerStyle={styles.dropdownOptionContainer}
-                  containerStyle={styles.dropdownOption}
-                  activeColor={theme.colors.surface2}
-                  disable={!isEditing}
-                />
-              </View>
+      <TouchableWithoutFeedback onPress={Keyboard.dismiss} >
+        <ImageBackground
+          source={require('../../assets/images/bg-bottom-gradient.png')}
+          style={styles.background}>
+          <View style={styles.container}>
+            <View style={styles.topBarContainer}>
+              <TouchableOpacity onPress={handleBack} style={styles.backButton}>
+                <ChevronLeftIcon width={40} height={40} fill={theme.colors.primary_text} />
+              </TouchableOpacity>
+              <Text style={[styles.headerTitle, theme.textStyles.title1]}>Personal Info</Text>
             </View>
-
-            <Text style={styles.fieldLabel}>Email*</Text>
-            <TextInput
-              style={[styles.input, !isEditing ? styles.placeholderInput : styles.filledInput]}
-              placeholder="Email Address"
-              placeholderTextColor={theme.colors.secondary_text}
-              value={email}
-              onChangeText={setEmail}
-              autoCapitalize="none"
-              keyboardType="email-address"
-              editable={isEditing}
-            />
-
-            <Text style={styles.fieldLabel}>Mobile Number</Text>
-            <TextInput
-              style={[styles.input, styles.placeholderInput]}
-              placeholder="Mobile Number"
-              placeholderTextColor={theme.colors.secondary_text}
-              value={phoneNumber}
-              editable={false}
-            />
-
-            <Text style={styles.fieldLabel}>Zip Code*</Text>
-            <TextInput
-              style={[styles.input, !isEditing ? styles.placeholderInput : styles.filledInput]}
-              placeholder="Zip Code"
-              placeholderTextColor={theme.colors.secondary_text}
-              value={zipCode}
-              onChangeText={(text) => {
-                // Only allow numbers
-                const formattedText = text.replace(/[^0-9]/g, '');
-                // Limit to 5 digits
-                if (formattedText.length <= 5) {
-                  setZipCode(formattedText);
-                }
-              }}
-              keyboardType="number-pad"
-              maxLength={5}
-              editable={isEditing}
-            />
-
-            <View style={styles.buttonWrapper}>
-              <PurpleButtonLarge
-                title={isEditing ? "Save" : "Edit"}
-                onPress={handleEditSave}
+            <KeyboardAwareScrollView style={styles.contentContainer} contentContainerStyle={styles.scrollContent}>
+              <Text style={styles.fieldLabel}>First Name*</Text>
+              <TextInput
+                style={[styles.input, !isEditing ? styles.placeholderInput : styles.filledInput]}
+                placeholder="First Name"
+                placeholderTextColor={theme.colors.secondary_text}
+                value={firstName}
+                onChangeText={setFirstName}
+                autoCapitalize="words"
+                editable={isEditing}
               />
-            </View>
-          </ScrollView>
-        </View>
-      </ImageBackground>
+
+              <Text style={styles.fieldLabel}>Last Name*</Text>
+              <TextInput
+                style={[styles.input, !isEditing ? styles.placeholderInput : styles.filledInput]}
+                placeholder="Last Name"
+                placeholderTextColor={theme.colors.secondary_text}
+                value={lastName}
+                onChangeText={setLastName}
+                autoCapitalize="words"
+                editable={isEditing}
+              />
+
+              <Text style={styles.fieldLabel}>Gender*</Text>
+              <Dropdown
+                style={[styles.dropdown, !isEditing && styles.disabledDropdown]}
+                placeholderStyle={styles.placeholderStyle}
+                selectedTextStyle={!selectedGender ? styles.placeholderStyle : styles.selectedTextStyle}
+                data={genderOptions}
+                maxHeight={200}
+                labelField="label"
+                valueField="value"
+                placeholder="Select Gender"
+                value={selectedGender}
+                onChange={item => setSelectedGender(item.value)}
+                itemTextStyle={styles.selectedTextStyle}
+                itemContainerStyle={styles.dropdownOptionContainer}
+                containerStyle={styles.dropdownOption}
+                activeColor={theme.colors.surface2}
+                disable={!isEditing}
+              />
+
+              <Text style={styles.fieldLabel}>Date of Birth*</Text>
+              <View style={styles.dateContainer}>
+                {/* TODO: Figure out why values are snapping back */}
+                <View style={[styles.dateInput, { flex: 2.1 }]}>
+                  <Dropdown
+                    style={[styles.dropdown, !isEditing && styles.disabledDropdown]}
+                    placeholderStyle={styles.placeholderStyle}
+                    selectedTextStyle={styles.selectedTextStyle}
+                    data={months}
+                    labelField="label"
+                    valueField="value"
+                    placeholder="Month"
+                    value={birthMonth}
+                    onChange={item => setBirthMonth(item.value)}
+                    itemTextStyle={styles.selectedTextStyle}
+                    itemContainerStyle={styles.dropdownOptionContainer}
+                    containerStyle={styles.dropdownOption}
+                    activeColor={theme.colors.surface2}
+                    disable={!isEditing}
+                  />
+                </View>
+                <View style={[styles.dateInput, { marginHorizontal: 5, flex: 1.2 }]}>
+                  <Dropdown
+                    style={[styles.dropdown, !isEditing && styles.disabledDropdown]}
+                    placeholderStyle={styles.placeholderStyle}
+                    selectedTextStyle={styles.selectedTextStyle}
+                    data={days}
+                    labelField="label"
+                    valueField="value"
+                    placeholder="Day"
+                    value={birthDay}
+                    onChange={item => setBirthDay(item.value)}
+                    itemTextStyle={styles.selectedTextStyle}
+                    itemContainerStyle={styles.dropdownOptionContainer}
+                    containerStyle={styles.dropdownOption}
+                    activeColor={theme.colors.surface2}
+                    disable={!isEditing}
+                  />
+                </View>
+                <View style={[styles.dateInput, { flex: 1.5 }]}>
+                  <Dropdown
+                    style={[styles.dropdown, !isEditing && styles.disabledDropdown]}
+                    placeholderStyle={styles.placeholderStyle}
+                    selectedTextStyle={styles.selectedTextStyle}
+                    data={years}
+                    labelField="label"
+                    valueField="value"
+                    placeholder="Year"
+                    value={birthYear}
+                    onChange={item => setBirthYear(item.value)}
+                    itemTextStyle={styles.selectedTextStyle}
+                    itemContainerStyle={styles.dropdownOptionContainer}
+                    containerStyle={styles.dropdownOption}
+                    activeColor={theme.colors.surface2}
+                    disable={!isEditing}
+                  />
+                </View>
+              </View>
+
+              <Text style={styles.fieldLabel}>Email*</Text>
+              <TextInput
+                style={[styles.input, !isEditing ? styles.placeholderInput : styles.filledInput]}
+                placeholder="Email Address"
+                placeholderTextColor={theme.colors.secondary_text}
+                value={email}
+                onChangeText={setEmail}
+                autoCapitalize="none"
+                keyboardType="email-address"
+                editable={isEditing}
+              />
+
+              <Text style={styles.fieldLabel}>Mobile Number</Text>
+              <TextInput
+                style={[styles.input, styles.placeholderInput]}
+                placeholder="Mobile Number"
+                placeholderTextColor={theme.colors.secondary_text}
+                value={phoneNumber}
+                editable={false}
+              />
+
+              <Text style={styles.fieldLabel}>Zip Code*</Text>
+              <TextInput
+                style={[styles.input, !isEditing ? styles.placeholderInput : styles.filledInput]}
+                placeholder="Zip Code"
+                placeholderTextColor={theme.colors.secondary_text}
+                value={zipCode}
+                onChangeText={(text) => {
+                  // Only allow numbers
+                  const formattedText = text.replace(/[^0-9]/g, '');
+                  // Limit to 5 digits
+                  if (formattedText.length <= 5) {
+                    setZipCode(formattedText);
+                  }
+                }}
+                keyboardType="number-pad"
+                maxLength={5}
+                editable={isEditing}
+              />
+
+              <View style={styles.buttonWrapper}>
+                <PurpleButtonLarge
+                  title={isEditing ? "Save" : "Edit"}
+                  onPress={handleEditSave}
+                />
+              </View>
+            </KeyboardAwareScrollView>
+          </View>
+        </ImageBackground>
+      </TouchableWithoutFeedback>
     );
   }
 

@@ -1,0 +1,4 @@
+1.  npx expo login or eas login
+2.  eas build:configure
+3.  eas build --platform ios --profile production
+4.  eas submit -p ios --profile production 

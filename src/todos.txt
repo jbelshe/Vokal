@@ -3,3 +3,10 @@ Update OTP messaging to handle country codes
     Fix the default +1 that is added currently
 Add zod.dev schema management
     Replace profiles object
+
+
+
+11/25:
+Fix Flavicon
+Add map down function
+Search bar on map
