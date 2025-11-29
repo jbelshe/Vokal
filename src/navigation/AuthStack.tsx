@@ -28,7 +28,6 @@ export default function AuthStack() {
         gestureDirection: 'horizontal',
       }}
     >
-      <Stack.Screen name="VotingResults" component={VotingResults} />
       <Stack.Screen name="EnterPhoneNumber" component={EnterPhoneNumber} />
       <Stack.Screen name="OTP" component={Otp} />
       <Stack.Screen name="CreateProfile1" component={CreateProfile1} />

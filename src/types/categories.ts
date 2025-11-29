@@ -2,7 +2,7 @@ import { ImageSourcePropType } from 'react-native';
 
 export type Subcategory = {
   name: string;
-  category_id: number;
+  id: number;
   code: string;
 };
 
@@ -62,5 +62,5 @@ export const categoryImageMap: CategoryImageMap = {
 export type CategoryImageKey = keyof typeof categoryImageMap;
 
 export type CategoryMap = {
-  [categoryName: string]: Subcategory[];
+  [categoryCode: string]: Subcategory[];
 };

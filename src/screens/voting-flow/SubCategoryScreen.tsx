@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Platform } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { theme } from '../../assets/theme';
 import CloseIcon from '../../assets/icons/close.svg';
@@ -19,14 +19,14 @@ export default function SubCategoryScreen({ navigation, route }: Props) {
     navigation.goBack();
   };
 
-  const selectedCategory = route.params.selectedCategory;
+  const selectedCategoryCode = route.params.selectedCategoryCode;
   // const propertyId = route.params.propertyId;
-  const { categories, categoryMap } = useAppContext();
+  const { categoriesDataMap, categoryToSubcategoryMap } = useAppContext();
   const { subCategorySelected, setSubCategorySelected } = useVotingContext();
 
-  const handleSubCategorySelect = (subcategory: string) => {
-    console.log('Selected Subcategory:', subcategory);
-    setSubCategorySelected(subcategory);
+  const handleSubCategorySelect = (subcategory_code: string) => {
+    console.log('Selected Subcategory:', subcategory_code);
+    setSubCategorySelected(subcategory_code);
   };
 
   const handleClose = () => {
@@ -35,7 +35,11 @@ export default function SubCategoryScreen({ navigation, route }: Props) {
 
   const handleNext = () => {
     console.log('Navigate to AdditionalNoteScreen');
-    navigation.navigate('AdditionalNote');
+    if (!subCategorySelected) {
+      Alert.alert('Please select a subcategory');
+      return;
+    }
+    navigation.navigate('AdditionalNote', { subCategorySelected });
   };
 
   return (
@@ -69,12 +73,12 @@ export default function SubCategoryScreen({ navigation, route }: Props) {
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.buttonsContainer}>
-          {categoryMap[selectedCategory].map((subcategory, index) => (
+          {Object.values(categoryToSubcategoryMap[selectedCategoryCode]).map((subcategory, index) => (
             <SelectableOptions
               key={index}
               title={subcategory.name}
-              isSelected={subCategorySelected === subcategory.name}
-              onPress={() => handleSubCategorySelect(subcategory.name)}
+              isSelected={subCategorySelected === subcategory.code}
+              onPress={() => handleSubCategorySelect(subcategory.code)}
               image_code={subcategory.code}
             />
           ))}

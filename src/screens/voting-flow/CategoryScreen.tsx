@@ -17,9 +17,9 @@ type Props = NativeStackScreenProps<VotingStackParamList, 'Category'>;
 
 export default function CategoryScreen({ navigation, route }: Props) {
 
-  const { categories } = useAppContext();
+  const { categoriesDataMap } = useAppContext();
   const { categorySelected, setCategorySelected } = useVotingContext();
-  const [selectedCategory, setSelectedCategory] = React.useState<string | null>(null);
+  const [selectedCategoryCode, setSelectedCategoryCode] = React.useState<string | null>(null);
 
 
   const handleClose = () => {
@@ -29,12 +29,12 @@ export default function CategoryScreen({ navigation, route }: Props) {
 
   const handleNext = () => {
     console.log('Navigate to SubCategoryScreen');
-    navigation.navigate('SubCategory', { selectedCategory: selectedCategory! });
+    navigation.navigate('SubCategory', { selectedCategoryCode: selectedCategoryCode! });
   };
 
   const handleCategorySelect = (category: string) => {
     setCategorySelected(category);
-    setSelectedCategory(category);
+    setSelectedCategoryCode(category);
   };
 
   return (
@@ -68,14 +68,14 @@ export default function CategoryScreen({ navigation, route }: Props) {
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.buttonsContainer}>
-          {categories.map((category, index) => (
+          {Object.values(categoriesDataMap).map((category, index) => (
             <SelectableOptions
               key={index}
               image_code={category.code}
               title={category.name}
               description={category.description}
-              isSelected={selectedCategory === category.name}
-              onPress={() => handleCategorySelect(category.name)}
+              isSelected={selectedCategoryCode === category.code}
+              onPress={() => handleCategorySelect(category.code)}
             />
           ))}
         </View>

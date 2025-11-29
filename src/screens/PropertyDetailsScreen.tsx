@@ -8,6 +8,8 @@ import { useAppContext } from '../context/AppContext';
 import { PurpleButtonLarge } from '@/components/PurpleButtonLarge';
 import { ImageWithLoader } from '../components/ImageWithLoader';
 import { FlatList } from 'react-native';
+import { categoryImageMap } from '../types/categories';
+import { DisplayVote } from '../types/vote';
 
 type Props = NativeStackScreenProps<AppStackParamList, 'PropertyDetails'>;
 
@@ -15,17 +17,33 @@ const screenWidth = Dimensions.get('window').width;
 
 export default function PropertyDetailsScreen({ route, navigation }: Props) {
   const { propertyId } = route.params;
-  const { properties } = useAppContext();
+  const { properties, categoriesDataMap, idToCategoryMap, subcategoryToCategoryMap } = useAppContext();
   const { currentPropertyId } = useAppContext();
 
 
   const property = properties.find(p => p.id === currentPropertyId);
+
+  const subcategory_id = property?.vote ? property!.vote!.choice_id : undefined;
+  const subcategory_name = subcategory_id ? idToCategoryMap[subcategory_id].name : undefined;
+  const subcategory_code = subcategory_id ? idToCategoryMap[subcategory_id].code : undefined;
+
+  const voteDetails : DisplayVote | undefined = property?.vote ? {
+    subcategory: subcategory_name!,
+    subcategory_code: subcategory_code!,
+    category: categoriesDataMap[subcategoryToCategoryMap[subcategory_code!]].name,
+    category_code: subcategoryToCategoryMap[subcategory_code!],
+    additional_note: property!.vote!.free_text ? property!.vote!.free_text : undefined,
+  } : undefined;
+
 
 
   const handleSubmitSuggestion = ( ) => {
     navigation.push('VotingFlow');
     //navigation.navigate('Category', { propertyId });
   };
+  const handleViewResults = () => {
+    navigation.push('VotingResults');
+  }
 
   // Early return if property is not found
   if (!property) {
@@ -85,30 +103,7 @@ export default function PropertyDetailsScreen({ route, navigation }: Props) {
               index,
             })}
           />
-          {/* Horizontal Image Scroll */}
-          {/* <ScrollView
-            horizontal
-            pagingEnabled
-            showsHorizontalScrollIndicator={false}
-            style={styles.imageScrollView}
-            contentContainerStyle={styles.imageScrollContent}
-          >
-            {property.image_urls?.map((url, index) => (
-              <ImageWithLoader uri={url} resizeMode="cover" containerStyle={styles.imageContainer} imageStyle={styles.propertyImage}/>
-            ))} */}
-            {/* <View key={index} style={styles.imageContainer}>
-            
-            {/* {property.images?.map((img, index) => (
-              <View key={index} style={styles.imageContainer}>
-                <Image
-                  source={img.source}
-                  style={styles.propertyImage}
-                  resizeMode="cover"
-                  alt={img.alt}
-                />
-              </View>
-            ))} */}
-          {/* </ScrollView> */}
+          
           { /* Text Container */}
           <View style={styles.contentContainer}>
 
@@ -168,18 +163,61 @@ export default function PropertyDetailsScreen({ route, navigation }: Props) {
                 </View>
               </View>
             )}
+
+            {voteDetails && (
+              <View style={styles.section}>
+                <Text style={[styles.sectionTitle, theme.textStyles.title1]}>
+                  You Voted for
+                </Text>
+                <View style={styles.votedForCategoryContainer}>
+                  <View style={styles.legendIcon}>
+                      <Image source={categoryImageMap[voteDetails.category_code]} style={styles.image} />
+                  </View>
+                  <Text style={[styles.sectionText, theme.textStyles.title1]}>
+                    {voteDetails.category}
+                  </Text>
+                </View>
+                <View style={[styles.votedForSubCategoryContainer, !voteDetails.additional_note ? {marginBottom: 50} : null]}>
+                  <View style={styles.legendIcon}>
+                      <Image source={categoryImageMap[voteDetails.subcategory_code]} style={styles.image} />
+                  </View>
+                  <Text style={[styles.sectionText, theme.textStyles.title1]}>
+                    {voteDetails.subcategory}
+                  </Text>
+                </View>
+                {voteDetails.additional_note && (
+                  <View style={styles.votedForAdditionalNoteContainer}>
+                    <Text style={[styles.sectionText, theme.textStyles.title2]}>
+                      {voteDetails.additional_note}
+                    </Text>
+                  </View>
+                )}
+              </View>
+            )}
+
+
+
+
           </View>
         </View>
       </ScrollView>
           <View style={styles.buttonContainer}>
             {
               property.status==='vacant' ? 
+              property.vote ? 
               <PurpleButtonLarge
-              title="Submit Suggestions"
-              onPress={() => {
-                handleSubmitSuggestion();
-              }}
-              />
+                title="View Real-Time Results"
+                onPress={() => {
+                  handleViewResults();
+                }}
+                />
+              :
+                <PurpleButtonLarge
+                title="Submit Suggestions"
+                onPress={() => {
+                  handleSubmitSuggestion();
+                }}
+                />
               :
               <PurpleButtonLarge
                 title="View on Instagram"
@@ -205,6 +243,7 @@ const styles = StyleSheet.create({
     zIndex: 10,
     paddingTop: 50,
     paddingBottom: 16,
+    marginBottom: 16,
     height: 90, 
   },
   headerTitle: {
@@ -298,21 +337,22 @@ const styles = StyleSheet.create({
   section: {
     marginTop: 12,
     paddingTop: 12,
-    paddingBottom: 12,
+    paddingBottom: 10,
     borderTopWidth: 1,
     borderTopColor: theme.colors.surface2,
   },
   sectionTitle: {
-    paddingTop: 12,
+    paddingTop: 10,
     fontSize: 18,
+    marginBottom: 8,
     fontWeight: '600',
     color: theme.colors.primary_text,
   },
   sectionText: {
-    paddingTop: 8,
     fontSize: 16,
     lineHeight: 24,
     color: theme.colors.primary_text,
+
   },
   sectionGroupText: {
   },
@@ -320,7 +360,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: 8,
   },
   linkButton: {
     marginTop: 24,
@@ -343,5 +383,48 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: theme.colors.secondary_text,
   },
+  votedForCategoryContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+    backgroundColor: theme.colors.surface1,
+    height: 60,
+    borderRadius: 12,
+    marginTop: 12,
+    padding: 16,
+    justifyContent: 'flex-start',
+  },
+  votedForSubCategoryContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+    backgroundColor: theme.colors.surface1,
+    height: 60,
+    borderRadius: 12,
+    padding: 16,
+    justifyContent: 'flex-start',
+  },
+  votedForAdditionalNoteContainer: {
+    flexDirection: 'row',
+    justifyContent: 'flex-start',
+    marginBottom: 50,
+    backgroundColor: theme.colors.surface1,
+    height: 120,
+    borderRadius: 12,
+    padding: 16,
+  },    
+  legendIcon: {
+        width: 36,
+        height: 36,
+        borderRadius: 18,
+        marginRight: 10,
+        backgroundColor: "#FFF",
+        alignItems: 'center',
+        justifyContent: 'center',
+    },    
+    image: {
+        width: 24,
+        height: 24,
+    },
 });
 

@@ -1,7 +1,7 @@
 import { supabase } from '../lib/supabase';
-import { Image } from 'react-native'
 import { DatabaseImage } from '../schemas/images';
-import { buildImageURL, getImageURL } from './images';
+import { buildImageURL } from './images';
+import { DBVote } from '../types/vote';
 
 export type PropertyStatus = 'active' | 'pending' | 'sold' | 'draft' | 'archived';
 export type PropertySiteStatus = 'published' | 'unpublished' | 'featured';
@@ -33,11 +33,11 @@ export interface Property {
   cover_image?: DatabaseImage;
   cover_image_path?: string;
   cover_image_url?: string;
-  images?: Array<PropertyImage>;
   image_paths?: Array<string>;
   image_urls?: Array<string>;
   created_at: string; // ISO date string
   last_edited: string; // ISO date string
+  vote: DBVote | null;
   [key: string]: any; // Allow for additional properties from the database
 }
 
@@ -45,7 +45,7 @@ export interface Property {
  * Fetches all properties from the Supabase "properties" table.
  * Returns an array of properties with their location data.
  */
-export async function fetchProperties(): Promise<Property[]> {
+export async function fetchProperties(profileId: string): Promise<Property[]> {
   try {
     console.log('Fetching properties from Supabase...');
 
@@ -86,9 +86,9 @@ export async function fetchPropertiesInBounds(bounds: {
   maxLat: number;
   minLng: number;
   maxLng: number;
-}): Promise<Property[]> {
+}, profileId: string): Promise<Property[]> {
   try {
-    console.log('Fetching properties in bounds:', bounds);
+    console.log('Fetching properties in bounds:', bounds, "for ", profileId);
 
     const { data, error } = await supabase
       .from('properties')
@@ -101,64 +101,33 @@ export async function fetchPropertiesInBounds(bounds: {
             bucket,
             path
           )
-        )`)
+        ),
+        votes (
+          user_id,
+          choice, 
+          free_text
+        )
+        `)
       .eq('site_status', 'active')
       .gte('latitude', bounds.minLat)
       .lte('latitude', bounds.maxLat)
       .gte('longitude', bounds.minLng)
       .lte('longitude', bounds.maxLng)
       .order('is_cover', { referencedTable: 'property_image_links', ascending: false })
-      .order('order_index', { referencedTable: 'property_image_links', ascending: true });
-      // .eq('property_image_links.is_cover', true);
+      .order('order_index', { referencedTable: 'property_image_links', ascending: true })
+      .eq("votes.user_id", profileId);
 
 
-    // const { data: moreData, error: moreError } = await supabase
-    //   .from('properties')
-    //   .select(`
-    //     *,
-    //     property_image_links!inner (
-    //       is_cover,
-    //       images (
-    //         id,
-    //         bucket,
-    //         path
-    //       )
-    //     )`)
-    //   .eq('site_status', 'active')
-    //   .gte('latitude', bounds.minLat)
-    //   .lte('latitude', bounds.maxLat)
-    //   .gte('longitude', bounds.minLng)
-    //   .lte('longitude', bounds.maxLng)
-    //   .order('is_cover', { referencedTable: 'property_image_links', ascending: false })
-    //   .order('order_index', { referencedTable: 'property_image_links', ascending: true });
+    console.log("CHECK MY DATA", data);
+    console.log("CHECK MY DATA", data?.[0].votes);
 
-
-
-    // console.log("CHECK MY DATA", moreData);
-
-        // if (moreError) {
-        //   console.error('Error fetching properties in bounds:', moreError);
-        //   throw moreError;
-        // }
-
+        
     if (!data) {
       console.warn('No properties data returned from Supabase');
       return [];
     }
-
     console.log(`Successfully fetched ${data.length} properties in bounds`);
-    // console.log("CHECK MY DATA", data);
-    // console.log("CHECK MY DATA", data[0].property_image_links[0]);
-    // const bucket = data[0].property_image_links[0].images.bucket;
-    // const cover_image = data[0].property_image_links[0].images.path || "../assets/images/fillers/mc-shop-image.png";
-    // console.log("CHECK MY COVER IMAGE", cover_image);
 
-    const my_images = [
-      require("../assets/images/fillers/mc-shop-image.png"),
-      require("../assets/images/fillers/mc-shop-image1.png"),
-      require("../assets/images/fillers/mc-shop-image.png"),
-      require("../assets/images/fillers/mc-shop-image1.png")
-    ]
     // Map the raw data to Property objects
     const properties: Property[] = await Promise.all(
       data.map(async (property) => {
@@ -166,6 +135,14 @@ export async function fetchPropertiesInBounds(bounds: {
         const img = link?.images;
         const bucket = img?.bucket;
         const path = img?.path;
+
+        const voted_on = property.votes?.length > 0;
+        const vote : DBVote | null = voted_on ? 
+        {
+            choice_id: property.votes?.[0].choice,
+            free_text: property.votes?.[0].free_text
+        }
+        : null;
 
         const cover_image_path = path || "../assets/images/fillers/mc-shop-image1.png";
         const cover_image_url =
@@ -201,13 +178,11 @@ export async function fetchPropertiesInBounds(bounds: {
           cover_image_url,
           image_paths,
           image_urls,
-          images: my_images.map((img, index) => ({
-            source: img,
-            alt: `Property image ${index + 1}`,
-          })) || [],
           estimated_open: property.estimated_open,
           created_at: property.created_at,
           last_edited: property.last_edited,
+          vote: voted_on ? vote : null,
+
         };
       })
     );

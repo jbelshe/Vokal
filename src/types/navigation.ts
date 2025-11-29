@@ -8,14 +8,11 @@ export type AppStackParamList = {
   Profile: undefined;
   ContactUs: undefined;
   VoteHistory: undefined;
-  // Category: { propertyId: string };
-  // SubCategory: { propertyId: string };
-  // AdditionalNote: { propertyId: string };
   VotingFlow: undefined;
+  VotingResults: undefined;
 };
 
 export type AuthStackParamList = {
-  VotingResults: undefined;
   SignIn: undefined;
   EnterPhoneNumber: undefined;
   OTP: undefined;
@@ -29,6 +26,6 @@ export type AuthStackParamList = {
 
 export type VotingStackParamList = {
   Category: undefined;
-  SubCategory: { selectedCategory: string };
-  AdditionalNote: undefined;
+  SubCategory: { selectedCategoryCode: string };
+  AdditionalNote: { subCategorySelected: string };
 };

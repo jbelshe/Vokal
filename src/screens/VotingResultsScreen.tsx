@@ -1,5 +1,5 @@
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { AuthStackParamList } from '../types/navigation';
+import { AppStackParamList } from '../types/navigation';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import DonutChart from '../components/DonutChart';
 import { colors } from '../assets/theme/colors';
@@ -8,7 +8,7 @@ import CloseIcon from '../assets/icons/close.svg';
 import { CloseButtonLarge } from '../components/CloseButtonLarge';
 import { Platform } from 'react-native';
 
-type props = NativeStackScreenProps<AuthStackParamList, 'VotingResults'>;
+type props = NativeStackScreenProps<AppStackParamList, 'VotingResults'>;
 
 
 

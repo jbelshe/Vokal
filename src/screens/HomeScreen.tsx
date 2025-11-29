@@ -15,6 +15,7 @@ import { useAppContext } from '../context/AppContext';
 import { fetchCoverImage } from '../api/images';
 import { getImageURL } from '../api/images';
 import { ImageWithLoader } from '../components/ImageWithLoader';
+import { useAuth } from '../context/AuthContext';
 
 type Props = NativeStackScreenProps<AppStackParamList, 'Home'>;
 
@@ -28,6 +29,7 @@ export default function HomeScreen({ navigation }: Props) {
   }, [navigation]);
 
   const { currentPropertyId, setCurrentPropertyId } = useAppContext();
+  const { state } = useAuth();
 
   const [searchQuery, setSearchQuery] = useState('');
   const { properties, setProperties, mapRegion, setMapRegion } = useAppContext();
@@ -79,7 +81,7 @@ export default function HomeScreen({ navigation }: Props) {
 
       // Calculate bounds with 50% buffer to include neighboring off-screen locations
       const bounds = calculateBounds(region, 0.5);
-      const data = await fetchPropertiesInBounds(bounds);
+      const data = await fetchPropertiesInBounds(bounds, state.profile?.userId || '');
       setProperties(data);
       setMapRegion(region);
       console.log("Properties loaded for region1:", data.length);
