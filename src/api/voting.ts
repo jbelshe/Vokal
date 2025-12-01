@@ -1,7 +1,7 @@
 import { supabase } from "../lib/supabase";
 import { Subcategory, CategoryWithSubcategories, CategoryMap } from "../types/categories";
 import { useAppContext } from "../context/AppContext";
-
+import { TopVoteResults, VoteTally } from "../types/vote";
 
 
 
@@ -98,5 +98,21 @@ export async function submitVote(user_id : string, property_id : string, subcate
     } catch (error) {
         console.error("Error submitting vote:", error);
         return false;
+    }
+}
+
+
+
+export async function getTopVotes(property_id : string) : Promise<any> {
+    try {
+        const { data, error } = await supabase.rpc('get_top_property_votes', { p_property_id: property_id, limit_n: 5 })
+        console.log("DATA in:", data);
+        if (data.length === 0) {
+            return null;
+        } 
+        return data;
+    } catch (error) {
+      console.error('Error fetching top votes:', error);
+      return null;
     }
 }

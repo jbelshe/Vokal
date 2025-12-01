@@ -3,6 +3,7 @@ import { Region } from 'react-native-maps';
 import { Property } from '../api/properties';
 import { loadCategoriesAll } from '../api/voting';
 import { CategoryMap, CategoryWithSubcategories } from '../types/categories';
+import { TopVoteResults } from '../types/vote';
 
 interface AppContextType {
   // Map state
@@ -25,6 +26,8 @@ interface AppContextType {
   setIdToCategoryMap: (idToCategoryMap: Record<string, { code: string; name: string }>) => void;
   subcategoryToCategoryMap: Record<string, string>;
   setSubcategoryToCategoryMap: (subcategoryToCategoryMap: Record<string, string>) => void;
+  currentTopVotes: TopVoteResults | null;
+  setCurrentTopVotes: (topVotes: TopVoteResults | null) => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -33,6 +36,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [mapRegion, setMapRegion] = useState<Region | null>(null);
   const [properties, setProperties] = useState<Property[]>([]);
   const [currentPropertyId, setCurrentPropertyId] = useState<string | null>(null);
+  const [currentTopVotes, setCurrentTopVotes] = useState<TopVoteResults | null>(null);
 
   const [categoriesDataMap, setCategoriesDataMap] = useState<Record<string, CategoryWithSubcategories>>({});
   const [categoryToSubcategoryMap, setCategoryToSubcategoryMap] = useState<CategoryMap>({});
@@ -91,6 +95,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
         setIdToCategoryMap,
         subcategoryToCategoryMap,
         setSubcategoryToCategoryMap,
+        currentTopVotes,
+        setCurrentTopVotes,
       }}
     >
       {children}

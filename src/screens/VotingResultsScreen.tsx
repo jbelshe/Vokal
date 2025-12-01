@@ -7,6 +7,7 @@ import { theme } from '../assets/theme';
 import CloseIcon from '../assets/icons/close.svg';
 import { CloseButtonLarge } from '../components/CloseButtonLarge';
 import { Platform } from 'react-native';
+import { VoteTally } from '../types/vote';
 
 type props = NativeStackScreenProps<AppStackParamList, 'VotingResults'>;
 
@@ -17,30 +18,22 @@ const calculatePercentage = (value: number, total: number): string => {
     return `${Math.round((value / total) * 100)}%`;
 };
 
-export default function VotingResults({ navigation }: props) {
-    const values = [321, 185, 430, 200, 100, 83];
+export default function VotingResults({ navigation, route }: props) {
+    const { vote_data } = route.params;
     const color_group = [colors.primary_gradient_start, colors.primary_gradient_end, colors.donut1, colors.donut2, colors.donut3, colors.donut4];
-    const total = values.reduce((sum, val) => sum + val, 0);
+    console.log("VOTE DATA:", vote_data);
+    const chartData = vote_data ? vote_data.top_categories.map((category: VoteTally, index: number) => {
+        return {
+            value: category.count,
+            color: color_group[index],
+            label: { text: calculatePercentage(category.count, vote_data.total_votes), fill: "#FFF" },
+        };
+    }) : [];
     
-    const chartData = [
-        { value: values[0], color: color_group[0], label: { text: calculatePercentage(values[0], total), fill: "#FFF" } },
-        { value: values[1], color: color_group[1], label: { text: calculatePercentage(values[1], total), fill: "#FFF" } },
-        { value: values[2], color: color_group[2], label: { text: calculatePercentage(values[2], total), fill: "#FFF" } },
-        { value: values[3], color: color_group[3], label: { text: calculatePercentage(values[3], total), fill: "#FFF" } },
-        { value: values[4], color: color_group[4], label: { text: calculatePercentage(values[4], total), fill: "#FFF" } },
-        { value: values[5], color: color_group[5], label: { text: calculatePercentage(values[5], total), fill: "#FFF" } },
-    ];
-    const chartInfo = {
-        categories: [
-            { name: "Chinese", image_code: "chinese" },
-            { name: "Clothing", image_code: "clothing" },
-            { name: "Thai", image_code: "thai" },
-            { name: "Fitness Studio", image_code: "fitness_studio" },
-            { name: "Bakery", image_code: "bakery" },
-            { name: "Other", image_code: "health_wellness_other" },
-        ],
-        data: chartData,
-    }
+    const chartInfo : { name: string, image_code: string }[] = vote_data ? vote_data.top_categories.map((category: VoteTally, index: number) => {
+        return { name: category.category_name, image_code: category.category_code }
+    }) : [];
+
 
     const handleClose = () => {
         navigation.goBack();
@@ -56,8 +49,8 @@ export default function VotingResults({ navigation }: props) {
             </View>
             <View style={styles.bodyContainer}>
                 <DonutChart
-                    categories={chartInfo.categories}
-                    data={chartInfo.data}
+                    categories={chartInfo}
+                    data={chartData}
                     size={280}
                     holeRadius={0.5}
                     showLabels={true}

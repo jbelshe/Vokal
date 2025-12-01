@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Image, Dimensions, Platform } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { AppStackParamList } from '../types/navigation';
@@ -9,7 +9,9 @@ import { PurpleButtonLarge } from '@/components/PurpleButtonLarge';
 import { ImageWithLoader } from '../components/ImageWithLoader';
 import { FlatList } from 'react-native';
 import { categoryImageMap } from '../types/categories';
-import { DisplayVote } from '../types/vote';
+import { supabase } from '@/lib/supabase';
+import { TopVoteResults, VoteTally,DisplayVote } from '../types/vote';
+import { getTopVotes } from '../api/voting';
 
 type Props = NativeStackScreenProps<AppStackParamList, 'PropertyDetails'>;
 
@@ -18,7 +20,7 @@ const screenWidth = Dimensions.get('window').width;
 export default function PropertyDetailsScreen({ route, navigation }: Props) {
   const { propertyId } = route.params;
   const { properties, categoriesDataMap, idToCategoryMap, subcategoryToCategoryMap } = useAppContext();
-  const { currentPropertyId } = useAppContext();
+  const { currentPropertyId, currentTopVotes, setCurrentTopVotes } = useAppContext();
 
 
   const property = properties.find(p => p.id === currentPropertyId);
@@ -37,13 +39,96 @@ export default function PropertyDetailsScreen({ route, navigation }: Props) {
 
 
 
+  useEffect(() => {
+    // try {
+    // supabase.rpc('get_top_property_votes', { p_property_id: currentPropertyId, limit_n: 5 }).then((result) => {
+    //   console.log(result);
+    //   const data = result.data;
+    //   if (data.length === 0) {
+    //     setCurrentTopVotes(null); // set to null to indicate no voting data
+    //     return;
+    //   } 
+    //   const vote_data : TopVoteResults = {
+    //     top_categories: [],
+    //     total_votes: data[0].total_votes,
+    //   }
+    //   let votes_count = 0;
+    //   const top_categories : VoteTally [] = [];
+    //   for (let i = 0; i < result?.data?.length; i++) {
+        
+    //     top_categories.push({
+    //       category_code: idToCategoryMap[result?.data[i].category_id].code,
+    //       category_name: idToCategoryMap[result?.data[i].category_id].name,
+    //       count: result?.data[i].vote_count,
+    //     });
+    //     votes_count += result?.data[i].vote_count;
+    //     console.log("TOP CATEGORY:", result?.data[i]);
+    //   }
+    //   if (vote_data.top_categories.length <= 5 && votes_count < vote_data.total_votes) {
+    //     top_categories.push({
+    //       category_code: "other",
+    //       category_name: "Other",
+    //       count: vote_data.total_votes - votes_count,
+    //     });
+    //   }
+    //   vote_data.top_categories = top_categories;
+    //   console.log("VOTE DATA:", vote_data);
+    //   setCurrentTopVotes(vote_data);
+    // })
+    // } catch (error) {
+    //   console.error('Error fetching top votes:', error);
+    // }
+  }, []);
+
   const handleSubmitSuggestion = ( ) => {
     navigation.push('VotingFlow');
     //navigation.navigate('Category', { propertyId });
   };
   const handleViewResults = () => {
-    navigation.push('VotingResults');
+    try {
+      getTopVotes(propertyId).then((data) => {
+        console.log("DATA out:", data);
+        if (data.length === 0) {
+          setCurrentTopVotes(null); // set to null to indicate no voting data
+          return;
+        } 
+        console.log("DATA:", data);
+        const vote_data : TopVoteResults = {
+          top_categories: [],
+          total_votes: data[0].total_votes,
+        }
+        
+        let votes_count = 0;
+        const top_categories : VoteTally [] = [];
+        for (let i = 0; i < data?.length; i++) {
+          
+          top_categories.push({
+            category_code: idToCategoryMap[data[i].category_id].code,
+            category_name: idToCategoryMap[data[i].category_id].name,
+            count: data[i].vote_count,
+          });
+          votes_count += data[i].vote_count;
+          console.log("TOP CATEGORY:", data[i]);
+        }
+        if (vote_data.top_categories.length <= 5 && votes_count < vote_data.total_votes) {
+          top_categories.push({
+            category_code: "other",
+            category_name: "Other",
+            count: vote_data.total_votes - votes_count,
+          });
+        }
+        vote_data.top_categories = top_categories;
+        console.log("VOTE DATA:", vote_data);
+        setCurrentTopVotes(vote_data);
+        navigation.push('VotingResults', { vote_data: currentTopVotes });
+    });
+    } catch (error) {
+      console.error('Error fetching top votes:', error);
+      setCurrentTopVotes(null);
+      navigation.push('VotingResults', { vote_data: null });
+    }
   }
+    
 
   // Early return if property is not found
   if (!property) {

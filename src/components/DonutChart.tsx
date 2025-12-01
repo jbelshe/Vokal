@@ -57,8 +57,10 @@ const DonutChart: FC<DonutChartProps> = ({
                             </View>
                             <Text 
                                 style={[theme.textStyles.title2, styles.legendText]}
-                                numberOfLines={2}
+                                numberOfLines={1}
                                 ellipsizeMode="tail"
+                                adjustsFontSizeToFit={true}
+                                minimumFontScale={0.5}
                             >
                                 {category.name}
                             </Text>
@@ -125,17 +127,17 @@ const styles = StyleSheet.create({
         marginRight: 8,
     },
     legendIcon: {
-        width: 36,
-        height: 36,
-        borderRadius: 18,
-        marginRight: 8,
+        width: 24,
+        height: 24,
+        borderRadius: 12,
+        marginRight: 4,
         backgroundColor: "#FFF",
         alignItems: 'center',
         justifyContent: 'center',
     },    
     image: {
-        width: 24,
-        height: 24,
+        width: 18,
+        height: 18,
     },
 });
 

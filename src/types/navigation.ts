@@ -1,4 +1,5 @@
 import { NavigatorScreenParams } from "@react-navigation/native";
+import { TopVoteResults } from "../types/vote";
 
 export type AppStackParamList = {
   Home: undefined;
@@ -9,7 +10,7 @@ export type AppStackParamList = {
   ContactUs: undefined;
   VoteHistory: undefined;
   VotingFlow: undefined;
-  VotingResults: undefined;
+  VotingResults: { vote_data: TopVoteResults | null };
 };
 
 export type AuthStackParamList = {

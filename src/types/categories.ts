@@ -53,6 +53,7 @@ export const categoryImageMap: CategoryImageMap = {
   "healthy_food_stores": require("../assets/icons/categories/avocado.png"),
   "beauty_salon": require("../assets/icons/categories/hair.png"),
   "health_wellness_other": require("../assets/icons/categories/more.png"),
+  "other": require("../assets/icons/categories/more.png"),
   "restaurant": require("../assets/icons/categories/plate.png"),
   "retail": require("../assets/icons/categories/shop_bag.png"),
   "health_and_wellness": require("../assets/icons/categories/yoga.png"),
