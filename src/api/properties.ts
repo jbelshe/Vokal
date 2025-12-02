@@ -2,6 +2,8 @@ import { supabase } from '../lib/supabase';
 import { buildImageURL } from './images';
 import { Property } from '../types/property';
 import { DBVote } from '../types/vote';
+import { ImageSize } from '../types/imageSizes'
+import { convertImagePath } from '@/lib/imageHelper';
 
 export type PropertyStatus = 'active' | 'pending' | 'sold' | 'draft' | 'archived';
 export type PropertySiteStatus = 'published' | 'unpublished' | 'featured';
@@ -111,9 +113,9 @@ export async function fetchPropertiesInBounds(bounds: {
         : null;
 
         const cover_image_path = path || "../assets/images/fillers/mc-shop-image1.png";
-        const cover_image_url =
-          bucket && path ? buildImageURL(bucket, path) : '';
-        
+        const cover_image_url =  bucket && path ? convertImagePath(buildImageURL(bucket, path), ImageSize.SIZE_512) : '';
+        console.log("Cover image path:", cover_image_path);
+        console.log("Cover image URL:", cover_image_url);
         const image_paths = bucket && property.property_image_links ? property.property_image_links.map((link: { images: { path: string } }) => {
           const path = link.images.path;
           return path;
@@ -223,9 +225,9 @@ export async function fetchPropertiesForUser(userId: string, offset: number, lim
         : null;
 
         const cover_image_path = path || "../assets/images/fillers/mc-shop-image1.png";
-        const cover_image_url =
-          bucket && path ? buildImageURL(bucket, path) : '';
-        
+        const cover_image_url =  bucket && path ? convertImagePath(buildImageURL(bucket, path), ImageSize.SIZE_512) : '';
+        console.log("Cover image path:", cover_image_path);
+        console.log("Cover image URL:", cover_image_url);
         const image_paths = bucket && property.property_image_links ? property.property_image_links.map((link: { images: { path: string } }) => {
           const path = link.images.path;
           return path;

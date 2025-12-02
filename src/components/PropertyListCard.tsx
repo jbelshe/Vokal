@@ -4,6 +4,9 @@ import { View, Text, TouchableOpacity, Image, StyleSheet, FlatList } from 'react
 import { theme } from '@/assets/theme';
 import { Property } from '@/types/property';
 import { ImageWithLoader } from './ImageWithLoader';
+import { convertImagePath } from '@/lib/imageHelper';
+import { ImageSize } from '@/types/imageSizes';
+
 
 interface PropertyListCardProps {
     property: Property;
@@ -44,15 +47,16 @@ const PropertyListCard = React.memo(({ property, onPress }: PropertyListCardProp
                 data={property.image_urls || []}
                 horizontal
                 keyExtractor={(_, index) => index.toString()}
-                initialNumToRender={3}
-                maxToRenderPerBatch={3}
+                initialNumToRender={2}
+                maxToRenderPerBatch={1}
+                windowSize={2}
                 showsHorizontalScrollIndicator={false}
                 style={styles.imageScrollView}
                 contentContainerStyle={styles.imageScrollContent}
-                windowSize={5}
-                removeClippedSubviews={true}
+                scrollEventThrottle={16}  
+                decelerationRate="fast"
                 renderItem={({ item: imgKey }) => (
-                    <MemoizedImage imgKey={imgKey} />
+                    <MemoizedImage imgKey={convertImagePath(imgKey, ImageSize.SIZE_512)} />
                 )}
             />
             <View style={styles.listItemContent}>
@@ -109,6 +113,7 @@ const styles = StyleSheet.create({
     marginHorizontal: -16, // Counteract the padding of listItem
     marginTop: 4,
     marginBottom: 4,
+
   },
   imageScrollContent: {
     paddingHorizontal: 16, // Match listItem padding

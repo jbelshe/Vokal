@@ -13,6 +13,7 @@ import { supabase } from '@/lib/supabase';
 import { TopVoteResults, VoteTally,DisplayVote } from '../types/vote';
 import { getTopVotes } from '../api/voting';
 import { VoteDetails } from '../components/VoteDetails';
+import { ImageSize } from '../types/imageSizes';
 
 type Props = NativeStackScreenProps<AppStackParamList, 'PropertyDetails'>;
 
@@ -135,19 +136,18 @@ export default function PropertyDetailsScreen({ route, navigation }: Props) {
             style={styles.imageScrollView}
             contentContainerStyle={styles.imageScrollContent}
             keyExtractor={(url, index) => url || index.toString()}
+            initialNumToRender={1}
+            maxToRenderPerBatch={1}
+            windowSize={3}
             renderItem={({ item: url }) => (
               <ImageWithLoader
                 uri={url}
                 resizeMode="cover"
+                imageSize={ImageSize.SIZE_512}
                 containerStyle={styles.imageContainer}
                 imageStyle={styles.propertyImage}
               />
             )}
-            getItemLayout={(data, index) => ({
-              length: 300, // Width of each image container
-              offset: 300 * index,
-              index,
-            })}
           />
           
           { /* Text Container */}
@@ -213,40 +213,7 @@ export default function PropertyDetailsScreen({ route, navigation }: Props) {
             {voteDetails && 
               <VoteDetails selectionDetails={voteDetails}>
               </VoteDetails>}
-            
-            {/* {voteDetails && (
-              <View style={styles.section}>
-                <Text style={[styles.sectionTitle, theme.textStyles.title1]}>
-                  You Voted for
-                </Text>
-                <View style={styles.votedForCategoryContainer}>
-                  <View style={styles.legendIcon}>
-                      <Image source={categoryImageMap[voteDetails.category_code]} style={styles.image} />
-                  </View>
-                  <Text style={[styles.sectionText, theme.textStyles.title1]}>
-                    {voteDetails.category}
-                  </Text>
-                </View>
-                <View style={[styles.votedForSubCategoryContainer, !voteDetails.additional_note ? {marginBottom: 50} : null]}>
-                  <View style={styles.legendIcon}>
-                      <Image source={categoryImageMap[voteDetails.subcategory_code]} style={styles.image} />
-                  </View>
-                  <Text style={[styles.sectionText, theme.textStyles.title1]}>
-                    {voteDetails.subcategory}
-                  </Text>
-                </View>
-                {voteDetails.additional_note && (
-                  <View style={styles.votedForAdditionalNoteContainer}>
-                    <Text style={[styles.sectionText, theme.textStyles.title2]}>
-                      {voteDetails.additional_note}
-                    </Text>
-                  </View>
-                )}
-              </View>
-            )} */}
-
-
-
+        
 
           </View>
         </View>

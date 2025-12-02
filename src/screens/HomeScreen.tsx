@@ -13,11 +13,9 @@ import ListIcon from '../assets/icons/list-icon.svg';
 import AccountIcon from '../assets/icons/account-icon.svg';
 import { Image } from 'react-native';
 import { useAppContext } from '../context/AppContext';
-import { fetchCoverImage } from '../api/images';
-import { getImageURL } from '../api/images';
-import { ImageWithLoader } from '../components/ImageWithLoader';
 import { useAuth } from '../context/AuthContext';
 import PropertyListCard from '@/components/PropertyListCard';
+import { ImageWithLoader } from '@/components/ImageWithLoader';
 
 type Props = NativeStackScreenProps<AppStackParamList, 'Home'>;
 
@@ -113,13 +111,14 @@ export default function HomeScreen({ navigation }: Props) {
 
 
   const handleCalloutPress = useCallback((property: Property) => {
+    
     console.log("Callout Press, Selected property:", {
       id: property.id,
       title: property.address_1 + ' ' + property.address_2,
-    });
+    }, "Current: ", currentPropertyId);
     setCurrentPropertyId(property.id);
     navigation.navigate('PropertyDetails', { propertyId: property.id });
-  }, [navigation, setCurrentPropertyId]);
+  }, [navigation, setCurrentPropertyId, currentPropertyId]);
 
 
   const handleRegionChangeComplete = useCallback((region: Region) => {
@@ -178,6 +177,13 @@ export default function HomeScreen({ navigation }: Props) {
     };
     loadPropertiesForRegion(regionToUse);
   }, [loadPropertiesForRegion]);
+
+  const renderPropertyItem = useCallback(({ item }: { item: Property }) => (
+  <PropertyListCard
+    property={item}
+    onPress={handleCalloutPress}
+  />
+), [handleCalloutPress]);
 
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
@@ -323,13 +329,18 @@ export default function HomeScreen({ navigation }: Props) {
                   }
                   style={{ width: 40, height: 40 }}
                 />
-                <Callout tooltip={false} style={styles.calloutContainer} onPress={() => { handleCalloutPress(property) }}>
+                <Callout 
+                  tooltip={false} 
+                  style={styles.calloutContainer} 
+                  onPress={() => { handleCalloutPress(property) }}
+                >
                   <View style={styles.calloutContent}>
                     <View style={styles.markerImageContainer}>
-                      {property.cover_image_path ? (
-                        <Image
-                          source={{ uri: property.cover_image_url }}
-                          style={styles.propertyImage}
+                      {property.cover_image_url ? (
+                        <ImageWithLoader
+                            uri={property.cover_image_url!}
+                            imageStyle={styles.propertyImage}
+                            resizeMode="cover"
                         />
                       ) : (
                         <View style={[styles.markerImageContainer, { backgroundColor: '#f0f0f0', justifyContent: 'center', alignItems: 'center' }]}>
@@ -375,15 +386,17 @@ export default function HomeScreen({ navigation }: Props) {
               <Text style={styles.emptyText}>No properties found</Text>
             </View>
           ) : (
-            <ScrollView style={styles.listScrollView} contentContainerStyle={styles.listContent}>
-              {properties.map((property) => (
-                <PropertyListCard
-                  key={property.id}
-                  property={property}
-                  onPress={handleCalloutPress}
-                />
-              ))}
-            </ScrollView>
+          <FlatList
+            data={properties}
+            renderItem={renderPropertyItem}
+            keyExtractor={item => item.id}
+            initialNumToRender={2}
+            maxToRenderPerBatch={2}
+            windowSize={1}
+            contentContainerStyle={styles.listContent}
+            style={styles.listScrollView}
+            showsVerticalScrollIndicator={false}
+          />
           )}
         </View>
       

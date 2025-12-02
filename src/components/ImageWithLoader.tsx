@@ -1,10 +1,13 @@
 import React, { useState, memo, useCallback } from "react";
 import { View, Image, ActivityIndicator, StyleSheet, StyleProp, ImageStyle, ViewStyle } from "react-native";
+import { ImageSize } from "../types/imageSizes";
+import { convertImagePath } from "../lib/imageHelper";
 
 interface ImageWithLoaderProps {
   uri: string;
   resizeMode?: 'cover' | 'contain' | 'stretch' | 'repeat' | 'center';
   imageStyle?: StyleProp<ImageStyle>;
+  imageSize?: ImageSize;
   containerStyle?: StyleProp<ViewStyle>;
 };
 
@@ -16,10 +19,13 @@ const ImageWithLoaderComponent : React.FC<ImageWithLoaderProps> = memo(({
   uri, 
   resizeMode = 'cover', 
   imageStyle, 
+  imageSize = ImageSize.SIZE_ORIGINAL,
   containerStyle 
 }) => {
+
+  const sizedUri = imageSize === ImageSize.SIZE_ORIGINAL ? uri : convertImagePath(uri, imageSize) 
   // Check if image was already loaded before
-  const wasLoaded = loadedImagesCache.has(uri);
+  const wasLoaded = loadedImagesCache.has(sizedUri);
   const [loading, setLoading] = useState(!wasLoaded);
 
   // // Debug logging
@@ -34,13 +40,13 @@ const ImageWithLoaderComponent : React.FC<ImageWithLoaderProps> = memo(({
   const handleLoadEnd = useCallback(() => {
     // console.log(`[ImageWithLoader] Image loaded: ${uri.substring(0, 50)}...`);
     setLoading(false);
-    loadedImagesCache.add(uri);
+    loadedImagesCache.add(sizedUri);
   }, [uri]);
 
   return (
     <View style={containerStyle}>
       <Image
-        source={{ uri }}
+        source={{ uri : sizedUri }}
         style={[{ width: "100%", height: "100%" }, imageStyle]}
         resizeMode={resizeMode}
         onLoadEnd={handleLoadEnd}
