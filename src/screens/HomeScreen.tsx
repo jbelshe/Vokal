@@ -5,7 +5,7 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { AppStackParamList } from '../types/navigation';
 import MapView, { Marker, Region, Callout } from 'react-native-maps';
 import { fetchPropertiesInBounds } from '../api/properties';
-import {Property} from '../types/property';
+import { Property } from '../types/property';
 import { LinearGradient } from 'expo-linear-gradient';
 import { theme } from '../assets/theme';
 import MapIcon from '../assets/icons/map-icon.svg';
@@ -17,6 +17,7 @@ import { fetchCoverImage } from '../api/images';
 import { getImageURL } from '../api/images';
 import { ImageWithLoader } from '../components/ImageWithLoader';
 import { useAuth } from '../context/AuthContext';
+import PropertyListCard from '@/components/PropertyListCard';
 
 type Props = NativeStackScreenProps<AppStackParamList, 'Home'>;
 
@@ -97,7 +98,7 @@ export default function HomeScreen({ navigation }: Props) {
   }, [calculateBounds]);
 
   const lastPressTimeRef = useRef<number>(0);
-  const handleMarkerPress = async(property: Property) => {
+  const handleMarkerPress = async (property: Property) => {
     const now = Date.now();
     if (now - lastPressTimeRef.current < 300) {
       return; // ignore very fast repeat presses
@@ -111,14 +112,14 @@ export default function HomeScreen({ navigation }: Props) {
   };
 
 
-  const handleCalloutPress = (property: Property) => {
+  const handleCalloutPress = useCallback((property: Property) => {
     console.log("Callout Press, Selected property:", {
       id: property.id,
       title: property.address_1 + ' ' + property.address_2,
     });
     setCurrentPropertyId(property.id);
     navigation.navigate('PropertyDetails', { propertyId: property.id });
-  };
+  }, [navigation, setCurrentPropertyId]);
 
 
   const handleRegionChangeComplete = useCallback((region: Region) => {
@@ -180,182 +181,181 @@ export default function HomeScreen({ navigation }: Props) {
 
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-    <View style={styles.container}>
-      <View style={styles.topContainer}>
-        <View style={styles.headerContainer}>
-          <View style={[styles.locationRuleContainer, { flexDirection: 'row', justifyContent: 'space-between' }]}>
-            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-              <Image source={require('../assets/icons/location-purple-icon.png')} style={{ width: 25, height: 25, marginRight: 8 }} />
-              <Text style={theme.textStyles.caption}>Vacant Spaces</Text>
+      <View style={styles.container}>
+        <View style={styles.topContainer}>
+          <View style={styles.headerContainer}>
+            <View style={[styles.locationRuleContainer, { flexDirection: 'row', justifyContent: 'space-between' }]}>
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <Image source={require('../assets/icons/location-purple-icon.png')} style={{ width: 25, height: 25, marginRight: 8 }} />
+                <Text style={theme.textStyles.caption}>Vacant Spaces</Text>
+              </View>
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <Image source={require('../assets/icons/location-blue-icon.png')} style={{ width: 25, height: 25, marginRight: 8 }} />
+                <Text style={theme.textStyles.caption}>Opening Soon</Text>
+              </View>
             </View>
-            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-              <Image source={require('../assets/icons/location-blue-icon.png')} style={{ width: 25, height: 25, marginRight: 8 }} />
-              <Text style={theme.textStyles.caption}>Opening Soon</Text>
-            </View>
-          </View>
-          <View style={styles.searchBar}>
-            <Ionicons name="search" size={20} color={theme.colors.secondary_text} style={styles.searchIcon} />
-            <TextInput
-              style={styles.input}
-              placeholder="Search..."
-              placeholderTextColor="#999"
-              value={searchQuery}
-              onChangeText={setSearchQuery}
-              returnKeyType="search"
-            />
-            {searchQuery.length > 0 && (
-              <Ionicons
-                name="close-circle"
-                size={20}
-                color="#666"
-                style={styles.clearIcon}
-                onPress={() => setSearchQuery('')}
+            <View style={styles.searchBar}>
+              <Ionicons name="search" size={20} color={theme.colors.secondary_text} style={styles.searchIcon} />
+              <TextInput
+                style={styles.input}
+                placeholder="Search..."
+                placeholderTextColor="#999"
+                value={searchQuery}
+                onChangeText={setSearchQuery}
+                returnKeyType="search"
               />
-            )}
-            <AccountIcon
-              width={25}
-              height={25}
-              fill={theme.colors.secondary_text}
-              style={styles.accountIcon}
-              onPress={() => navigation.navigate('SettingsMain')}
-            />
+              {searchQuery.length > 0 && (
+                <Ionicons
+                  name="close-circle"
+                  size={20}
+                  color="#666"
+                  style={styles.clearIcon}
+                  onPress={() => setSearchQuery('')}
+                />
+              )}
+              <AccountIcon
+                width={25}
+                height={25}
+                fill={theme.colors.secondary_text}
+                style={styles.accountIcon}
+                onPress={() => navigation.navigate('SettingsMain')}
+              />
+            </View>
           </View>
-        </View>
-        {/* View Mode Selector */}
-        <View style={[styles.viewModeSelector]}>
-          <TouchableOpacity
-            style={styles.viewModeButton}
-            onPress={() => setViewMode('map')}
-            activeOpacity={0.8}
-          >
-            {viewMode === 'map' ? (
-              <LinearGradient
-                colors={[theme.colors.primary_gradient_start, theme.colors.primary_gradient_end]}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 0, y: 1 }}
-                style={styles.viewModeButtonGradient}
-              >
-                <MapIcon width={20} height={20} fill="#fff" />
-                <Text style={styles.viewModeButtonTextSelected}>Map</Text>
-              </LinearGradient>
-            ) : (
-              <View style={styles.viewModeButtonUnselected}>
-                <MapIcon width={20} height={20} fill={theme.colors.primary_text} />
-                <Text style={styles.viewModeButtonTextUnselected}>Map</Text>
-              </View>
-            )}
-          </TouchableOpacity>
 
-          <TouchableOpacity
-            style={styles.viewModeButton}
-            onPress={() => setViewMode('list')}
-            activeOpacity={0.8}
-          >
-            {viewMode === 'list' ? (
-              <LinearGradient
-                colors={[theme.colors.primary_gradient_start, theme.colors.primary_gradient_end]}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 0, y: 1 }}
-                style={styles.viewModeButtonGradient}
-              >
-                <ListIcon width={20} height={20} fill="#fff" />
-                <Text style={styles.viewModeButtonTextSelected}>List</Text>
-              </LinearGradient>
-            ) : (
-              <View style={styles.viewModeButtonUnselected}>
-                <ListIcon width={20} height={20} fill={theme.colors.primary_text} />
-                <Text style={styles.viewModeButtonTextUnselected}>List</Text>
-              </View>
-            )}
-          </TouchableOpacity>
-        </View>
 
-      </View>
-
-      {viewMode === 'map' ? (
-        <>
-          {loadingProperties && properties.length === 0 ? (
-            <View style={styles.loadingContainer}>
-              <ActivityIndicator size="large" color="#6247AA" />
-              <Text style={styles.loadingText}>Loading properties...</Text>
-            </View>
-          ) : error && properties.length === 0 ? (
-            <View style={styles.errorContainer}>
-              <Ionicons name="alert-circle" size={48} color="#EB4335" />
-              <Text style={styles.errorText}>{error}</Text>
-              <Text style={styles.retryText} onPress={handleRetry}>
-                Tap to retry
-              </Text>
-            </View>
-          ) : (
-            <MapView
-              ref={mapRef}
-              style={styles.map}
-              initialRegion={{
-                latitude: 34.0529855,
-                longitude: -118.4705272,
-                latitudeDelta: 0.01,
-                longitudeDelta: 0.01,
-              }}
-              showsUserLocation
-              showsMyLocationButton
-              onRegionChangeComplete={handleRegionChangeComplete}
-              onMapReady={handleMapReady}
+          {/* View Mode Selector */}
+          <View style={[styles.viewModeSelector]}>
+            <TouchableOpacity
+              style={styles.viewModeButton}
+              onPress={() => setViewMode('map')}
+              activeOpacity={0.8}
             >
-              {properties.map((property) => (
-                <Marker
-                  key={property.id}
-                  coordinate={{
-                    latitude: property.latitude,
-                    longitude: property.longitude,
-                  }}
-                  title={property.address_1}
-                  onPress={() => handleMarkerPress(property)}
-                  pointerEvents="auto"
+              {viewMode === 'map' ? (
+                <LinearGradient
+                  colors={[theme.colors.primary_gradient_start, theme.colors.primary_gradient_end]}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 0, y: 1 }}
+                  style={styles.viewModeButtonGradient}
                 >
-                  <Image
-                    source={property.status === 'vacant' ?
-                      require('../assets/icons/location-purple-icon.png')
-                      :
-                      require('../assets/icons/location-blue-icon.png')
-                    }
-                    style={{ width: 40, height: 40 }}
-                  />
-                  <Callout tooltip={false} style={styles.calloutContainer} onPress={() => {handleCalloutPress(property)}}>
-                    <View style={styles.calloutContent}>
-                      <View style={styles.markerImageContainer}>
-                        {property.cover_image_path ? (
-                          <Image
-                            source={{ uri: property.cover_image_url }}
-                            style={styles.propertyImage}
-                          />
-                        ) : (
-                          <View style={[styles.markerImageContainer, { backgroundColor: '#f0f0f0', justifyContent: 'center', alignItems: 'center' }]}>
-                            <Text>No Image</Text>
-                          </View>
-                        )}
-                      </View>
-                      <View style={styles.calloutTextContainer}>
-                        <Text style={[styles.propertyTitle, theme.textStyles.title2]} numberOfLines={1}>
-                          {property.title || 'Property'}
-                        </Text>
-                        <Text style={[styles.propertyAddress, theme.textStyles.title2]} numberOfLines={2}>
-                          {property.address_1}
-                          {property.address_2 ? `, ${property.address_2}` : ''}
-                        </Text>
-                        <Text style={styles.propertyStatus}>
-                          {property.status === 'vacant' ? 'Vacant' : 'Opening Soon'}
-                        </Text>
-                      </View>
+                  <MapIcon width={20} height={20} fill="#fff" />
+                  <Text style={styles.viewModeButtonTextSelected}>Map</Text>
+                </LinearGradient>
+              ) : (
+                <View style={styles.viewModeButtonUnselected}>
+                  <MapIcon width={20} height={20} fill={theme.colors.primary_text} />
+                  <Text style={styles.viewModeButtonTextUnselected}>Map</Text>
+                </View>
+              )}
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.viewModeButton}
+              onPress={() => setViewMode('list')}
+              activeOpacity={0.8}
+            >
+              {viewMode === 'list' ? (
+                <LinearGradient
+                  colors={[theme.colors.primary_gradient_start, theme.colors.primary_gradient_end]}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 0, y: 1 }}
+                  style={styles.viewModeButtonGradient}
+                >
+                  <ListIcon width={20} height={20} fill="#fff" />
+                  <Text style={styles.viewModeButtonTextSelected}>List</Text>
+                </LinearGradient>
+              ) : (
+                <View style={styles.viewModeButtonUnselected}>
+                  <ListIcon width={20} height={20} fill={theme.colors.primary_text} />
+                  <Text style={styles.viewModeButtonTextUnselected}>List</Text>
+                </View>
+              )}
+            </TouchableOpacity>
+          </View>
+
+        </View>
+
+
+        {loadingProperties && properties.length === 0 ? (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color="#6247AA" />
+            <Text style={styles.loadingText}>Loading properties...</Text>
+          </View>
+        ) : error && properties.length === 0 ? (
+          <View style={styles.errorContainer}>
+            <Ionicons name="alert-circle" size={48} color="#EB4335" />
+            <Text style={styles.errorText}>{error}</Text>
+            <Text style={styles.retryText} onPress={handleRetry}>
+              Tap to retry
+            </Text>
+          </View>
+        ) : (
+          <MapView
+            ref={mapRef}
+            style={[styles.map, viewMode === 'map' ? styles.viewVisible : styles.viewHidden]}
+            initialRegion={{
+              latitude: 34.0529855,
+              longitude: -118.4705272,
+              latitudeDelta: 0.01,
+              longitudeDelta: 0.01,
+            }}
+            showsUserLocation
+            showsMyLocationButton
+            onRegionChangeComplete={handleRegionChangeComplete}
+            onMapReady={handleMapReady}
+          >
+            {properties.map((property) => (
+              <Marker
+                key={property.id}
+                coordinate={{
+                  latitude: property.latitude,
+                  longitude: property.longitude,
+                }}
+                title={property.address_1}
+                onPress={() => handleMarkerPress(property)}
+                pointerEvents="auto"
+              >
+                <Image
+                  source={property.status === 'vacant' ?
+                    require('../assets/icons/location-purple-icon.png')
+                    :
+                    require('../assets/icons/location-blue-icon.png')
+                  }
+                  style={{ width: 40, height: 40 }}
+                />
+                <Callout tooltip={false} style={styles.calloutContainer} onPress={() => { handleCalloutPress(property) }}>
+                  <View style={styles.calloutContent}>
+                    <View style={styles.markerImageContainer}>
+                      {property.cover_image_path ? (
+                        <Image
+                          source={{ uri: property.cover_image_url }}
+                          style={styles.propertyImage}
+                        />
+                      ) : (
+                        <View style={[styles.markerImageContainer, { backgroundColor: '#f0f0f0', justifyContent: 'center', alignItems: 'center' }]}>
+                          <Text>No Image</Text>
+                        </View>
+                      )}
                     </View>
-                  </Callout>
-                </Marker>
-              ))}
-            </MapView>
-          )}
-        </>
-      ) : (
-        <View style={styles.listContainer}>
+                    <View style={styles.calloutTextContainer}>
+                      <Text style={[styles.propertyTitle, theme.textStyles.title2]} numberOfLines={1}>
+                        {property.title || 'Property'}
+                      </Text>
+                      <Text style={[styles.propertyAddress, theme.textStyles.title2]} numberOfLines={2}>
+                        {property.address_1}
+                        {property.address_2 ? `, ${property.address_2}` : ''}
+                      </Text>
+                      <Text style={styles.propertyStatus}>
+                        {property.status === 'vacant' ? 'Vacant' : 'Opening Soon'}
+                      </Text>
+                    </View>
+                  </View>
+                </Callout>
+              </Marker>
+            ))}
+          </MapView>
+        )}
+        <View style={[styles.listContainer, viewMode === 'list' ? styles.viewVisible : styles.viewHidden]}>
           {loadingProperties && properties.length === 0 ? (
             <View style={styles.loadingContainer}>
               <ActivityIndicator size="large" color="#6247AA" />
@@ -385,7 +385,7 @@ export default function HomeScreen({ navigation }: Props) {
                 >
                   <FlatList
                     // data={property.images || []}
-                    data = { property.image_urls || [] }
+                    data={property.image_urls || []}
                     horizontal
                     keyExtractor={(_, index) => index.toString()}
                     initialNumToRender={3}
@@ -393,12 +393,12 @@ export default function HomeScreen({ navigation }: Props) {
                     style={styles.imageScrollView}
                     contentContainerStyle={styles.imageScrollContent}
                     renderItem={({ item: imgKey }) => (
-                      <ImageWithLoader 
-                        uri={imgKey} 
-                        resizeMode="cover" 
-                        containerStyle={styles.imageContainer} 
-                        imageStyle={styles.propertyImage}/>
-                    )}  
+                      <ImageWithLoader
+                        uri={imgKey}
+                        resizeMode="cover"
+                        containerStyle={styles.imageContainer}
+                        imageStyle={styles.propertyImage} />
+                    )}
                   />
                   <View style={styles.listItemContent}>
                     <Image
@@ -420,9 +420,9 @@ export default function HomeScreen({ navigation }: Props) {
             </ScrollView>
           )}
         </View>
-      )}
-    </View>
-    </TouchableWithoutFeedback>
+      
+      </View>
+    </TouchableWithoutFeedback >
   );
 }
 
@@ -619,8 +619,8 @@ const styles = StyleSheet.create({
   },
   listContainer: {
     flex: 1,
-    marginTop: 240, // Space for the top container and view mode selector
-   // backgroundColor: theme,
+    paddingTop: 240, // Space for the top container and view mode selector
+    // backgroundColor: theme,
   },
   listScrollView: {
     flex: 1,
@@ -667,8 +667,8 @@ const styles = StyleSheet.create({
     paddingRight: 4, // Extra space on the right for better scrolling
   },
   imageContainer: {
-    width: 150, 
-    height: 150, 
+    width: 150,
+    height: 150,
     borderRadius: 12, // Slightly larger border radius
     marginRight: 12,
     overflow: 'hidden',
@@ -689,6 +689,15 @@ const styles = StyleSheet.create({
     marginTop: 16,
     fontSize: 16,
     color: theme.colors.secondary_text,
+  },
+  viewVisible: {
+    opacity: 1,
+    // zIndex: 1,
+  },
+  viewHidden: {
+    opacity: 0,
+    // zIndex: 0,
+    pointerEvents: 'none',
   },
 
 });

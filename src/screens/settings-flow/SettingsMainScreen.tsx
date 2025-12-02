@@ -11,12 +11,17 @@ import { ProfileIconButton } from '../../components/ProfileIconButton';
 import ChevronLeftIcon from '../../assets/icons/chevron-left.svg';
 import ChevronRightIcon from '../../assets/icons/chevron-right.svg';
 
+import VotedIcon from '../../assets/icons/home.png';
+import ProfileIcon from '../../assets/icons/profile-silhouette.png';
+import RemindersIcon from '../../assets/icons/alert.png';
+import ContactIcon from '../../assets/icons/telephone.png';
+
 // Import the icon images
 const Icons = {
-  voted: require('../../assets/icons/home.png'),
-  profile: require('../../assets/icons/profile-silhouette.png'),
-  reminders: require('../../assets/icons/alert.png'),
-  contact: require('../../assets/icons/telephone.png'),
+  voted: VotedIcon,
+  profile: ProfileIcon,
+  reminders: RemindersIcon,
+  contact: ContactIcon,
 };
 
 type Props = NativeStackScreenProps<AppStackParamList, 'SettingsMain'>;

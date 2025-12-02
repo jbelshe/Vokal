@@ -2,3 +2,125 @@
 2.  eas build:configure
 3.  eas build --platform ios --profile production
 4.  eas submit -p ios --profile production 
+
+
+
+      {/* Map View - Keep mounted but hide when not active */}
+      <View style={[viewMode === 'map' ? styles.viewVisible : styles.viewHidden, { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }]}>
+        {loadingProperties && properties.length === 0 ? (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color="#6247AA" />
+            <Text style={styles.loadingText}>Loading properties...</Text>
+          </View>
+        ) : error && properties.length === 0 ? (
+          <View style={styles.errorContainer}>
+            <Ionicons name="alert-circle" size={48} color="#EB4335" />
+            <Text style={styles.errorText}>{error}</Text>
+            <Text style={styles.retryText} onPress={handleRetry}>
+              Tap to retry
+            </Text>
+          </View>
+        ) : (
+          <MapView
+            ref={mapRef}
+            style={styles.map}
+            initialRegion={{
+              latitude: 34.0529855,
+              longitude: -118.4705272,
+              latitudeDelta: 0.01,
+              longitudeDelta: 0.01,
+            }}
+            showsUserLocation
+            showsMyLocationButton
+            onRegionChangeComplete={handleRegionChangeComplete}
+            onMapReady={handleMapReady}
+          >
+            {properties.map((property) => (
+              <Marker
+                key={property.id}
+                coordinate={{
+                  latitude: property.latitude,
+                  longitude: property.longitude,
+                }}
+                title={property.address_1}
+                onPress={() => handleMarkerPress(property)}
+                pointerEvents="auto"
+              >
+                <Image
+                  source={property.status === 'vacant' ?
+                    require('../assets/icons/location-purple-icon.png')
+                    :
+                    require('../assets/icons/location-blue-icon.png')
+                  }
+                  style={{ width: 40, height: 40 }}
+                />
+                <Callout tooltip={false} style={styles.calloutContainer} onPress={() => {handleCalloutPress(property)}}>
+                  <View style={styles.calloutContent}>
+                    <View style={styles.markerImageContainer}>
+                      {property.cover_image_path ? (
+                        <Image
+                          source={{ uri: property.cover_image_url }}
+                          style={styles.propertyImage}
+                        />
+                      ) : (
+                        <View style={[styles.markerImageContainer, { backgroundColor: '#f0f0f0', justifyContent: 'center', alignItems: 'center' }]}>
+                          <Text>No Image</Text>
+                        </View>
+                      )}
+                    </View>
+                    <View style={styles.calloutTextContainer}>
+                      <Text style={[styles.propertyTitle, theme.textStyles.title2]} numberOfLines={1}>
+                        {property.title || 'Property'}
+                      </Text>
+                      <Text style={[styles.propertyAddress, theme.textStyles.title2]} numberOfLines={2}>
+                        {property.address_1}
+                        {property.address_2 ? `, ${property.address_2}` : ''}
+                      </Text>
+                      <Text style={styles.propertyStatus}>
+                        {property.status === 'vacant' ? 'Vacant' : 'Opening Soon'}
+                      </Text>
+                    </View>
+                  </View>
+                </Callout>
+              </Marker>
+            ))}
+          </MapView>
+        )}
+      </View>
+
+      {/* List View - Keep mounted but hide when not active */}
+      <View style={[
+        viewMode === 'list' ? styles.viewVisible : styles.viewHidden, 
+        styles.listContainer,
+        { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }
+      ]}>
+        {loadingProperties && properties.length === 0 ? (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color="#6247AA" />
+            <Text style={styles.loadingText}>Loading properties...</Text>
+          </View>
+        ) : error && properties.length === 0 ? (
+          <View style={styles.errorContainer}>
+            <Ionicons name="alert-circle" size={48} color="#EB4335" />
+            <Text style={styles.errorText}>{error}</Text>
+            <Text style={styles.retryText} onPress={handleRetry}>
+              Tap to retry
+            </Text>
+          </View>
+        ) : properties.length === 0 ? (
+          <View style={styles.emptyContainer}>
+            <Ionicons name="home-outline" size={48} color={theme.colors.secondary_text} />
+            <Text style={styles.emptyText}>No properties found</Text>
+          </View>
+        ) : (
+          <ScrollView style={styles.listScrollView} contentContainerStyle={styles.listContent}>
+            {properties.map((property) => (
+              <PropertyListCard
+                key={property.id}
+                property={property}
+                onPress={handleCalloutPress}
+              />
+            ))}
+          </ScrollView>
+        )}
+      </View>

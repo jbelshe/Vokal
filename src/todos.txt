@@ -10,3 +10,8 @@ Add zod.dev schema management
 Fix Flavicon
 Add map down function
 Search bar on map
+
+
+12/01:
+Link instagrams
+Special pin symbols for voted on property

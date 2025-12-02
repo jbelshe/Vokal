@@ -116,3 +116,5 @@ export async function getTopVotes(property_id : string) : Promise<any> {
       return null;
     }
 }
+
+

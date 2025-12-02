@@ -1,25 +1,41 @@
 import React, { useState, memo, useCallback } from "react";
 import { View, Image, ActivityIndicator, StyleSheet, StyleProp, ImageStyle, ViewStyle } from "react-native";
 
-type Props = {
+interface ImageWithLoaderProps {
   uri: string;
   resizeMode?: 'cover' | 'contain' | 'stretch' | 'repeat' | 'center';
   imageStyle?: StyleProp<ImageStyle>;
   containerStyle?: StyleProp<ViewStyle>;
 };
 
+// Global cache to track loaded images across remounts
+const loadedImagesCache = new Set<string>();
+
 // In ImageWithLoader.tsx
-const ImageWithLoaderComponent = React.memo(({ 
+const ImageWithLoaderComponent : React.FC<ImageWithLoaderProps> = memo(({ 
   uri, 
   resizeMode = 'cover', 
   imageStyle, 
   containerStyle 
-}: Props) => {
-  const [loading, setLoading] = useState(true);
+}) => {
+  // Check if image was already loaded before
+  const wasLoaded = loadedImagesCache.has(uri);
+  const [loading, setLoading] = useState(!wasLoaded);
+
+  // // Debug logging
+  // React.useEffect(() => {
+  //   if (wasLoaded) {
+  //     console.log(`[ImageWithLoader] Image already in cache: ${uri.substring(0, 50)}...`);
+  //   } else {
+  //     console.log(`[ImageWithLoader] Loading new image: ${uri.substring(0, 50)}...`);
+  //   }
+  // }, [uri, wasLoaded]);
 
   const handleLoadEnd = useCallback(() => {
+    // console.log(`[ImageWithLoader] Image loaded: ${uri.substring(0, 50)}...`);
     setLoading(false);
-  }, []);
+    loadedImagesCache.add(uri);
+  }, [uri]);
 
   return (
     <View style={containerStyle}>
