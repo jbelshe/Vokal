@@ -15,3 +15,6 @@ Search bar on map
 12/01:
 Link instagrams
 Special pin symbols for voted on property
+
+12/02
+Optimize Image sizes used

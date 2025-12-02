@@ -19,7 +19,8 @@ export interface Property {
   category?: string; // UUID of the category
   description?: string;
   owners_note?: string;
-  instagram_link?: string;
+  link_type?: string;
+  link_url?: string;
   estimated_open?: string;
   cover_image?: DatabaseImage;
   cover_image_path?: string;

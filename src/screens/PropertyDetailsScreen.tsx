@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Image, Dimensions, Platform } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Image, Dimensions, Linking } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { AppStackParamList } from '../types/navigation';
 import CloseIcon from '../assets/icons/close.svg';
@@ -269,12 +269,14 @@ export default function PropertyDetailsScreen({ route, navigation }: Props) {
                 }}
                 />
               :
+              property.link_type !== "none" && property.link_url ? 
               <PurpleButtonLarge
-                title="View on Instagram"
+                title={property.link_type === "instagram" ? "View on Instagram" : property.link_type === "website" ? "View Website" : "View Link"}
                 onPress={() => {
-                  //Linking.openURL(property.instagram_link);
+                  Linking.openURL(property.link_url!);
                 }}
-              />
+              /> : 
+              null
             }
           </View>
     </View>

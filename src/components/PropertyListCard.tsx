@@ -53,11 +53,6 @@ const PropertyListCard = React.memo(({ property, onPress }: PropertyListCardProp
                 removeClippedSubviews={true}
                 renderItem={({ item: imgKey }) => (
                     <MemoizedImage imgKey={imgKey} />
-                    // <ImageWithLoader
-                    //     uri={imgKey}
-                    //     resizeMode="cover"
-                    //     containerStyle={styles.imageContainer}
-                    //     imageStyle={styles.propertyImage} />
                 )}
             />
             <View style={styles.listItemContent}>

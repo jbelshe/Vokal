@@ -139,7 +139,8 @@ export async function fetchPropertiesInBounds(bounds: {
           category: property.category,
           description: property.description,
           owners_note: property.owners_note,
-          instagram_link: property.instagram_link,
+          link_type: property.link_type,
+          link_url: property.link_url,
           cover_image_path,
           cover_image_url,
           image_paths,
@@ -187,7 +188,7 @@ export async function fetchPropertiesForUser(userId: string, offset: number, lim
         )
       `)
       .eq("votes.user_id", userId)
-      .range(offset, offset + limit - 1)
+      // .range(offset, offset + limit - 1)
       .order('updated_at', { referencedTable: 'votes', ascending: false })
       .order('is_cover', { referencedTable: 'property_image_links', ascending: false })
       .order('order_index', { referencedTable: 'property_image_links', ascending: true });
@@ -250,7 +251,8 @@ export async function fetchPropertiesForUser(userId: string, offset: number, lim
           category: property.category,
           description: property.description,
           owners_note: property.owners_note,
-          instagram_link: property.instagram_link,
+          link_type: property.link_type,
+          link_url: property.link_url,
           cover_image_path,
           cover_image_url,
           image_paths,
