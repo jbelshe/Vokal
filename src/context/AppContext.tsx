@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
 import { Region } from 'react-native-maps';
-import { Property } from '../api/properties';
+import { Property } from '../types/property';
 import { loadCategoriesAll } from '../api/voting';
 import { CategoryMap, CategoryWithSubcategories } from '../types/categories';
 import { TopVoteResults } from '../types/vote';

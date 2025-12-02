@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect, useMemo, useRef, useCallback } from 'react';
 import * as SecureStore from 'expo-secure-store';
-import { sendOtp, verifyOtp, checkIfUserExists, saveProfile, updateProfile, checkSession, fetchUserProfile, doesUserExist } from '../api/auth';
+import { sendOtp, verifyOtp, saveProfile, updateProfile, fetchUserProfile, doesUserExist } from '../api/auth';
 import { Profile } from '../types/profile';
 import { Session } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase';

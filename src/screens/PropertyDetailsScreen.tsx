@@ -12,6 +12,7 @@ import { categoryImageMap } from '../types/categories';
 import { supabase } from '@/lib/supabase';
 import { TopVoteResults, VoteTally,DisplayVote } from '../types/vote';
 import { getTopVotes } from '../api/voting';
+import { VoteDetails } from '../components/VoteDetails';
 
 type Props = NativeStackScreenProps<AppStackParamList, 'PropertyDetails'>;
 
@@ -38,52 +39,12 @@ export default function PropertyDetailsScreen({ route, navigation }: Props) {
   } : undefined;
 
 
-
-  useEffect(() => {
-    // try {
-    // supabase.rpc('get_top_property_votes', { p_property_id: currentPropertyId, limit_n: 5 }).then((result) => {
-    //   console.log(result);
-    //   const data = result.data;
-    //   if (data.length === 0) {
-    //     setCurrentTopVotes(null); // set to null to indicate no voting data
-    //     return;
-    //   } 
-    //   const vote_data : TopVoteResults = {
-    //     top_categories: [],
-    //     total_votes: data[0].total_votes,
-    //   }
-    //   let votes_count = 0;
-    //   const top_categories : VoteTally [] = [];
-    //   for (let i = 0; i < result?.data?.length; i++) {
-        
-    //     top_categories.push({
-    //       category_code: idToCategoryMap[result?.data[i].category_id].code,
-    //       category_name: idToCategoryMap[result?.data[i].category_id].name,
-    //       count: result?.data[i].vote_count,
-    //     });
-    //     votes_count += result?.data[i].vote_count;
-    //     console.log("TOP CATEGORY:", result?.data[i]);
-    //   }
-    //   if (vote_data.top_categories.length <= 5 && votes_count < vote_data.total_votes) {
-    //     top_categories.push({
-    //       category_code: "other",
-    //       category_name: "Other",
-    //       count: vote_data.total_votes - votes_count,
-    //     });
-    //   }
-    //   vote_data.top_categories = top_categories;
-    //   console.log("VOTE DATA:", vote_data);
-    //   setCurrentTopVotes(vote_data);
-    // })
-    // } catch (error) {
-    //   console.error('Error fetching top votes:', error);
-    // }
-  }, []);
-
   const handleSubmitSuggestion = ( ) => {
     navigation.push('VotingFlow');
     //navigation.navigate('Category', { propertyId });
   };
+
+
   const handleViewResults = () => {
     try {
       getTopVotes(propertyId).then((data) => {
@@ -120,7 +81,7 @@ export default function PropertyDetailsScreen({ route, navigation }: Props) {
         vote_data.top_categories = top_categories;
         console.log("VOTE DATA:", vote_data);
         setCurrentTopVotes(vote_data);
-        navigation.push('VotingResults', { vote_data: currentTopVotes });
+        navigation.push('VotingResults', { vote_data: vote_data });
     });
     } catch (error) {
       console.error('Error fetching top votes:', error);
@@ -248,8 +209,12 @@ export default function PropertyDetailsScreen({ route, navigation }: Props) {
                 </View>
               </View>
             )}
-
-            {voteDetails && (
+            
+            {voteDetails && 
+              <VoteDetails selectionDetails={voteDetails}>
+              </VoteDetails>}
+            
+            {/* {voteDetails && (
               <View style={styles.section}>
                 <Text style={[styles.sectionTitle, theme.textStyles.title1]}>
                   You Voted for
@@ -278,7 +243,7 @@ export default function PropertyDetailsScreen({ route, navigation }: Props) {
                   </View>
                 )}
               </View>
-            )}
+            )} */}
 
 
 
@@ -468,48 +433,48 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: theme.colors.secondary_text,
   },
-  votedForCategoryContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 12,
-    backgroundColor: theme.colors.surface1,
-    height: 60,
-    borderRadius: 12,
-    marginTop: 12,
-    padding: 16,
-    justifyContent: 'flex-start',
-  },
-  votedForSubCategoryContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 12,
-    backgroundColor: theme.colors.surface1,
-    height: 60,
-    borderRadius: 12,
-    padding: 16,
-    justifyContent: 'flex-start',
-  },
-  votedForAdditionalNoteContainer: {
-    flexDirection: 'row',
-    justifyContent: 'flex-start',
-    marginBottom: 50,
-    backgroundColor: theme.colors.surface1,
-    height: 120,
-    borderRadius: 12,
-    padding: 16,
-  },    
-  legendIcon: {
-        width: 36,
-        height: 36,
-        borderRadius: 18,
-        marginRight: 10,
-        backgroundColor: "#FFF",
-        alignItems: 'center',
-        justifyContent: 'center',
-    },    
-    image: {
-        width: 24,
-        height: 24,
-    },
+  // votedForCategoryContainer: {
+  //   flexDirection: 'row',
+  //   alignItems: 'center',
+  //   marginBottom: 12,
+  //   backgroundColor: theme.colors.surface1,
+  //   height: 60,
+  //   borderRadius: 12,
+  //   marginTop: 12,
+  //   padding: 16,
+  //   justifyContent: 'flex-start',
+  // },
+  // votedForSubCategoryContainer: {
+  //   flexDirection: 'row',
+  //   alignItems: 'center',
+  //   marginBottom: 12,
+  //   backgroundColor: theme.colors.surface1,
+  //   height: 60,
+  //   borderRadius: 12,
+  //   padding: 16,
+  //   justifyContent: 'flex-start',
+  // },
+  // votedForAdditionalNoteContainer: {
+  //   flexDirection: 'row',
+  //   justifyContent: 'flex-start',
+  //   marginBottom: 50,
+  //   backgroundColor: theme.colors.surface1,
+  //   height: 120,
+  //   borderRadius: 12,
+  //   padding: 16,
+  // },    
+  // legendIcon: {
+  //       width: 36,
+  //       height: 36,
+  //       borderRadius: 18,
+  //       marginRight: 10,
+  //       backgroundColor: "#FFF",
+  //       alignItems: 'center',
+  //       justifyContent: 'center',
+  //   },    
+  //   image: {
+  //       width: 24,
+  //       height: 24,
+  //   },
 });
 

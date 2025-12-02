@@ -1,8 +1,12 @@
 // src/context/VotingContext.tsx
 import React, { createContext, useContext, ReactNode } from 'react';
 import { ImageSourcePropType } from 'react-native';
+import { DisplayVote } from '@/types/vote';
+
 
 type VotingContextType = {
+  // voteDetails: DisplayVote | null;
+  // updateVoteDetails: (updates: Partial<DisplayVote>) => void;
   categorySelected: string | null;
   setCategorySelected: (category: string) => void;
   subCategorySelected: string | null;
@@ -11,6 +15,7 @@ type VotingContextType = {
   setAdditionalNote: (note: string) => void;
 };
 
+
 const VotingContext = createContext<VotingContextType | undefined>(undefined);
 
 export function VotingProvider({ children }: { children: ReactNode }) {
@@ -18,6 +23,18 @@ export function VotingProvider({ children }: { children: ReactNode }) {
   const [categorySelected, setCategorySelected] = React.useState<string | null>(null);
   const [subCategorySelected, setSubCategorySelected] = React.useState<string | null>(null);
   const [additionalNote, setAdditionalNote] = React.useState<string | "">("");
+  // const [voteDetails, setVoteDetails] = React.useState<DisplayVote>({
+  //   category: "",
+  //   category_code: "",
+  //   subcategory: "",
+  //   subcategory_code: "",
+  //   additional_note: "",
+  // });
+
+
+  // const updateVoteDetails = React.useCallback((updates: Partial<DisplayVote>) => {
+  //   setVoteDetails(prev => prev ? { ...prev, ...updates } : { ...updates } as DisplayVote);
+  // }, []);
 
   return (
     <VotingContext.Provider value={{
@@ -27,6 +44,8 @@ export function VotingProvider({ children }: { children: ReactNode }) {
       setSubCategorySelected,
       additionalNote,
       setAdditionalNote,
+      // voteDetails,
+      // updateVoteDetails,
     }}>
       {children}
     </VotingContext.Provider>

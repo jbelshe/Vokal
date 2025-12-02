@@ -29,4 +29,5 @@ export type VotingStackParamList = {
   Category: undefined;
   SubCategory: { selectedCategoryCode: string };
   AdditionalNote: { subCategorySelected: string };
+  VoteConfirm: { vote_data: TopVoteResults };
 };

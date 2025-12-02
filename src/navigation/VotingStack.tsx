@@ -6,6 +6,7 @@ import CategoryScreen from '../screens/voting-flow/CategoryScreen';
 import SubCategoryScreen from '../screens/voting-flow/SubCategoryScreen';
 import AdditionalNoteScreen from '../screens/voting-flow/AdditionalNoteScreen';
 import { VotingStackParamList } from '../types/navigation';
+import VoteConfirmScreen from '../screens/voting-flow/VoteConfirmScreen';
 
 // Define the parameter list for the voting flow
 
@@ -29,6 +30,7 @@ export default function VotingStack() {
       />
       <Stack.Screen name="SubCategory" component={SubCategoryScreen} />
       <Stack.Screen name="AdditionalNote" component={AdditionalNoteScreen} />
+      <Stack.Screen name="VoteConfirm" component={VoteConfirmScreen} />
     </Stack.Navigator>
   );
 }

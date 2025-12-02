@@ -10,14 +10,20 @@ import { useAppContext } from '../../context/AppContext';
 import { VotingStackParamList } from '../../types/navigation';
 import { votingScreenStyles } from '../../assets/theme/votingFlowStyles';
 import { useVotingContext } from '../../context/VotingContext';
-import { submitVote } from '../../api/voting';
+import { submitVote, getTopVotes } from '../../api/voting';
 import { useAuth } from '../../context/AuthContext';
+import { TopVoteResults, VoteTally } from '../../types/vote';
+
+
+
+
+
 type Props = NativeStackScreenProps<VotingStackParamList, 'AdditionalNote'>;
 
 export default function AdditionalNoteScreen({ navigation, route }: Props) {
   const maxLength = 50;
   const subCategorySelected = route.params.subCategorySelected;
-  const { properties, setProperties, currentPropertyId, subcategoryToIdMap } = useAppContext();
+  const { properties, setProperties, currentPropertyId, subcategoryToIdMap, idToCategoryMap } = useAppContext();
   const { state } = useAuth();
   const { additionalNote, setAdditionalNote } = useVotingContext();
 
@@ -30,8 +36,6 @@ export default function AdditionalNoteScreen({ navigation, route }: Props) {
   };
 
   const handleSendVote = async () => {
-
-
 
 
 
@@ -74,7 +78,45 @@ export default function AdditionalNoteScreen({ navigation, route }: Props) {
     // Update the properties in the context
     setProperties(updatedProperties);
 
-    navigation.getParent()?.goBack();
+
+    try {
+          getTopVotes(currentPropertyId!).then((data) => {
+            console.log("DATA out:", data);
+            if (data.length === 0) {
+              return;
+            } 
+            console.log("DATA:", data);
+            const vote_data : TopVoteResults = {
+              top_categories: [],
+              total_votes: data[0].total_votes,
+            }
+            
+            let votes_count = 0;
+            const top_categories : VoteTally [] = [];
+            for (let i = 0; i < data?.length; i++) {
+              
+              top_categories.push({
+                category_code: idToCategoryMap[data[i].category_id].code,
+                category_name: idToCategoryMap[data[i].category_id].name,
+                count: data[i].vote_count,
+              });
+              votes_count += data[i].vote_count;
+              console.log("TOP CATEGORY:", data[i]);
+            }
+            if (vote_data.top_categories.length <= 5 && votes_count < vote_data.total_votes) {
+              top_categories.push({
+                category_code: "other",
+                category_name: "Other",
+                count: vote_data.total_votes - votes_count,
+              });
+            }
+            vote_data.top_categories = top_categories;
+            console.log("VOTE DATA:", vote_data);
+            navigation.navigate('VoteConfirm', { vote_data });
+        });
+    } catch (error) {
+      console.error('Error fetching top votes:', error);
+    }
   };
 
   const handleNoteChange = (text: string) => {

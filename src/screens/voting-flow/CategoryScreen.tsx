@@ -11,7 +11,7 @@ import { PurpleButtonLarge } from '../../components/PurpleButtonLarge';
 import { votingScreenStyles } from '../../assets/theme/votingFlowStyles';
 import { useAppContext } from '../../context/AppContext';
 import { useVotingContext } from '../../context/VotingContext';
-
+import { useEffect } from 'react';
 
 type Props = NativeStackScreenProps<VotingStackParamList, 'Category'>;
 
@@ -21,6 +21,9 @@ export default function CategoryScreen({ navigation, route }: Props) {
   const { categorySelected, setCategorySelected } = useVotingContext();
   const [selectedCategoryCode, setSelectedCategoryCode] = React.useState<string | null>(null);
 
+  useEffect(() => {
+    setSelectedCategoryCode(null);
+  }, []);
 
   const handleClose = () => {
     navigation.getParent()?.goBack();
