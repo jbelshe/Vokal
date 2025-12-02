@@ -20,11 +20,11 @@ const screenWidth = Dimensions.get('window').width;
 
 export default function PropertyDetailsScreen({ route, navigation }: Props) {
   const { propertyId } = route.params;
-  const { properties, categoriesDataMap, idToCategoryMap, subcategoryToCategoryMap } = useAppContext();
+  const { currProperty, properties, categoriesDataMap, idToCategoryMap, subcategoryToCategoryMap } = useAppContext();
   const { currentPropertyId, currentTopVotes, setCurrentTopVotes } = useAppContext();
 
 
-  const property = properties.find(p => p.id === currentPropertyId);
+  const property = properties.find(p => p.id === currentPropertyId) ?? currProperty;
 
   const subcategory_id = property?.vote ? property!.vote!.choice_id : undefined;
   const subcategory_name = subcategory_id ? idToCategoryMap[subcategory_id].name : undefined;

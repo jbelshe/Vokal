@@ -377,45 +377,11 @@ export default function HomeScreen({ navigation }: Props) {
           ) : (
             <ScrollView style={styles.listScrollView} contentContainerStyle={styles.listContent}>
               {properties.map((property) => (
-                <TouchableOpacity
+                <PropertyListCard
                   key={property.id}
-                  style={styles.listItem}
-                  onPress={() => handleCalloutPress(property)}
-                  activeOpacity={0.7}
-                >
-                  <FlatList
-                    // data={property.images || []}
-                    data={property.image_urls || []}
-                    horizontal
-                    keyExtractor={(_, index) => index.toString()}
-                    initialNumToRender={3}
-                    showsHorizontalScrollIndicator={false}
-                    style={styles.imageScrollView}
-                    contentContainerStyle={styles.imageScrollContent}
-                    renderItem={({ item: imgKey }) => (
-                      <ImageWithLoader
-                        uri={imgKey}
-                        resizeMode="cover"
-                        containerStyle={styles.imageContainer}
-                        imageStyle={styles.propertyImage} />
-                    )}
-                  />
-                  <View style={styles.listItemContent}>
-                    <Image
-                      source={property.status === 'vacant' ?
-                        require('../assets/icons/location-purple-icon.png')
-                        :
-                        require('../assets/icons/location-blue-icon.png')
-                      }
-                      style={{ width: 20, height: 20, marginTop: 2 }}
-                    />
-                    <View style={styles.listItemTextContainer}>
-                      <Text style={[styles.listItemAddress, theme.textStyles.body]}>
-                        {property.address_1 + (property.address_2 ? ', #' + property.address_2 : '') || 'Property'}
-                      </Text>
-                    </View>
-                  </View>
-                </TouchableOpacity>
+                  property={property}
+                  onPress={handleCalloutPress}
+                />
               ))}
             </ScrollView>
           )}

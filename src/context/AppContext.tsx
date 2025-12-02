@@ -17,6 +17,9 @@ interface AppContextType {
   subcategoryToIdMap: Record<string, string>;
   setSubcategoryToIdMap: (subcategoryToIdMap: Record<string, string>) => void;
   // Properties state
+
+  currProperty: Property | null;
+  setCurrProperty: (property: Property | null) => void;
   properties: Property[];
   setProperties: (properties: Property[]) => void;
   // Current property ID state
@@ -34,6 +37,7 @@ const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export function AppProvider({ children }: { children: ReactNode }) {
   const [mapRegion, setMapRegion] = useState<Region | null>(null);
+  const [currProperty, setCurrProperty] = useState<Property | null>(null);
   const [properties, setProperties] = useState<Property[]>([]);
   const [currentPropertyId, setCurrentPropertyId] = useState<string | null>(null);
   const [currentTopVotes, setCurrentTopVotes] = useState<TopVoteResults | null>(null);
@@ -81,6 +85,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
       value={{
         mapRegion,
         setMapRegion,
+        currProperty,
+        setCurrProperty,
         properties,
         setProperties,
         currentPropertyId,
