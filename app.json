@@ -42,7 +42,7 @@
       ]
     },
     "web": {
-      "favicon": "./src/assets/icons/favicon.png"
+      "favicon": "./src/assets/icons/vokal-icon.png"
     },
     "extra": {
       "eas": {

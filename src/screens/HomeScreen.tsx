@@ -1,5 +1,5 @@
-import React, { useState, useCallback, useRef } from 'react';
-import { View, Text, StyleSheet, TextInput, Platform, ActivityIndicator, TouchableOpacity, ScrollView, Dimensions, FlatList, Keyboard, TouchableWithoutFeedback } from 'react-native';
+import React, { useState, useCallback, useRef, useEffect } from 'react';
+import { View, Text, StyleSheet, TextInput, Platform, ActivityIndicator, TouchableOpacity, Dimensions, FlatList, Keyboard, TouchableWithoutFeedback } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { AppStackParamList } from '../types/navigation';
@@ -16,8 +16,24 @@ import { useAppContext } from '../context/AppContext';
 import { useAuth } from '../context/AuthContext';
 import PropertyListCard from '@/components/PropertyListCard';
 import { ImageWithLoader } from '@/components/ImageWithLoader';
+import { fetchPlaces, fetchPredictedPlace } from '../api/places';
+import { Dropdown } from 'react-native-element-dropdown';
+
 
 type Props = NativeStackScreenProps<AppStackParamList, 'Home'>;
+
+
+type PlacePrediction = {
+  description: string;
+  place_id: string;
+};
+
+type SelectedPalce = {
+  name: string;
+  address: string;
+  lat: number;
+  lng: number;
+};
 
 export default function HomeScreen({ navigation }: Props) {
 
@@ -31,17 +47,119 @@ export default function HomeScreen({ navigation }: Props) {
   const { currentPropertyId, setCurrentPropertyId } = useAppContext();
   const { state } = useAuth();
 
-  const [searchQuery, setSearchQuery] = useState('');
   const { properties, setProperties, mapRegion, setMapRegion } = useAppContext();
   const [loadingProperties, setLoadingProperties] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'map' | 'list'>('map');
   const [selectedProperty, setSelectedProperty] = useState<Property | null>(null);
   const mapRef = useRef<MapView>(null);
+
+  const [searchQuery, setSearchQuery] = useState('');
+  const [predictedQuery, setPredictedQuery] = useState<PlacePrediction[]>([]);
+  const [loadingPredictions, setLoadingPredictions] = useState(false);
+  const [selectedPlace, setSelectedPlace] = useState<SelectedPalce | null>(null);
+  const [selectedPredictionId, setSelectedPredictionId] = useState<string | null>(null);
+
+
+  const [region, setRegion] = useState<Region>({
+    latitude: 34.0529855,
+    longitude: -118.4705272,
+    latitudeDelta: 0.01,
+    longitudeDelta: 0.01,
+  })
+
+
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const loadingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastRegionRef = useRef<Region | null>(null);
 
   const screenWidth = Dimensions.get('window').width;
+
+
+  const fetchPredictions = useCallback(
+    async (input: string) => {
+      if (!input || input.length < 2) {
+        setPredictedQuery([]);
+        return;
+      }
+
+      setLoadingPredictions(true);
+      try {
+        const json = await fetchPlaces(input);
+
+        if (json.status === 'OK') {
+          setPredictedQuery(json.predictions);
+        } else {
+          console.warn('Places autocomplete error:', json.status, json.error_message);
+          setPredictedQuery([]);
+        }
+      } catch (err) {
+        console.error('Autocomplete error', err);
+        setPredictedQuery([]);
+      } finally {
+        setLoadingPredictions(false);
+      }
+    },
+    []
+  );
+
+  const onSearchTextChange = (text: string) => {
+    setSearchQuery(text);
+
+    // basic debounce: wait 300ms after user stops typing
+    if (debounceRef.current) {
+      clearTimeout(debounceRef.current);
+    }
+
+    debounceRef.current = setTimeout(() => {
+      fetchPredictions(text);
+    }, 300);
+  };
+
+
+  useEffect(() => {
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+    };
+  }, []);
+
+
+  const handleSelectPrediction = useCallback(
+    async (prediction: PlacePrediction) => {
+      try {
+        Keyboard.dismiss();
+        setPredictedQuery([]);
+        setSearchQuery(prediction.description);
+
+        const json = await fetchPredictedPlace(prediction);
+
+        const { location } = json.result.geometry;
+        const lat = location.lat;
+        const lng = location.lng;
+
+        const name = json.result.name ?? prediction.description;
+        const address = json.result.formatted_address ?? prediction.description;
+
+        const newRegion: Region = {
+          latitude: lat,
+          longitude: lng,
+          latitudeDelta: 0.01,
+          longitudeDelta: 0.01,
+        };
+
+        setRegion(newRegion);
+        setSelectedPlace({ name, address, lat, lng });
+
+        // Imperative map control:
+        if (mapRef.current) {
+          mapRef.current.animateToRegion(newRegion, 800);
+        }
+      } catch (err) {
+        console.error('Place details error', err);
+      }
+    },
+    []
+  );
 
   /**
    * Calculates the bounding box for the visible map region plus a buffer
@@ -111,7 +229,7 @@ export default function HomeScreen({ navigation }: Props) {
 
 
   const handleCalloutPress = useCallback((property: Property) => {
-    
+
     console.log("Callout Press, Selected property:", {
       id: property.id,
       title: property.address_1 + ' ' + property.address_2,
@@ -148,21 +266,21 @@ export default function HomeScreen({ navigation }: Props) {
     }, 300);
   }, [loadPropertiesForRegion]);
 
-  /**
-   * Initial load when map is ready - triggers load for initial region.
-   */
-  const handleMapReady = useCallback(() => {
-    // Trigger initial load with the initial region
-    const initialRegion: Region = {
-      latitude: 34.0529855,
-      longitude: -118.4705272,
-      latitudeDelta: 0.01,
-      longitudeDelta: 0.01,
-    };
-    lastRegionRef.current = initialRegion;
-    loadPropertiesForRegion(initialRegion);
-    console.log("Initial region loaded", initialRegion);
-  }, [loadPropertiesForRegion]);
+  // /**
+  //  * Initial load when map is ready - triggers load for initial region.
+  //  */
+  // const handleMapReady = useCallback(() => {
+  //   // Trigger initial load with the initial region
+  //   const initialRegion: Region = {
+  //     latitude: 34.0529855,
+  //     longitude: -118.4705272,
+  //     latitudeDelta: 0.01,
+  //     longitudeDelta: 0.01,
+  //   };
+  //   lastRegionRef.current = initialRegion;
+  //   loadPropertiesForRegion(initialRegion);
+  //   console.log("Initial region loaded", initialRegion);
+  // }, [loadPropertiesForRegion]);
 
   /**
    * Retry loading properties after an error.
@@ -179,11 +297,11 @@ export default function HomeScreen({ navigation }: Props) {
   }, [loadPropertiesForRegion]);
 
   const renderPropertyItem = useCallback(({ item }: { item: Property }) => (
-  <PropertyListCard
-    property={item}
-    onPress={handleCalloutPress}
-  />
-), [handleCalloutPress]);
+    <PropertyListCard
+      property={item}
+      onPress={handleCalloutPress}
+    />
+  ), [handleCalloutPress]);
 
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
@@ -201,31 +319,52 @@ export default function HomeScreen({ navigation }: Props) {
               </View>
             </View>
             <View style={styles.searchBar}>
-              <Ionicons name="search" size={20} color={theme.colors.secondary_text} style={styles.searchIcon} />
-              <TextInput
-                style={styles.input}
-                placeholder="Search..."
-                placeholderTextColor="#999"
-                value={searchQuery}
-                onChangeText={setSearchQuery}
-                returnKeyType="search"
-              />
-              {searchQuery.length > 0 && (
-                <Ionicons
-                  name="close-circle"
-                  size={20}
-                  color="#666"
-                  style={styles.clearIcon}
-                  onPress={() => setSearchQuery('')}
+              <View style={styles.searchBarInputContainer}>
+                <View style={styles.searchTextContainerRow}>
+                <Ionicons name="search" size={20} color={theme.colors.secondary_text} style={styles.searchIcon} />
+                <TextInput
+                  style={styles.input}
+                  placeholder="Search..."
+                  placeholderTextColor="#999"
+                  value={searchQuery}
+                  onChangeText={onSearchTextChange}
+                  returnKeyType="search"
                 />
-              )}
-              <AccountIcon
+                <AccountIcon
                 width={25}
                 height={25}
                 fill={theme.colors.secondary_text}
                 style={styles.accountIcon}
                 onPress={() => navigation.navigate('SettingsMain')}
               />
+              </View>
+                {loadingPredictions && (
+                  <View style={styles.loadingRow}>
+                    <ActivityIndicator size="small" />
+                    <Text style={styles.loadingText}>Searching...</Text>
+                  </View>
+                )}
+                {predictedQuery.length > 0 && (
+                  <View style={styles.suggestionsContainer}>
+                    <FlatList
+                      data={predictedQuery}
+                      keyExtractor={(item) => item.place_id}
+                      keyboardShouldPersistTaps="handled"
+                      renderItem={({ item }) => (
+                        <TouchableOpacity
+                          style={styles.suggestionItem}
+                          onPress={() => handleSelectPrediction(item)}
+                        >
+                          <Text style={styles.suggestionPrimaryText}>
+                            {item.description}
+                          </Text>
+                        </TouchableOpacity>
+                      )}
+                    />
+                  </View>
+                )}
+              
+            </View>
             </View>
           </View>
 
@@ -299,16 +438,11 @@ export default function HomeScreen({ navigation }: Props) {
           <MapView
             ref={mapRef}
             style={[styles.map, viewMode === 'map' ? styles.viewVisible : styles.viewHidden]}
-            initialRegion={{
-              latitude: 34.0529855,
-              longitude: -118.4705272,
-              latitudeDelta: 0.01,
-              longitudeDelta: 0.01,
-            }}
+            initialRegion={region}
             showsUserLocation
             showsMyLocationButton
             onRegionChangeComplete={handleRegionChangeComplete}
-            onMapReady={handleMapReady}
+          // onMapReady={handleMapReady}
           >
             {properties.map((property) => (
               <Marker
@@ -329,18 +463,18 @@ export default function HomeScreen({ navigation }: Props) {
                   }
                   style={{ width: 40, height: 40 }}
                 />
-                <Callout 
-                  tooltip={false} 
-                  style={styles.calloutContainer} 
+                <Callout
+                  tooltip={false}
+                  style={styles.calloutContainer}
                   onPress={() => { handleCalloutPress(property) }}
                 >
                   <View style={styles.calloutContent}>
                     <View style={styles.markerImageContainer}>
                       {property.cover_image_url ? (
                         <ImageWithLoader
-                            uri={property.cover_image_url!}
-                            imageStyle={styles.propertyImage}
-                            resizeMode="cover"
+                          uri={property.cover_image_url!}
+                          imageStyle={styles.propertyImage}
+                          resizeMode="cover"
                         />
                       ) : (
                         <View style={[styles.markerImageContainer, { backgroundColor: '#f0f0f0', justifyContent: 'center', alignItems: 'center' }]}>
@@ -386,20 +520,20 @@ export default function HomeScreen({ navigation }: Props) {
               <Text style={styles.emptyText}>No properties found</Text>
             </View>
           ) : (
-          <FlatList
-            data={properties}
-            renderItem={renderPropertyItem}
-            keyExtractor={item => item.id}
-            initialNumToRender={2}
-            maxToRenderPerBatch={2}
-            windowSize={1}
-            contentContainerStyle={styles.listContent}
-            style={styles.listScrollView}
-            showsVerticalScrollIndicator={false}
-          />
+            <FlatList
+              data={properties}
+              renderItem={renderPropertyItem}
+              keyExtractor={item => item.id}
+              initialNumToRender={2}
+              maxToRenderPerBatch={2}
+              windowSize={1}
+              contentContainerStyle={styles.listContent}
+              style={styles.listScrollView}
+              showsVerticalScrollIndicator={false}
+            />
           )}
         </View>
-      
+
       </View>
     </TouchableWithoutFeedback >
   );
@@ -426,6 +560,7 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 3,
     padding: 12,
+    zIndex: 100,
     marginBottom: 12, // Add space between header and view mode selector
   },
   locationRuleContainer: {
@@ -437,18 +572,10 @@ const styles = StyleSheet.create({
     height: 50,
     width: '100%',
   },
-  searchBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: theme.colors.surface1,
-    borderRadius: 12,
-    paddingHorizontal: 12,
-    height: 50,
-    width: '100%',
-    alignSelf: 'center',
-  },
+
   viewModeSelector: {
     flexDirection: 'row',
+    position: 'relative',
     backgroundColor: 'rgba(255, 255, 255)',
     borderRadius: 20,
     padding: 4,
@@ -457,6 +584,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
+    zIndex: 10
   },
   searchIcon: {
     marginRight: 10,
@@ -677,6 +805,60 @@ const styles = StyleSheet.create({
     opacity: 0,
     // zIndex: 0,
     pointerEvents: 'none',
+  },
+  searchBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: theme.colors.surface1,
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    height: 50,
+    width: '100%',
+    alignSelf: 'center',
+  },
+  searchBarInputContainer: {
+    position: 'absolute',
+    top: 8,
+    left: 16,
+    right: 16,
+    zIndex: 1002,
+  },
+  loadingRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+  },
+  suggestionsContainer: {
+    marginTop: 7,
+    backgroundColor: 'white',
+    borderRadius: 16,
+    borderColor: theme.colors.border,
+    borderWidth: 1,
+    maxHeight: 220,
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 3,
+    zIndex: 1002,
+    position: 'relative'
+  },
+  suggestionItem: {
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    borderBottomWidth: 2,
+    borderBottomColor: '#eee',
+  },
+  suggestionPrimaryText: {
+    fontSize: 14,
+    color: '#222',
+  },
+
+  searchTextContainerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
 
 });

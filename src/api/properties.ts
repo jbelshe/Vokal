@@ -87,7 +87,7 @@ export async function fetchPropertiesInBounds(bounds: {
 
 
     console.log("CHECK MY DATA", data);
-    console.log("CHECK MY DATA", data?.[0].votes);
+    // console.log("CHECK MY DATA", data?.[0].votes);
 
         
     if (!data) {
@@ -114,8 +114,6 @@ export async function fetchPropertiesInBounds(bounds: {
 
         const cover_image_path = path || "../assets/images/fillers/mc-shop-image1.png";
         const cover_image_url =  bucket && path ? convertImagePath(buildImageURL(bucket, path), ImageSize.SIZE_512) : '';
-        console.log("Cover image path:", cover_image_path);
-        console.log("Cover image URL:", cover_image_url);
         const image_paths = bucket && property.property_image_links ? property.property_image_links.map((link: { images: { path: string } }) => {
           const path = link.images.path;
           return path;
@@ -145,6 +143,7 @@ export async function fetchPropertiesInBounds(bounds: {
           link_url: property.link_url,
           cover_image_path,
           cover_image_url,
+          tenant: property.tenant,
           image_paths,
           image_urls,
           estimated_open: property.estimated_open,
@@ -226,8 +225,6 @@ export async function fetchPropertiesForUser(userId: string, offset: number, lim
 
         const cover_image_path = path || "../assets/images/fillers/mc-shop-image1.png";
         const cover_image_url =  bucket && path ? convertImagePath(buildImageURL(bucket, path), ImageSize.SIZE_512) : '';
-        console.log("Cover image path:", cover_image_path);
-        console.log("Cover image URL:", cover_image_url);
         const image_paths = bucket && property.property_image_links ? property.property_image_links.map((link: { images: { path: string } }) => {
           const path = link.images.path;
           return path;
@@ -257,6 +254,7 @@ export async function fetchPropertiesForUser(userId: string, offset: number, lim
           link_url: property.link_url,
           cover_image_path,
           cover_image_url,
+          tenant: property.tenant,
           image_paths,
           image_urls,
           estimated_open: property.estimated_open,

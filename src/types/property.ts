@@ -21,6 +21,7 @@ export interface Property {
   owners_note?: string;
   link_type?: string;
   link_url?: string;
+  tenant?: string;
   estimated_open?: string;
   cover_image?: DatabaseImage;
   cover_image_path?: string;

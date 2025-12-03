@@ -156,8 +156,11 @@ export default function PropertyDetailsScreen({ route, navigation }: Props) {
             {property?.title && (
               <View style={styles.headerRow}>
                 <Text style={[styles.propertyTitle, theme.textStyles.title1]}>
-                  {property.title}
+                  {property.tenant ? property.tenant : property.title}
                 </Text>
+                {!!property.tenant ? <Text style={[styles.propertyTitle, theme.textStyles.title2]}>
+                  {'  @ ' + property.title}
+                </Text> : null}
               </View>
             )}
             <View style={styles.headerRow}>

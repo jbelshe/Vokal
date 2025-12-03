@@ -57,10 +57,9 @@ const DonutChart: FC<DonutChartProps> = ({
                             </View>
                             <Text 
                                 style={[theme.textStyles.title2, styles.legendText]}
-                                numberOfLines={1}
+                                numberOfLines={category.name.indexOf(' ') > -1 ? 2 : 1}
                                 ellipsizeMode="tail"
                                 adjustsFontSizeToFit={true}
-                                minimumFontScale={0.5}
                             >
                                 {category.name}
                             </Text>
@@ -118,6 +117,7 @@ const styles = StyleSheet.create({
         flex: 1,
         flexWrap: 'wrap',
         marginLeft: 8,
+        textAlign: 'center',
     },
     legendDot: {
         width: 16,
