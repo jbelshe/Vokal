@@ -18,3 +18,8 @@ Special pin symbols for voted on property
 
 12/02
 Optimize Image sizes used
+
+12/03: 
+Make the PropertyCardList horizontally scrollable
+Fix Googles Places API for production
+Fix image snapping on PropertyDetails

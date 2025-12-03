@@ -11,8 +11,8 @@ type AuthContextType = {
   state : AuthState;
   dispatch: React.Dispatch<AuthAction>;
   handleSendOtp: (phoneNumber: string) => Promise<void>;
-  handleVerifyOtp: (otpInput: string) => Promise<boolean>;
-  signIn: (tokenOrUser: string | any) => Promise<void>;
+  handleVerifyOtp: (otpInput: string) => Promise<number>;
+  // signIn: (tokenOrUser: string | any) => Promise<void>;
   signOut: () => Promise<void>;
   saveNewProfileToDatabase: (currProfile: Profile) => Promise<boolean>;
   updateProfileInDatabase: (currProfile: Partial<Profile>) => Promise<boolean>;
@@ -177,6 +177,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         });
         if (sessionError) {
           console.error(`[${source}] Error setting session:`, sessionError);
+          dispatch({ type: "SIGN_OUT", msg: "Bad session" });
           throw sessionError;
         }
       }
@@ -292,26 +293,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
 
 
-  const signIn = async (currSession: any) => {
-    console.log("Signing in...");
-    console.log("tokenOrUser: ", currSession);
+  // const signIn = async (currSession: any) => {
+  //   console.log("Signing in...");
+  //   console.log("tokenOrUser: ", currSession);
 
-    if (currSession) {
-      // Handle both Supabase Session and our custom Session type
-      const sessionToSave: Session = {
-        access_token: currSession.access_token || '',
-        refresh_token: currSession.refresh_token || '',
-        token_type: currSession.token_type || 'bearer',
-        expires_in: currSession.expires_in || 0,
-        user: currSession.user || null,
-      };
-      supabase.auth.setSession(sessionToSave);
-      const json = JSON.stringify(sessionToSave);
-      console.log("Saving session: ", json);
-      await SecureStore.setItemAsync(SESSION_KEY, json)
-        .catch(error => console.error('Error saving session:', error));
-    }
-  };
+  //   if (currSession) {
+  //     // Handle both Supabase Session and our custom Session type
+  //     const sessionToSave: Session = {
+  //       access_token: currSession.access_token || '',
+  //       refresh_token: currSession.refresh_token || '',
+  //       token_type: currSession.token_type || 'bearer',
+  //       expires_in: currSession.expires_in || 0,
+  //       user: currSession.user || null,
+  //     };
+  //     supabase.auth.setSession(sessionToSave);
+  //     const json = JSON.stringify(sessionToSave);
+  //     console.log("Saving session: ", json);
+  //     await SecureStore.setItemAsync(SESSION_KEY, json)
+  //       .catch(error => console.error('Error saving session:', error));
+  //   }
+  // };
 
   const signOut = async () => {
     try {
@@ -334,29 +335,42 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
 
 
-  const handleVerifyOtp = async (otpInput: string): Promise<boolean> => {
+  const handleVerifyOtp = async (otpInput: string): Promise<number> => {
     try {
       const result = await verifyOtp((state.profile?.phoneNumber!), otpInput!);   // TODO: Handle country codes
       if (result && result.newSession) {
         console.log("[VERIFY_OTP] OTP verified successfully");
-        
+        console.log("Sesssion + Profile:", result)
         // Set the session - this will trigger onAuthStateChange which will trigger handleSessionChange
         // and handle profile loading and state updates consistently
         await supabase.auth.setSession({
           access_token: result.newSession.access_token,
           refresh_token: result.newSession.refresh_token,
         });
+        
+        if (!result.profile) {
+          console.log("OTP Verified, but no profile found => New User => setting onboarding to true");
+          const partProfile  : Partial<Profile> = { 
+            userId: result.newSession.user?.id ?? '',
+            phoneNumber: result.newSession.user?.phone ?? '',
+          };
+          dispatch({ type: "SET_ONBOARDING", payload: true, msg: "handleVerifyOtp" });
+          dispatch({ type: "SET_PROFILE", payload: partProfile, msg: "handleVerifyOtp (no profile)" });
+          return 1;
+        }
+        else {
+          console.log("Profile found, existing user => setting onboarding to false");
+          dispatch({ type: "SET_ONBOARDING", payload: false, msg: "handleVerifyOtp" });
+          dispatch({ type: "SET_PROFILE", payload: result.profile, msg: "handleVerifyOtp" });
+        }
 
-        dispatch({ type: "SET_PROFILE", payload: result.profile, msg: "handleVerifyOtp" })
-        // dispatch({ type: 'SET_SESSION', payload: result.newSession, msg: "handleVerifyOtp" });r
-        // onAuthStateChange will handle the rest (profile loading, onboarding state, etc.)
-        return true;
+        return 0;
       }
       console.error('[VERIFY_OTP] OTP verification failed - no session returned');
-      return false;
+      return -1;
     } catch (error) {
       console.error('[VERIFY_OTP] Error verifying OTP:', error);
-      return false;
+      return -1;
     }
   }
 
@@ -398,7 +412,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     dispatch,
     handleSendOtp,
     handleVerifyOtp,
-    signIn,
+    // signIn,
     signOut,  
     saveNewProfileToDatabase,
     updateProfileInDatabase

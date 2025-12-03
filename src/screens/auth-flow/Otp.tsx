@@ -61,22 +61,26 @@ export default function Otp({ navigation }: Props) {
       const success = await handleVerifyOtp(otpValue);
       console.log("handleVerifyOtp success: ", success);
       
-      if (success) {     
+      if (success == 1) {     
         console.log("handleVerifyOtp success, onboarding: ", state.isOnboarding);
-        if (state.isOnboarding) {
-          navigation.navigate('CreateProfile1'); // if user exists, AuthContext sends them to HomeScreen
-        } else {
+        navigation.navigate('CreateProfile1'); // if user exists, AuthContext sends them to HomeScreen
+        
+      } else if (success == 0) {
           console.log("handleVerifyOtp success, no onboarding: ", success);
           setTimeout(() => {
+            console.log("Waiting....")
             // wait until the auth context has updated the state.  Navigation will automatically switch to AppContext
           }, 5000);
-        }
-      } else {
+      }
+      else if (success < 0) {
         Alert.alert(
           'Incorrect Code',
           'The verification code you entered is incorrect. Please try again.',
           [{ text: 'OK', onPress: () => setOtpValue('') }]
         );
+      }
+      else { 
+        console.log("Unknown error from handleVerifyOtp - check handleVerifyOtp logic in Otp.tsx: ", success);
       }
     } catch (error) {
       console.error('Error verifying OTP:', error);

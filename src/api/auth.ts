@@ -59,7 +59,7 @@ export async function verifyOtp(phone: string, token: string) {
     }
     else {
       console.warn('OTP verification failed — no user returned');
-      return { newSession, profile: null };
+      return { newSession, profile: { userID: newUser?.id || '', phone: newUser } };
     }
   } catch (err) {
     console.error('verifyOtp exception:', err);
@@ -142,6 +142,7 @@ export async function doesUserExist(userId: string) : Promise<boolean> {
   }
 }
 
+
 export async function fetchUserProfile(userId: string, phone: string) {
   try {
     console.log("Fetching user profile for user:", userId)
@@ -149,7 +150,6 @@ export async function fetchUserProfile(userId: string, phone: string) {
     // console.log("USER:", user)
     // const phone = user?.phone;
     // console.log("PHONE:", phone)
-    console.log("Fetching user profile for user:", userId)
     const { data, error } = await supabase.from('profiles')
       .select(`*`)
       .eq('id', userId)

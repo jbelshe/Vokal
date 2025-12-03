@@ -43,7 +43,7 @@ const parseBirthdayFromProfile = (birthday: Birthday | null | undefined): { mont
 };
 
 export default function CreateProfile2({ navigation }: Props) {
-  const { signIn, state, dispatch, saveNewProfileToDatabase } = useAuth();
+  const { state, dispatch, saveNewProfileToDatabase } = useAuth();
   const [selectedGender, setSelectedGender] = React.useState<string>(state.profile?.gender || '');
   const [email, setEmail] = React.useState(state.profile?.email || '');
   const [zipCode, setZipCode] = React.useState(state.profile?.zipCode || '');
@@ -142,7 +142,7 @@ export default function CreateProfile2({ navigation }: Props) {
       return;
     }
     // If date is valid and profile saved, proceed with sign in
-    signIn(state.session?.access_token!);
+    // signIn(state.session?.access_token!);
     console.log("Navigating to onboarding...");
     navigation.navigate('Onboarding1');
   };

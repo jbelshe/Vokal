@@ -117,36 +117,41 @@ export default React.memo(function VoteHistoryScreen({ navigation, route }: Prop
             <Text style={[theme.textStyles.title1, { marginLeft: 24, marginVertical: 12 }]}>All Properties</Text>
             {loading ? <ActivityIndicator size="large" color={theme.colors.primary_gradient_start} />
                 :
-                <FlatList 
+                votedProperties.length !== 0 ? 
+                    <FlatList 
 
-                    data={votedProperties}
-                    renderItem={renderItem}
-                    keyExtractor={item => item.id}
-                    onEndReached={handleLoadMore}
-                    onEndReachedThreshold={0.5}
-                    ListFooterComponent={
-                        loading ? <ActivityIndicator size="small" color={theme.colors.primary_gradient_start} /> : null
-                    }
-                    initialNumToRender={10}
-                    maxToRenderPerBatch={5}
-                    windowSize={10}
-                    removeClippedSubviews={false}
-
-                    contentContainerStyle={styles.listContent}
-                    style={styles.listScrollView}
-                    showsVerticalScrollIndicator={false}
-                    scrollEventThrottle={16}
-                    onMomentumScrollEnd={({ nativeEvent } ) => {
-                        const { layoutMeasurement, contentOffset, contentSize } = nativeEvent;
-                        const isCloseToBottom = 
-                            layoutMeasurement.height + contentOffset.y >= contentSize.height - 100;
-                        if (isCloseToBottom) {
-                            console.log('Loading more votes...');
-                            handleLoadMore();
+                        data={votedProperties}
+                        renderItem={renderItem}
+                        keyExtractor={item => item.id}
+                        onEndReached={handleLoadMore}
+                        onEndReachedThreshold={0.5}
+                        ListFooterComponent={
+                            loading ? <ActivityIndicator size="small" color={theme.colors.primary_gradient_start} /> : null
                         }
-                    }}
-                >
-                </FlatList>
+                        initialNumToRender={10}
+                        maxToRenderPerBatch={5}
+                        windowSize={10}
+                        removeClippedSubviews={false}
+
+                        contentContainerStyle={styles.listContent}
+                        style={styles.listScrollView}
+                        showsVerticalScrollIndicator={false}
+                        scrollEventThrottle={16}
+                        onMomentumScrollEnd={({ nativeEvent } ) => {
+                            const { layoutMeasurement, contentOffset, contentSize } = nativeEvent;
+                            const isCloseToBottom = 
+                                layoutMeasurement.height + contentOffset.y >= contentSize.height - 100;
+                            if (isCloseToBottom) {
+                                console.log('Loading more votes...');
+                                handleLoadMore();
+                            }
+                        }}
+                    >
+                    </FlatList>
+                : 
+                <View style={{ flex: 1, marginTop: 100, alignItems: 'center', padding: 20 }}>
+                    <Text style={[theme.textStyles.body, { color: theme.colors.primary_text, textAlign: 'center', maxWidth: '80%' }]}>You haven't cast any votes yet. Cast your first vote to see it appear here.</Text>
+                </View>
             }
 
         </View>

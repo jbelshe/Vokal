@@ -117,11 +117,14 @@ export default function HomeScreen({ navigation }: Props) {
   };
 
 
-  useEffect(() => {
-    return () => {
-      if (debounceRef.current) clearTimeout(debounceRef.current);
-    };
-  }, []);
+  // useEffect(() => {
+
+  //   console.log("HomeScreen useEffect", region);
+  //   loadPropertiesForRegion(region);
+  //   return () => {
+  //     if (debounceRef.current) clearTimeout(debounceRef.current);
+  //   };
+  // }, []);
 
 
   const handleSelectPrediction = useCallback(
@@ -193,6 +196,7 @@ export default function HomeScreen({ navigation }: Props) {
    * Loads properties for the visible map region plus buffer.
    */
   const loadPropertiesForRegion = useCallback(async (region: Region) => {
+    console.log("loadPropertiesForRegion:", region);
     try {
       setLoadingProperties(true);
       setError(null);
@@ -269,18 +273,13 @@ export default function HomeScreen({ navigation }: Props) {
   // /**
   //  * Initial load when map is ready - triggers load for initial region.
   //  */
-  // const handleMapReady = useCallback(() => {
-  //   // Trigger initial load with the initial region
-  //   const initialRegion: Region = {
-  //     latitude: 34.0529855,
-  //     longitude: -118.4705272,
-  //     latitudeDelta: 0.01,
-  //     longitudeDelta: 0.01,
-  //   };
-  //   lastRegionRef.current = initialRegion;
-  //   loadPropertiesForRegion(initialRegion);
-  //   console.log("Initial region loaded", initialRegion);
-  // }, [loadPropertiesForRegion]);
+  const handleMapReady = useCallback(() => {
+    console.log("handleMapReady", state);
+    // Trigger initial load with the initial region
+    lastRegionRef.current = region;
+    loadPropertiesForRegion(region);
+    console.log("Initial region loaded", region);
+  }, [loadPropertiesForRegion]);
 
   /**
    * Retry loading properties after an error.
@@ -442,7 +441,7 @@ export default function HomeScreen({ navigation }: Props) {
             showsUserLocation
             showsMyLocationButton
             onRegionChangeComplete={handleRegionChangeComplete}
-          // onMapReady={handleMapReady}
+            onMapReady={handleMapReady}
           >
             {properties.map((property) => (
               <Marker
