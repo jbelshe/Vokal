@@ -1,6 +1,6 @@
 // src/components/PropertyListCard.tsx
-import React from 'react';
-import { View, Text, TouchableOpacity, Image, StyleSheet, FlatList } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, TouchableOpacity, Image, StyleSheet, FlatList, Pressable } from 'react-native';
 import { theme } from '@/assets/theme';
 import { Property } from '@/types/property';
 import { ImageWithLoader } from './ImageWithLoader';
@@ -22,6 +22,7 @@ const MemoizedImage = React.memo(({ imgKey }: { imgKey: string }) => (
     />
 ), (prevProps, nextProps) => prevProps.imgKey === nextProps.imgKey);
 
+
 const PropertyListCard = React.memo(({ property, onPress }: PropertyListCardProps) => {
     // // Debug logging
     // React.useEffect(() => {
@@ -31,9 +32,22 @@ const PropertyListCard = React.memo(({ property, onPress }: PropertyListCardProp
     //     };
     // }, [property.id]);
 
+    
+    const [isDraggingImages, setIsDraggingImages] = useState(false);
+
+    const isDraggingImagesRef = React.useRef(false);
+
     const handlePress = React.useCallback(() => {
+      if (!isDraggingImagesRef.current) {
         onPress(property);
+      }
     }, [onPress, property]);
+    
+    // const memoizedImages = React.useMemo(() => {
+    //     return property.image_urls?.slice(0, 2).map(url => 
+    //         convertImagePath(url, ImageSize.SIZE_512)
+    //     ) || [];
+    // }, [property.image_urls]);
 
     return (
         <TouchableOpacity
@@ -42,23 +56,34 @@ const PropertyListCard = React.memo(({ property, onPress }: PropertyListCardProp
             onPress={handlePress}
             activeOpacity={0.7}
         >
-            <FlatList
-                // data={property.images || []}
+            <View style={styles.imageScrollContainer}>
+              <MemoizedImage imgKey={convertImagePath(property.image_urls![0], ImageSize.SIZE_512)} />
+              { property.image_urls!.length > 1 && <MemoizedImage imgKey={convertImagePath(property.image_urls![1], ImageSize.SIZE_512)} />}
+            </View>
+            {/* <View style={styles.imageScrollContainer}>
+                {memoizedImages.map((imgKey, index) => (
+                    <MemoizedImage 
+                        key={`${property.id}-${index}`}
+                        imgKey={imgKey} 
+                    />
+                ))}
+            </View> */}
+            {/* <FlatList
                 data={property.image_urls || []}
                 horizontal
                 keyExtractor={(_, index) => index.toString()}
                 initialNumToRender={2}
-                maxToRenderPerBatch={1}
-                windowSize={2}
+                maxToRenderPerBatch={2}
+                windowSize={1}
                 showsHorizontalScrollIndicator={false}
                 style={styles.imageScrollView}
                 contentContainerStyle={styles.imageScrollContent}
-                scrollEventThrottle={16}  
-                decelerationRate="fast"
                 renderItem={({ item: imgKey }) => (
-                    <MemoizedImage imgKey={convertImagePath(imgKey, ImageSize.SIZE_512)} />
+                    <View style={styles.imageItemContainer}>
+                      <MemoizedImage imgKey={convertImagePath(imgKey, ImageSize.SIZE_512)} />
+                    </View>
                 )}
-            />
+            /> */}
             <View style={styles.listItemContent}>
                 <Image
                     source={property.status === 'vacant' ?
@@ -74,6 +99,7 @@ const PropertyListCard = React.memo(({ property, onPress }: PropertyListCardProp
                     </Text>
                 </View>
             </View>
+            {/* </View> */}
         </TouchableOpacity>
     )}, (prevProps, nextProps) => {
     // Only re-render if property or onPress changes
@@ -83,7 +109,7 @@ const PropertyListCard = React.memo(({ property, onPress }: PropertyListCardProp
 });
 
 const styles = StyleSheet.create({
-      listItem: {
+  listItem: {
     backgroundColor: '#fff',
     borderRadius: 12,
     padding: 16,
@@ -110,22 +136,32 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   imageScrollView: {
-    marginHorizontal: -16, // Counteract the padding of listItem
     marginTop: 4,
     marginBottom: 4,
-
+    marginHorizontal: -6, // Remove negative margin to prevent horizontal overflow
   },
   imageScrollContent: {
-    paddingHorizontal: 16, // Match listItem padding
-    paddingBottom: 16,
+    paddingHorizontal: 12, 
+    paddingBottom: 8,
     paddingTop: 8,
-    paddingRight: 4, // Extra space on the right for better scrolling
+    paddingRight: 4,
+  },
+  imageScrollContainer: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 8,
+    gap: 12,
+    marginLeft: 12
+  },
+  imageItemContainer: {
+    marginRight: 4, 
   },
   imageContainer: {
     width: 150, 
     height: 150, 
     borderRadius: 12, // Slightly larger border radius
-    marginRight: 12,
     overflow: 'hidden',
     backgroundColor: theme.colors.surface2,
     shadowColor: '#000',

@@ -523,9 +523,10 @@ export default function HomeScreen({ navigation }: Props) {
               data={properties}
               renderItem={renderPropertyItem}
               keyExtractor={item => item.id}
-              initialNumToRender={2}
-              maxToRenderPerBatch={2}
-              windowSize={1}
+              initialNumToRender={6}
+              maxToRenderPerBatch={6}
+              windowSize={5}
+              nestedScrollEnabled
               contentContainerStyle={styles.listContent}
               style={styles.listScrollView}
               showsVerticalScrollIndicator={false}
@@ -649,10 +650,15 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   loadingContainer: {
-    flex: 1,
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#fff',
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    zIndex: 1000,
   },
   loadingText: {
     marginTop: 12,

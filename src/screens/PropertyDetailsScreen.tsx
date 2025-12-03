@@ -131,7 +131,6 @@ export default function PropertyDetailsScreen({ route, navigation }: Props) {
           <FlatList
             data={property.image_urls || []}
             horizontal
-            pagingEnabled
             showsHorizontalScrollIndicator={false}
             style={styles.imageScrollView}
             contentContainerStyle={styles.imageScrollContent}
@@ -307,6 +306,7 @@ const styles = StyleSheet.create({
 
   scrollContent: {
     paddingBottom: 40,
+    paddingEnd: 8,
   },
 
   imageScrollView: {

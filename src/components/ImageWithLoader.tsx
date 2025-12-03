@@ -46,7 +46,7 @@ const ImageWithLoaderComponent : React.FC<ImageWithLoaderProps> = memo(({
   return (
     <View style={containerStyle}>
       <Image
-        source={{ uri : sizedUri }}
+        source={{ uri : sizedUri, cache: 'force-cache' }}
         style={[{ width: "100%", height: "100%" }, imageStyle]}
         resizeMode={resizeMode}
         onLoadEnd={handleLoadEnd}
