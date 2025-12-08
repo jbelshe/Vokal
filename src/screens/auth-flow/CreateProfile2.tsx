@@ -272,6 +272,9 @@ export default function CreateProfile2({ navigation }: Props) {
               if (formattedText.length <= 5) {
                 setZipCode(formattedText);
               }
+              if (formattedText.length === 5) {
+                Keyboard.dismiss();
+              }
             }}
             keyboardType="number-pad"
             maxLength={5}

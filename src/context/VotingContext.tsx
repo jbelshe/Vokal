@@ -13,6 +13,7 @@ type VotingContextType = {
   setSubCategorySelected: (subCategory: string) => void;
   additionalNote: string | "";
   setAdditionalNote: (note: string) => void;
+  resetVoting: () => void;
 };
 
 
@@ -23,18 +24,13 @@ export function VotingProvider({ children }: { children: ReactNode }) {
   const [categorySelected, setCategorySelected] = React.useState<string | null>(null);
   const [subCategorySelected, setSubCategorySelected] = React.useState<string | null>(null);
   const [additionalNote, setAdditionalNote] = React.useState<string | "">("");
-  // const [voteDetails, setVoteDetails] = React.useState<DisplayVote>({
-  //   category: "",
-  //   category_code: "",
-  //   subcategory: "",
-  //   subcategory_code: "",
-  //   additional_note: "",
-  // });
 
+  function resetVoting() {
+    setCategorySelected(null);
+    setSubCategorySelected(null);
+    setAdditionalNote("");
+  }
 
-  // const updateVoteDetails = React.useCallback((updates: Partial<DisplayVote>) => {
-  //   setVoteDetails(prev => prev ? { ...prev, ...updates } : { ...updates } as DisplayVote);
-  // }, []);
 
   return (
     <VotingContext.Provider value={{
@@ -44,8 +40,7 @@ export function VotingProvider({ children }: { children: ReactNode }) {
       setSubCategorySelected,
       additionalNote,
       setAdditionalNote,
-      // voteDetails,
-      // updateVoteDetails,
+      resetVoting,
     }}>
       {children}
     </VotingContext.Provider>

@@ -1,11 +1,12 @@
-import React, { useEffect } from 'react';
-import { View, Image, Text, ImageBackground, StyleSheet, TouchableOpacity, Alert, Keyboard, TouchableWithoutFeedback } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, Image, Text, ImageBackground, StyleSheet, TouchableOpacity, Alert, Keyboard, Platform, TouchableWithoutFeedback, KeyboardAvoidingView } from 'react-native';
 import { CodeField, Cursor, useBlurOnFulfill, useClearByFocusCell } from 'react-native-confirmation-code-field';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { AuthStackParamList } from '../../types/navigation';
 import { theme } from '@/assets/theme';
 import { RoundNextButton } from '../../components/RoundNextButton';
 import { useAuth } from '@/context/AuthContext';
+
 
 type Props = NativeStackScreenProps<AuthStackParamList, 'OTP'>;
 
@@ -20,6 +21,8 @@ export default function Otp({ navigation }: Props) {
     setValue: setOtpValue,
   });
 
+  const forceCreateProfile = false;  // only set 
+
 
   const {state, handleVerifyOtp , handleSendOtp} = useAuth();
 
@@ -28,6 +31,24 @@ export default function Otp({ navigation }: Props) {
   const safePhoneNumber = state.profile?.phoneNumber!;
 
   const isCodeComplete = otpValue.length === 6;
+
+  const [keyboardVisible, setKeyboardVisible] = useState(false);
+  
+  useEffect(() => {
+      const keyboardDidShowListener = Keyboard.addListener(
+        Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow',
+        () => setKeyboardVisible(true)
+      );
+      const keyboardDidHideListener = Keyboard.addListener(
+        Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide',
+        () => setKeyboardVisible(false)
+      );
+  
+      return () => {
+        keyboardDidShowListener.remove();
+        keyboardDidHideListener.remove();
+      };
+    }, []);
 
   const handleResendCode = () => {
     if (resendDisabled) return;
@@ -55,6 +76,11 @@ export default function Otp({ navigation }: Props) {
 
   const handleNext = async () => {
     if (!isCodeComplete) return;
+
+    if (forceCreateProfile) {
+      navigation.navigate('CreateProfile1');
+      return;
+    }
     
     setError(null);
     try {
@@ -168,9 +194,15 @@ export default function Otp({ navigation }: Props) {
           </Text>
         </TouchableOpacity>
       </View>
-      <View style={styles.buttonContainer}>
-        <RoundNextButton onPress={handleNext} disabled={!isCodeComplete} />
-      </View>
+      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={styles.buttonContainer}>
+        <View style={[
+            styles.buttonContainer,
+            { paddingBottom: keyboardVisible ? 10 : 40, paddingRight: keyboardVisible ? 10 : 20 }
+          ]}>
+          <RoundNextButton onPress={handleNext} disabled={!isCodeComplete} />
+        </View>
+      </KeyboardAvoidingView>
+
     </ImageBackground>
     </TouchableWithoutFeedback>
   );
@@ -205,7 +237,7 @@ const styles = StyleSheet.create({
     width: '100%',
     padding: 20,
     paddingBottom: 40,
-    alignItems: 'flex-end',
+    alignItems: 'flex-end',  
   },
   codeFieldRoot: {
     marginTop: 5,

@@ -22,7 +22,7 @@ export default function SubCategoryScreen({ navigation, route }: Props) {
   const selectedCategoryCode = route.params.selectedCategoryCode;
   // const propertyId = route.params.propertyId;
   const { categoriesDataMap, categoryToSubcategoryMap } = useAppContext();
-  const { subCategorySelected, setSubCategorySelected } = useVotingContext();
+  const { subCategorySelected, setSubCategorySelected, resetVoting } = useVotingContext();
 
   const handleSubCategorySelect = (subcategory_code: string) => {
     console.log('Selected Subcategory:', subcategory_code);
@@ -30,6 +30,7 @@ export default function SubCategoryScreen({ navigation, route }: Props) {
   };
 
   const handleClose = () => {
+    resetVoting();
     navigation.getParent()?.goBack();
   };
 

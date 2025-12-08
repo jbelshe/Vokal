@@ -49,7 +49,7 @@ export default function VoteConfirmScreen({ navigation, route }: props) {
 
 
 
-    const { categorySelected, subCategorySelected, additionalNote } = useVotingContext();
+    const { categorySelected, subCategorySelected, additionalNote, resetVoting } = useVotingContext();
     const { categoriesDataMap, subcategoryToIdMap, idToCategoryMap } = useAppContext();
 
     console.log("Category Selected:", categoriesDataMap[categorySelected!].name);
@@ -68,10 +68,13 @@ export default function VoteConfirmScreen({ navigation, route }: props) {
 
 
     const handleClose = () => {
+        
+        resetVoting();
         navigation.getParent()?.goBack();
     };
 
     const handleBackToMain = () => {    
+        resetVoting();
         navigation.getParent()?.goBack();
         navigation.getParent()?.goBack();
     };

@@ -42,12 +42,7 @@ const PropertyListCard = React.memo(({ property, onPress }: PropertyListCardProp
         onPress(property);
       }
     }, [onPress, property]);
-    
-    // const memoizedImages = React.useMemo(() => {
-    //     return property.image_urls?.slice(0, 2).map(url => 
-    //         convertImagePath(url, ImageSize.SIZE_512)
-    //     ) || [];
-    // }, [property.image_urls]);
+
 
     return (
         <TouchableOpacity
@@ -60,14 +55,7 @@ const PropertyListCard = React.memo(({ property, onPress }: PropertyListCardProp
               <MemoizedImage imgKey={convertImagePath(property.image_urls![0], ImageSize.SIZE_512)} />
               { property.image_urls!.length > 1 && <MemoizedImage imgKey={convertImagePath(property.image_urls![1], ImageSize.SIZE_512)} />}
             </View>
-            {/* <View style={styles.imageScrollContainer}>
-                {memoizedImages.map((imgKey, index) => (
-                    <MemoizedImage 
-                        key={`${property.id}-${index}`}
-                        imgKey={imgKey} 
-                    />
-                ))}
-            </View> */}
+
             {/* <FlatList
                 data={property.image_urls || []}
                 horizontal

@@ -1,12 +1,11 @@
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { AppStackParamList } from '../types/navigation';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Platform} from 'react-native';
 import DonutChart from '../components/DonutChart';
 import { colors } from '../assets/theme/colors';
 import { theme } from '../assets/theme';
 import CloseIcon from '../assets/icons/close.svg';
 import { CloseButtonLarge } from '../components/CloseButtonLarge';
-import { Platform } from 'react-native';
 import { VoteTally } from '../types/vote';
 
 type props = NativeStackScreenProps<AppStackParamList, 'VotingResults'>;

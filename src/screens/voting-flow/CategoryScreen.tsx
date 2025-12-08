@@ -18,7 +18,7 @@ type Props = NativeStackScreenProps<VotingStackParamList, 'Category'>;
 export default function CategoryScreen({ navigation, route }: Props) {
 
   const { categoriesDataMap } = useAppContext();
-  const { categorySelected, setCategorySelected } = useVotingContext();
+  const { categorySelected, setCategorySelected, resetVoting } = useVotingContext();
   const [selectedCategoryCode, setSelectedCategoryCode] = React.useState<string | null>(null);
 
   useEffect(() => {
@@ -26,6 +26,7 @@ export default function CategoryScreen({ navigation, route }: Props) {
   }, []);
 
   const handleClose = () => {
+    resetVoting();
     navigation.getParent()?.goBack();
   };
 

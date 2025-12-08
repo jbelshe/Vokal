@@ -1,5 +1,5 @@
-import React from 'react';
-import { View, Button, Text, Image, ImageBackground, StyleSheet, TextInput, TouchableOpacity, Keyboard } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Button, Text, Image, ImageBackground, StyleSheet, TextInput, TouchableOpacity, Keyboard, KeyboardAvoidingView, Platform } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { AuthStackParamList } from '../../types/navigation';
 import { theme } from '../../assets/theme';
@@ -10,6 +10,24 @@ import { TouchableWithoutFeedback } from 'react-native';
 type Props = NativeStackScreenProps<AuthStackParamList, 'EnterPhoneNumber'>;
 
 export default function EnterPhoneNumber({ navigation }: Props) {
+  const [keyboardVisible, setKeyboardVisible] = useState(false);
+
+  useEffect(() => {
+    const keyboardDidShowListener = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow',
+      () => setKeyboardVisible(true)
+    );
+    const keyboardDidHideListener = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide',
+      () => setKeyboardVisible(false)
+    );
+
+    return () => {
+      keyboardDidShowListener.remove();
+      keyboardDidHideListener.remove();
+    };
+  }, []);
+
   const { state, handleSendOtp } = useAuth();
 
   const [phoneNumberLocal, setPhoneNumberLocal] = React.useState('');
@@ -87,9 +105,14 @@ export default function EnterPhoneNumber({ navigation }: Props) {
             )}
           </View>
         </View>
-        <View style={styles.buttonContainer}>
-          <RoundNextButton onPress={handleNext} disabled={!isValid} />
-        </View>
+        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={styles.buttonContainer}>
+          <View style={[
+            styles.buttonContainer,
+            { paddingBottom: keyboardVisible ? 10 : 40, paddingRight: keyboardVisible ? 10 : 20 }
+          ]}>
+            <RoundNextButton onPress={handleNext} disabled={!isValid} />
+          </View>
+        </KeyboardAvoidingView>
     </ImageBackground>
     </TouchableWithoutFeedback>
   );
@@ -159,7 +182,7 @@ const styles = StyleSheet.create({
     width: '100%',
     padding: 20,
     paddingBottom: 40,
-    alignItems: 'flex-end',  // Align to the right
+    alignItems: 'flex-end',  
   },
 
 });

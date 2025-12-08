@@ -65,7 +65,18 @@ export const votingScreenStyles = StyleSheet.create({
     right: 0,
     bottom: 0,
     paddingBottom: Platform.OS === 'ios' ? 48 : 24,
-    paddingTop: 16,
+    paddingTop: 16
+  },
+  movingButtonContainer: {
+    width: '100%',
+    paddingVertical: 24,
+    alignItems: 'flex-end',
+  },
+  keyboardAvoidingView: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
   },
   contentContainer: {
     paddingHorizontal: 16,

@@ -101,6 +101,7 @@ const styles = StyleSheet.create({
         display: 'flex',
         flexDirection: 'row',
         flexWrap: 'wrap',
+        columnGap: '6%',
     },
     legendItem: {
         width: '47%',
@@ -110,7 +111,6 @@ const styles = StyleSheet.create({
         backgroundColor: colors.surface1,
         padding: 8,
         borderRadius: 12,
-        marginHorizontal: 5,
         minHeight: 60,
     },
     legendText: {

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, TextInput, TouchableWithoutFeedback, Keyboard } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, TextInput, TouchableWithoutFeedback, Keyboard, KeyboardAvoidingView, Platform } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { theme } from '../../assets/theme';
 import CloseIcon from '../../assets/icons/close.svg';
@@ -25,13 +25,14 @@ export default function AdditionalNoteScreen({ navigation, route }: Props) {
   const subCategorySelected = route.params.subCategorySelected;
   const { properties, setProperties, currentPropertyId, subcategoryToIdMap, idToCategoryMap } = useAppContext();
   const { state } = useAuth();
-  const { additionalNote, setAdditionalNote } = useVotingContext();
+  const { additionalNote, setAdditionalNote, resetVoting } = useVotingContext();
 
   const handleBack = () => {
     navigation.goBack();
   };
 
   const handleClose = () => {
+    resetVoting();
     navigation.getParent()?.goBack();
   };
 
@@ -174,12 +175,16 @@ export default function AdditionalNoteScreen({ navigation, route }: Props) {
         </View>
 
         {/* Bottom Button */}
-        <View style={styles.buttonContainer}>
-          <PurpleButtonLarge
-            title="Send Vote"
-            onPress={handleSendVote}
-          />
-        </View>
+        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} 
+            style={styles.keyboardAvoidingView}
+            keyboardVerticalOffset={Platform.OS === 'ios' ? 20 : 0}>
+          <View style={[styles.movingButtonContainer, { marginBottom: 20 }]}>
+            <PurpleButtonLarge
+              title="Send Vote"
+              onPress={handleSendVote}
+            />
+          </View>
+        </KeyboardAvoidingView>
       </View>
     </TouchableWithoutFeedback>
   );

@@ -1,5 +1,5 @@
-import React from 'react';
-import { View, Image, Text, ImageBackground, StyleSheet, TextInput, TouchableWithoutFeedback, Keyboard } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Image, Text, ImageBackground, StyleSheet, TextInput, Platform, TouchableWithoutFeedback, Keyboard, KeyboardAvoidingView } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { AuthStackParamList } from '../../types/navigation';
 import { theme } from '../../assets/theme';
@@ -18,6 +18,24 @@ export default function CreateProfile1({ navigation }: Props) {
 
   const input1Ref = useRef<TextInput>(null);
   const input2Ref = useRef<TextInput>(null);
+
+
+  const [keyboardVisible, setKeyboardVisible] = useState(false);
+  useEffect(() => {
+        const keyboardDidShowListener = Keyboard.addListener(
+          Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow',
+          () => setKeyboardVisible(true)
+        );
+        const keyboardDidHideListener = Keyboard.addListener(
+          Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide',
+          () => setKeyboardVisible(false)
+        );
+    
+        return () => {
+          keyboardDidShowListener.remove();
+          keyboardDidHideListener.remove();
+        };
+      }, []);
 
   // Update local state when profile changes
   React.useEffect(() => {
@@ -84,14 +102,18 @@ export default function CreateProfile1({ navigation }: Props) {
             </Text>
           )}
         </View>
-        <View style={styles.buttonContainer}>
-          <RoundNextButton onPress={handleNext} disabled={!firstName.trim() || !lastName.trim()} />
-        </View>
+        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={styles.buttonContainer}>
+           <View style={[
+                      styles.buttonContainer,
+                      { paddingBottom: keyboardVisible ? 10 : 40, paddingRight: keyboardVisible ? 10 : 20 }
+                    ]}>
+                        <RoundNextButton onPress={handleNext} disabled={!firstName.trim() || !lastName.trim()} />
+          </View>
+        </KeyboardAvoidingView>
       </ImageBackground>
     </TouchableWithoutFeedback>
   );
 }
-12347
 const styles = StyleSheet.create({
   background: {
     flex: 1,               // fills the whole screen

@@ -432,6 +432,9 @@ export default function ProfileScreen({ navigation, route }: Props) {
                   if (formattedText.length <= 5) {
                     setZipCode(formattedText);
                   }
+                  if (formattedText.length === 5) {
+                    Keyboard.dismiss();
+                  }
                 }}
                 keyboardType="number-pad"
                 maxLength={5}
