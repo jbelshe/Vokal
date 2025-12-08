@@ -1,7 +1,7 @@
 import { VotingStackParamList } from '@/types/navigation';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import React from 'react';
-import { View, Text, TouchableOpacity, ScrollView } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, TouchableOpacity, ScrollView, Dimensions } from 'react-native';
 import { VoteDetails } from '@/components/VoteDetails';
 import { DisplayVote } from '@/types/vote';
 import { useVotingContext } from '@/context/VotingContext';
@@ -18,6 +18,8 @@ import { VoteTally } from '@/types/vote';
 import { PurpleButtonLarge } from '@/components/PurpleButtonLarge';
 import { CloseButtonLarge } from '@/components/CloseButtonLarge';
 import { Platform } from 'react-native';
+import ConfettiCannon from 'react-native-confetti-cannon';
+const { width, height } = Dimensions.get("window");
 
 
 
@@ -80,9 +82,17 @@ export default function VoteConfirmScreen({ navigation, route }: props) {
     };
 
 
-
     return (
         <View style={styles.container}>
+            <ConfettiCannon
+                count={400}
+                origin={{x: -10, y: 0}}
+                fallSpeed={3000}
+                fadeOut={true}
+                autoStart={true}
+                explosionSpeed={400}
+                autoStartDelay={0}    
+            />
             {/* Header */}
             <View style={styles.topBarContainer}>
                 <TouchableOpacity style={styles.backButton} disabled>
@@ -97,7 +107,7 @@ export default function VoteConfirmScreen({ navigation, route }: props) {
                 <View style={styles.confirmContainer}>
                     <Text style={[theme.textStyles.headline2]}>Thanks for voting!</Text>
                     <CheckMarkIcon width={56} height={56} fill={theme.colors.primary_text} />
-                    <Text style={[theme.textStyles.caption, { textAlign: 'center' }]}>Your vote vote just helped shape the future of this space.</Text>
+                    <Text style={[theme.textStyles.caption, { textAlign: 'center' }]}>Your vote just helped shape the future of this space.</Text>
                 </View>
                 <VoteDetails selectionDetails={voteDetails} />
                 <Text style={[theme.textStyles.title1, { textAlign: 'center', }]}>Here's What Others Are Saying</Text>

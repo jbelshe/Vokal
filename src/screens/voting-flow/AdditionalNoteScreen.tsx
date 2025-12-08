@@ -82,11 +82,9 @@ export default function AdditionalNoteScreen({ navigation, route }: Props) {
 
     try {
           getTopVotes(currentPropertyId!).then((data) => {
-            console.log("DATA out:", data);
             if (data.length === 0) {
               return;
             } 
-            console.log("DATA:", data);
             const vote_data : TopVoteResults = {
               top_categories: [],
               total_votes: data[0].total_votes,
@@ -102,7 +100,6 @@ export default function AdditionalNoteScreen({ navigation, route }: Props) {
                 count: data[i].vote_count,
               });
               votes_count += data[i].vote_count;
-              console.log("TOP CATEGORY:", data[i]);
             }
             if (vote_data.top_categories.length <= 5 && votes_count < vote_data.total_votes) {
               top_categories.push({
@@ -112,7 +109,6 @@ export default function AdditionalNoteScreen({ navigation, route }: Props) {
               });
             }
             vote_data.top_categories = top_categories;
-            console.log("VOTE DATA:", vote_data);
             navigation.navigate('VoteConfirm', { vote_data });
         });
     } catch (error) {

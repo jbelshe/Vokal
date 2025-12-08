@@ -23,3 +23,8 @@ Optimize Image sizes used
 Make the PropertyCardList horizontally scrollable
 Fix Googles Places API for production
 Fix image snapping on PropertyDetails
+
+
+
+12/08:
+Share property

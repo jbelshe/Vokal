@@ -254,6 +254,8 @@ export default function CreateProfile2({ navigation }: Props) {
           <TextInput
             style={styles.input}
             placeholder="Email Address"
+            returnKeyType='done'
+            returnKeyLabel='Done'
             placeholderTextColor={theme.colors.secondary_text}
             value={email}
             onChangeText={setEmail}
@@ -265,6 +267,8 @@ export default function CreateProfile2({ navigation }: Props) {
             placeholder="Zip Code"
             placeholderTextColor={theme.colors.secondary_text}
             value={zipCode}
+            returnKeyType='done'
+            returnKeyLabel='Done'
             onChangeText={(text) => {
               // Only allow numbers
               const formattedText = text.replace(/[^0-9]/g, '');

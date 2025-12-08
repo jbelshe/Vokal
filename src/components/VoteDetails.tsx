@@ -14,7 +14,7 @@ export const VoteDetails: React.FC<VoteDetailsProps> = ({ selectionDetails }) =>
     return (
             <View style={styles.section}>
                 <Text style={[styles.sectionTitle, theme.textStyles.title1]}>
-                    You Voted for
+                    You Voted For
                 </Text>
                 <View style={styles.votedForCategoryContainer}>
                     <View style={styles.legendIcon}>
@@ -32,7 +32,7 @@ export const VoteDetails: React.FC<VoteDetailsProps> = ({ selectionDetails }) =>
                         {selectionDetails.subcategory}
                     </Text>
                 </View>
-                {selectionDetails.additional_note && (
+                {selectionDetails.additional_note?.trim() && (
                     <View style={styles.votedForAdditionalNoteContainer}>
                         <Text style={[styles.sectionText, theme.textStyles.title2]}>
                             {selectionDetails.additional_note}

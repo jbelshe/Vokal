@@ -305,6 +305,8 @@ export default function ProfileScreen({ navigation, route }: Props) {
                 placeholderTextColor={theme.colors.secondary_text}
                 value={firstName}
                 onChangeText={setFirstName}
+                returnKeyType='done'
+                returnKeyLabel='Done'
                 autoCapitalize="words"
                 editable={isEditing}
               />
@@ -316,6 +318,8 @@ export default function ProfileScreen({ navigation, route }: Props) {
                 placeholderTextColor={theme.colors.secondary_text}
                 value={lastName}
                 onChangeText={setLastName}
+                returnKeyType='done'
+                returnKeyLabel='Done'
                 autoCapitalize="words"
                 editable={isEditing}
               />
@@ -403,6 +407,8 @@ export default function ProfileScreen({ navigation, route }: Props) {
                 style={[styles.input, !isEditing ? styles.placeholderInput : styles.filledInput]}
                 placeholder="Email Address"
                 placeholderTextColor={theme.colors.secondary_text}
+                returnKeyType="done"
+                onSubmitEditing={() => Keyboard.dismiss()}
                 value={email}
                 onChangeText={setEmail}
                 autoCapitalize="none"

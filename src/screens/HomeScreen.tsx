@@ -53,11 +53,12 @@ export default function HomeScreen({ navigation }: Props) {
   const [viewMode, setViewMode] = useState<'map' | 'list'>('map');
   const [selectedProperty, setSelectedProperty] = useState<Property | null>(null);
   const mapRef = useRef<MapView>(null);
+  const mapReadyFired = useRef(false);
 
   const [searchQuery, setSearchQuery] = useState('');
   const [predictedQuery, setPredictedQuery] = useState<PlacePrediction[]>([]);
   const [loadingPredictions, setLoadingPredictions] = useState(false);
-  const [selectedPlace, setSelectedPlace] = useState<SelectedPalce | null>(null);
+  // const [selectedPlace, setSelectedPlace] = useState<SelectedPalce | null>(null);
   const [selectedPredictionId, setSelectedPredictionId] = useState<string | null>(null);
 
 
@@ -150,9 +151,11 @@ export default function HomeScreen({ navigation }: Props) {
           longitudeDelta: 0.01,
         };
 
+        setMapRegion(newRegion);
         setRegion(newRegion);
-        setSelectedPlace({ name, address, lat, lng });
+        // setSelectedPlace({ name, address, lat, lng });
 
+        console.log("Setting new region and triggering load", newRegion);
         // Imperative map control:
         if (mapRef.current) {
           mapRef.current.animateToRegion(newRegion, 800);
@@ -243,43 +246,48 @@ export default function HomeScreen({ navigation }: Props) {
   }, [navigation, setCurrentPropertyId, currentPropertyId]);
 
 
-  const handleRegionChangeComplete = useCallback((region: Region) => {
+  const handleRegionChangeComplete = useCallback((newRegion: Region) => {
+    console.log("handleRegionChangeComplete", newRegion);
     // If we have a previous region, only refetch if movement is significant
     if (lastRegionRef.current) {
       const prev = lastRegionRef.current;
-      const latDiff = Math.abs(prev.latitude - region.latitude);
-      const lngDiff = Math.abs(prev.longitude - region.longitude);
+      const latDiff = Math.abs(prev.latitude - newRegion.latitude);
+      const lngDiff = Math.abs(prev.longitude - newRegion.longitude);
 
       // tweak these thresholds as needed
       const MIN_MOVE = 0.0005;
 
       if (latDiff < MIN_MOVE && lngDiff < MIN_MOVE) {
-        lastRegionRef.current = region;
+        lastRegionRef.current = newRegion;
         return; // ignore tiny region change (like callout/marker selection)
       }
     }
 
-    lastRegionRef.current = region;
+    lastRegionRef.current = newRegion;
+    setRegion(newRegion);
+    setMapRegion(newRegion);
 
     if (loadingTimeoutRef.current) {
       clearTimeout(loadingTimeoutRef.current);
     }
 
     loadingTimeoutRef.current = setTimeout(() => {
-      loadPropertiesForRegion(region);
+      loadPropertiesForRegion(newRegion);
     }, 300);
-  }, [loadPropertiesForRegion]);
+  }, [loadPropertiesForRegion, setMapRegion]);
 
   // /**
   //  * Initial load when map is ready - triggers load for initial region.
   //  */
   const handleMapReady = useCallback(() => {
+    if(mapReadyFired.current) return;
+    mapReadyFired.current = true;
     console.log("handleMapReady", state);
     // Trigger initial load with the initial region
     lastRegionRef.current = region;
     loadPropertiesForRegion(region);
     console.log("Initial region loaded", region);
-  }, [loadPropertiesForRegion]);
+  }, [region, loadPropertiesForRegion]);
 
   /**
    * Retry loading properties after an error.
@@ -420,7 +428,7 @@ export default function HomeScreen({ navigation }: Props) {
         </View>
 
 
-        {loadingProperties && properties.length === 0 ? (
+        {!mapReadyFired.current && loadingProperties && properties.length === 0 ? (
           <View style={styles.loadingContainer}>
             <ActivityIndicator size="large" color="#6247AA" />
             <Text style={styles.loadingText}>Loading properties...</Text>
@@ -437,7 +445,8 @@ export default function HomeScreen({ navigation }: Props) {
           <MapView
             ref={mapRef}
             style={[styles.map, viewMode === 'map' ? styles.viewVisible : styles.viewHidden]}
-            initialRegion={region}
+            // initialRegion={region}
+            region={region}
             showsUserLocation
             showsMyLocationButton
             onRegionChangeComplete={handleRegionChangeComplete}
@@ -483,7 +492,7 @@ export default function HomeScreen({ navigation }: Props) {
                     </View>
                     <View style={styles.calloutTextContainer}>
                       <Text style={[styles.propertyTitle, theme.textStyles.title2]} numberOfLines={1}>
-                        {property.title || 'Property'}
+                        {property.tenant || property.title || 'Property'}
                       </Text>
                       <Text style={[styles.propertyAddress, theme.textStyles.title2]} numberOfLines={2}>
                         {property.address_1}

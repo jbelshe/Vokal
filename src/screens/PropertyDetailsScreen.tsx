@@ -25,7 +25,7 @@ export default function PropertyDetailsScreen({ route, navigation }: Props) {
   const { currentPropertyId, currentTopVotes, setCurrentTopVotes } = useAppContext();
 
 
-  const property = properties.find(p => p.id === currentPropertyId) ?? currProperty;
+  const property = properties.find(p => p.id === propertyId) ?? currProperty;
 
   const subcategory_id = property?.vote ? property!.vote!.choice_id : undefined;
   const subcategory_name = subcategory_id ? idToCategoryMap[subcategory_id].name : undefined;
@@ -45,6 +45,9 @@ export default function PropertyDetailsScreen({ route, navigation }: Props) {
     //navigation.navigate('Category', { propertyId });
   };
 
+  useEffect(() => {
+    console.log("PropertyDetailsScreen mounted", route.params);
+  }, []);
 
   const handleViewResults = () => {
     try {
@@ -152,12 +155,12 @@ export default function PropertyDetailsScreen({ route, navigation }: Props) {
           { /* Text Container */}
           <View style={styles.contentContainer}>
 
-            {property?.title && (
+            {(property?.title || property?.tenant) && (
               <View style={styles.headerRow}>
                 <Text style={[styles.propertyTitle, theme.textStyles.title1]}>
                   {property.tenant ? property.tenant : property.title}
                 </Text>
-                {!!property.tenant ? <Text style={[styles.propertyTitle, theme.textStyles.title2]}>
+                {!!property.tenant && !!property.title ? <Text style={[styles.propertyTitle, theme.textStyles.title2]}>
                   {'  @ ' + property.title}
                 </Text> : null}
               </View>
