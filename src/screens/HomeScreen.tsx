@@ -1,9 +1,11 @@
 import React, { useState, useCallback, useRef, useEffect } from 'react';
-import { View, Text, StyleSheet, TextInput, Platform, ActivityIndicator, TouchableOpacity, Dimensions, FlatList, Keyboard, TouchableWithoutFeedback } from 'react-native';
+import { View, Text, StyleSheet, Alert, TextInput, Platform, ActivityIndicator, TouchableOpacity, Dimensions, FlatList, Keyboard, TouchableWithoutFeedback } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { AppStackParamList } from '../types/navigation';
 import MapView, { Marker, Region, Callout } from 'react-native-maps';
+import MyLocationIcon from '@/assets/icons/my_location.svg';
+import LocationDisabledIcon from '@/assets/icons/location_disabled.svg';
 import { fetchPropertiesInBounds } from '../api/properties';
 import { Property } from '../types/property';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -17,7 +19,10 @@ import { useAuth } from '../context/AuthContext';
 import PropertyListCard from '@/components/PropertyListCard';
 import { ImageWithLoader } from '@/components/ImageWithLoader';
 import { fetchPlaces, fetchPredictedPlace } from '../api/places';
-import { Dropdown } from 'react-native-element-dropdown';
+import { useUserLocation } from '../hooks/useUserLocation';
+import { RoundNextButton } from '@/components/RoundNextButton';
+import * as Location from 'expo-location';
+import { Linking } from 'react-native';
 
 
 type Props = NativeStackScreenProps<AppStackParamList, 'Home'>;
@@ -54,12 +59,56 @@ export default function HomeScreen({ navigation }: Props) {
   const [selectedProperty, setSelectedProperty] = useState<Property | null>(null);
   const mapRef = useRef<MapView>(null);
   const mapReadyFired = useRef(false);
+  const [needsLoadIcon, setNeedsLoadIcon] = useState(true);
 
   const [searchQuery, setSearchQuery] = useState('');
   const [predictedQuery, setPredictedQuery] = useState<PlacePrediction[]>([]);
   const [loadingPredictions, setLoadingPredictions] = useState(false);
   // const [selectedPlace, setSelectedPlace] = useState<SelectedPalce | null>(null);
   const [selectedPredictionId, setSelectedPredictionId] = useState<string | null>(null);
+
+
+  // const [userLocation, setUserLocation] = useState<Location.LocationObject | null>(null);
+
+  const {
+    requestLocation,
+    status: locationStatus,
+  } = useUserLocation();
+
+
+  useEffect(() => {
+    const checkLocationPermission = async () => {
+      const { status } = await Location.getForegroundPermissionsAsync();
+      console.log('Initial location status:', status);
+      // This will update the locationStatus in the useUserLocation hook
+      if (status === 'granted') {
+        await requestLocation();
+      }
+    };
+
+    checkLocationPermission();
+  }, [requestLocation]);
+
+  // useEffect(() => {
+
+  //   async function getCurrentLocation() {
+
+  //     let { status } = await Location.requestForegroundPermissionsAsync();
+  //     console.log('Location permission status:', status);
+  //     if (status !== 'granted') {
+  //       Error('Permission to access location was denied');
+  //       return;
+  //     }
+
+  //     let location = await Location.getCurrentPositionAsync({});
+  //     console.log('User location:', location);
+  //     setUserLocation(location);
+
+  //   }
+
+  //   getCurrentLocation();
+  // }, []);
+
 
 
   const [region, setRegion] = useState<Region>({
@@ -117,19 +166,65 @@ export default function HomeScreen({ navigation }: Props) {
     }, 300);
   };
 
+  const handleCenterOnUser = useCallback(async () => {
+    // const { status, canAskAgain } = await Location.getForegroundPermissionsAsync();
+    if (locationStatus !== 'granted' ) {
+      const coords = await requestLocation();
+      if (!coords) {
+          Alert.alert(
+          "Location Permission Required",
+          "Please enable location services in your device settings to use this feature.",
+          [
+            {
+              text: "Cancel",
+              style: "cancel"
+            },
+            { 
+              text: "Open Settings", 
+              onPress: () => Linking.openSettings() 
+            }
+          ]
+        );
+        return;
+      }
+    }
+    const coords = await requestLocation(); // this runs the whole permission + getCurrentPosition flow
 
-  // useEffect(() => {
+    if (!coords) return;
 
-  //   console.log("HomeScreen useEffect", region);
-  //   loadPropertiesForRegion(region);
-  //   return () => {
-  //     if (debounceRef.current) clearTimeout(debounceRef.current);
-  //   };
-  // }, []);
+    const { latitude, longitude } = coords;
+
+    const nextRegion: Region = {
+      latitude,
+      longitude,
+      latitudeDelta: 0.01,
+      longitudeDelta: 0.01,
+    };
+
+    setRegion(nextRegion);
+    setMapRegion(nextRegion);
+
+
+    if (loadingTimeoutRef.current) {
+      clearTimeout(loadingTimeoutRef.current);
+    }
+
+    loadingTimeoutRef.current = setTimeout(() => {
+      loadPropertiesForRegion(nextRegion);
+    }, 300);
+
+    mapRef.current?.animateToRegion(nextRegion, 1000);
+
+
+  }, [requestLocation, mapRef, requestLocation]);
+
+
+
 
 
   const handleSelectPrediction = useCallback(
     async (prediction: PlacePrediction) => {
+      // setNeedsLoadIcon(true);
       try {
         Keyboard.dismiss();
         setPredictedQuery([]);
@@ -153,16 +248,21 @@ export default function HomeScreen({ navigation }: Props) {
 
         setMapRegion(newRegion);
         setRegion(newRegion);
-        // setSelectedPlace({ name, address, lat, lng });
+        await new Promise<void>(resolve => setTimeout(resolve, 100));
 
-        console.log("Setting new region and triggering load", newRegion);
-        // Imperative map control:
-        if (mapRef.current) {
-          mapRef.current.animateToRegion(newRegion, 800);
+      // Animate to the new location
+      mapRef.current?.animateToRegion(newRegion, 1000);
+
+      // Load properties after the animation completes
+      setTimeout(() => {
+        if (loadingTimeoutRef.current) {
+          clearTimeout(loadingTimeoutRef.current);
         }
+        loadPropertiesForRegion(newRegion);
+      }, 1100); // Slightly longer than the animation
       } catch (err) {
         console.error('Place details error', err);
-      }
+      } 
     },
     []
   );
@@ -280,8 +380,9 @@ export default function HomeScreen({ navigation }: Props) {
   //  * Initial load when map is ready - triggers load for initial region.
   //  */
   const handleMapReady = useCallback(() => {
-    if(mapReadyFired.current) return;
+    if (mapReadyFired.current) return;
     mapReadyFired.current = true;
+    setNeedsLoadIcon(false);
     console.log("handleMapReady", state);
     // Trigger initial load with the initial region
     lastRegionRef.current = region;
@@ -328,23 +429,23 @@ export default function HomeScreen({ navigation }: Props) {
             <View style={styles.searchBar}>
               <View style={styles.searchBarInputContainer}>
                 <View style={styles.searchTextContainerRow}>
-                <Ionicons name="search" size={20} color={theme.colors.secondary_text} style={styles.searchIcon} />
-                <TextInput
-                  style={styles.input}
-                  placeholder="Search..."
-                  placeholderTextColor="#999"
-                  value={searchQuery}
-                  onChangeText={onSearchTextChange}
-                  returnKeyType="search"
-                />
-                <AccountIcon
-                width={25}
-                height={25}
-                fill={theme.colors.secondary_text}
-                style={styles.accountIcon}
-                onPress={() => navigation.navigate('SettingsMain')}
-              />
-              </View>
+                  <Ionicons name="search" size={20} color={theme.colors.secondary_text} style={styles.searchIcon} />
+                  <TextInput
+                    style={styles.input}
+                    placeholder="Search..."
+                    placeholderTextColor="#999"
+                    value={searchQuery}
+                    onChangeText={onSearchTextChange}
+                    returnKeyType="search"
+                  />
+                  <AccountIcon
+                    width={25}
+                    height={25}
+                    fill={theme.colors.secondary_text}
+                    style={styles.accountIcon}
+                    onPress={() => navigation.navigate('SettingsMain')}
+                  />
+                </View>
                 {loadingPredictions && (
                   <View style={styles.loadingRow}>
                     <ActivityIndicator size="small" />
@@ -370,8 +471,8 @@ export default function HomeScreen({ navigation }: Props) {
                     />
                   </View>
                 )}
-              
-            </View>
+
+              </View>
             </View>
           </View>
 
@@ -451,7 +552,21 @@ export default function HomeScreen({ navigation }: Props) {
             showsMyLocationButton
             onRegionChangeComplete={handleRegionChangeComplete}
             onMapReady={handleMapReady}
+            // loadingEnabled 
+            // loadingIndicatorColor={theme.colors.primary_gradient_start} 
           >
+            <TouchableOpacity
+              style={styles.locationButton}
+              onPress={handleCenterOnUser}
+              activeOpacity={0.7}
+              // disabled={locationStatus !== 'granted'}
+            >
+              {locationStatus === 'granted'  || locationStatus === 'requesting' ? (
+                <MyLocationIcon width={24} height={24} fill={theme.colors.primary_gradient_start} />
+              ) : (
+                <LocationDisabledIcon width={24} height={24} fill={theme.colors.secondary_text} />
+              )}
+            </TouchableOpacity>
             {properties.map((property) => (
               <Marker
                 key={property.id}
@@ -873,6 +988,22 @@ const styles = StyleSheet.create({
   searchTextContainerRow: {
     flexDirection: 'row',
     alignItems: 'center',
+  },
+  locationButton: {
+    position: 'absolute',
+    right: 20,
+    bottom: 40,
+    backgroundColor: 'white',
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
   },
 
 });

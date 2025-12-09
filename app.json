@@ -67,7 +67,7 @@
       [
         "expo-location",
         {
-          "locationWhenInUsePermission": "Allow MyApp to access your location to show your position on the map."
+          "locationWhenInUsePermission": "Allow this app to access your location to show your position on the map."
         }
       ]
     ],
