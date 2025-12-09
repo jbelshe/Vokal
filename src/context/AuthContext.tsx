@@ -6,6 +6,7 @@ import { Session } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase';
 import { AppState, AppStateStatus } from 'react-native';
 import { useReducer } from 'react';
+import { useNotificationsSetup } from '../hooks/useNotificationSetup';
 
 type AuthContextType = {
   state : AuthState;
@@ -22,7 +23,6 @@ type AuthContextType = {
 // Creates context
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-const SESSION_KEY = 'session_user'; // store token or serialized user
 
 type AuthState = {
   loading: boolean;
@@ -107,6 +107,8 @@ const emptyProfile: Profile = {
   emailSubscribed: false,
   userId: null,
   role: null,
+  notificationsEnabled: false,
+  expoPushToken: null
 };
 
 const emptySession: Session = {
@@ -132,7 +134,12 @@ const initialAuthState: AuthState = {
 
 // Provider for the context
 export function AuthProvider({ children }: { children: React.ReactNode }) {
+
+
+
+
   const [state, dispatch] = useReducer(authReducer, initialAuthState);
+
   
   // Ref to prevent concurrent session processing (race condition guard)
   const isProcessingSession = useRef(false);
@@ -292,28 +299,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
 
-
-  // const signIn = async (currSession: any) => {
-  //   console.log("Signing in...");
-  //   console.log("tokenOrUser: ", currSession);
-
-  //   if (currSession) {
-  //     // Handle both Supabase Session and our custom Session type
-  //     const sessionToSave: Session = {
-  //       access_token: currSession.access_token || '',
-  //       refresh_token: currSession.refresh_token || '',
-  //       token_type: currSession.token_type || 'bearer',
-  //       expires_in: currSession.expires_in || 0,
-  //       user: currSession.user || null,
-  //     };
-  //     supabase.auth.setSession(sessionToSave);
-  //     const json = JSON.stringify(sessionToSave);
-  //     console.log("Saving session: ", json);
-  //     await SecureStore.setItemAsync(SESSION_KEY, json)
-  //       .catch(error => console.error('Error saving session:', error));
-  //   }
-  // };
-
   const signOut = async () => {
     try {
       console.log("Signing out...");
@@ -380,6 +365,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (!state.session) {
         console.error('Cannot update profile: missing session data');
         return false;
+      }
+      if (state.profile?.userId) {
+        currProfile.userId = state.profile.userId;
       }
       const success = await updateProfile(currProfile, state.session);
       console.log("Profile updated successfully", success);

@@ -23,7 +23,7 @@ import { useUserLocation } from '../hooks/useUserLocation';
 import { RoundNextButton } from '@/components/RoundNextButton';
 import * as Location from 'expo-location';
 import { Linking } from 'react-native';
-
+import { useNotificationsSetup } from '../hooks/useNotificationSetup';
 
 type Props = NativeStackScreenProps<AppStackParamList, 'Home'>;
 
@@ -51,6 +51,9 @@ export default function HomeScreen({ navigation }: Props) {
 
   const { currentPropertyId, setCurrentPropertyId } = useAppContext();
   const { state } = useAuth();
+
+  
+  useNotificationsSetup(state.session, state.profile!);
 
   const { properties, setProperties, mapRegion, setMapRegion } = useAppContext();
   const [loadingProperties, setLoadingProperties] = useState(false);

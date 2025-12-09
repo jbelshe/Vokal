@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Image, ScrollView, Platform, ImageBackground } from 'react-native';
+import { View, Text, StyleSheet, Linking, TouchableOpacity, Image, Alert, Platform, ImageBackground } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { AppStackParamList } from '../../types/navigation';
 import { theme } from '../../assets/theme';
@@ -10,11 +10,12 @@ import { ProfileIconButton } from '../../components/ProfileIconButton';
 
 import ChevronLeftIcon from '../../assets/icons/chevron-left.svg';
 import ChevronRightIcon from '../../assets/icons/chevron-right.svg';
-
 import VotedIcon from '../../assets/icons/home.png';
 import ProfileIcon from '../../assets/icons/profile-silhouette.png';
 import RemindersIcon from '../../assets/icons/alert.png';
 import ContactIcon from '../../assets/icons/telephone.png';
+import { updateProfile } from '@/api/auth';
+import { useNotificationsSetup } from '@/hooks/useNotificationSetup';
 
 // Import the icon images
 const Icons = {
@@ -27,9 +28,9 @@ const Icons = {
 type Props = NativeStackScreenProps<AppStackParamList, 'SettingsMain'>;
 
 export default function SettingsHomeScreen({ navigation, route }: Props) {
-  const [remindersEnabled, setRemindersEnabled] = useState(true);
+  const { state, signOut, updateProfileInDatabase } = useAuth();
+  const [remindersEnabled, setRemindersEnabled] = useState<boolean>(state.profile?.notificationsEnabled ?? false);
 
-  const { state, signOut } = useAuth();
 
   const handleBack = () => {
     navigation.goBack(); //('Home');
@@ -41,6 +42,37 @@ export default function SettingsHomeScreen({ navigation, route }: Props) {
 
   const handleProfileImagePress = () => {
     console.log("TODO: Handle Profile image pressed")
+  };
+
+  const handleNotificationToggle = (value: boolean, source: string) => {
+    if (! state.profile?.expoPushToken ) {
+      Alert.alert(
+          "Notifications Disabled",
+          "Please enable notifications in your device settings to get alerts.",
+          [
+            { text: "Cancel", style: "cancel" },
+            {
+              text: "Open Settings",
+              onPress: () => {
+                Linking.openSettings();
+              },
+            },
+          ]
+        );
+      console.log("Exiting setup");
+      return;
+    }
+    console.log("Notification toggle:", value, "from:", source);
+    updateProfileInDatabase({ notificationsEnabled: value });
+    console.log("NotificationsEnabled:", value, remindersEnabled)
+    if (value) {
+      if (state.profile?.expoPushToken) {
+        Alert.alert("Notifications Enabled", "You will now receive reminder notifications.");
+      }
+
+    }
+
+    setRemindersEnabled(value);
   };
 
   const getUserName = () => {
@@ -68,11 +100,6 @@ export default function SettingsHomeScreen({ navigation, route }: Props) {
         <Text style={[styles.headerTitle, theme.textStyles.title1]}>Profile</Text>
       </View>
 
-      {/* <ScrollView
-        style={styles.scrollView}
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-      > */}
         {/* Profile Image */}
         <View style={styles.imageContainer}>
           <TouchableOpacity onPress={() => {handleProfileImagePress()}}> 
@@ -125,13 +152,9 @@ export default function SettingsHomeScreen({ navigation, route }: Props) {
             image={Icons.reminders}
             toggle={{
               value: remindersEnabled,
-              onValueChange: (value) => {
-                setRemindersEnabled(value);
-              }
+              onValueChange: (value) => {handleNotificationToggle(value, "toggle")}
             }}
-            onPress={() => {
-              setRemindersEnabled(!remindersEnabled);
-            }}
+            onPress={() => handleNotificationToggle(!remindersEnabled, "press") }
           />
 
           <SectionOptionsButton

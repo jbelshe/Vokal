@@ -158,7 +158,10 @@ export default function CreateProfile2({ navigation }: Props) {
       } as const,
       emailSubscribed: isChecked,
       userId: state.profile?.userId ?? null,
-      role: state.profile?.role ?? null
+      role: state.profile?.role ?? null,
+      notificationsEnabled: false,
+      expoPushToken: null
+      
     };
 
     dispatch({ type: "SET_PROFILE", payload: updatedProfile, msg: "CreateProfile Call" });

@@ -232,6 +232,15 @@ function convertProfileToDatabaseFormat(profile: Partial<Profile>): any {
     result.email_subscription = profile.emailSubscribed ? 'all_emails' : 'no_emails';
   }
 
+  if ('notificationsEnabled' in profile) {
+    result.notifications_enabled = profile.notificationsEnabled ?? false;
+  }
+
+  if ('expoPushToken' in profile) {
+    result.expo_push_token = profile.expoPushToken ?? null;
+  }
+
+
   // Always update the updated_at timestamp
   result.updated_at = new Date().toISOString();
 

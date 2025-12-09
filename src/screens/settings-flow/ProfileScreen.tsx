@@ -264,7 +264,9 @@ export default function ProfileScreen({ navigation, route }: Props) {
           } as const,
           emailSubscribed: state.profile?.emailSubscribed || false,
           userId: state.profile?.userId ?? null,
-          role: state.profile?.role ?? null 
+          role: state.profile?.role ?? null, 
+          notificationsEnabled: state.profile?.notificationsEnabled ?? false,
+          expoPushToken: state.profile?.expoPushToken ?? null
         } 
         dispatch({ type: "SET_PROFILE", payload: mergedProfile, msg: "ProfileScreen Update" });
 

@@ -4,6 +4,8 @@ import { ActivityIndicator, View } from 'react-native';
 import { useAuth } from '../context/AuthContext';
 import AuthStack from './AuthStack';
 import AppStack from './AppStack';
+import * as Notifications from 'expo-notifications';
+import { useEffect, useRef } from 'react';
 
 function Splash() {
   return (
@@ -14,7 +16,36 @@ function Splash() {
 }
 
 export default function RootNavigator() {
-  const {state} = useAuth();
+  const { state } = useAuth();
+
+  const notificationListener = useRef<Notifications.EventSubscription | null>(null);
+  const responseListener = useRef<Notifications.EventSubscription | null>(null);
+
+  useEffect(() => {
+    // Fires when a notification arrives in foreground
+    notificationListener.current =
+      Notifications.addNotificationReceivedListener(notification => {
+        // e.g. update notification badge in state
+        console.log('Notification received in foreground:', notification);
+      });
+
+    // Fires when user taps / interacts with notification
+    responseListener.current =
+      Notifications.addNotificationResponseReceivedListener(response => {
+        const data = response.notification.request.content.data;
+        console.log('User interacted with notification:', data);
+      });
+
+    // Cleanup on unmount
+    return () => {
+      if (notificationListener.current) {
+        notificationListener.current.remove();
+      }
+      if (responseListener.current) {
+        responseListener.current.remove();
+      }
+    };
+  }, []);
 
   if (state.loading) {
     return <Splash />;

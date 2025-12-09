@@ -10,4 +10,6 @@ export type Profile = {
   emailSubscribed: boolean;
   userId: string | null;
   role: string | null;
+  notificationsEnabled: boolean;
+  expoPushToken: string | null;
 };
