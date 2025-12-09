@@ -22,7 +22,7 @@ const parseBirthdayFromProfile = (birthday: Birthday | null | undefined): { mont
   // Handle string format "YYYY-MM-DD"
   if (typeof birthday === 'string') {
     const date = new Date(birthday);
-    console.log("Date:", date)
+    // console.log("Date:", date)
     if (!isNaN(date.getTime())) {
       return {
         month: date.getUTCMonth() + 1, // Use UTC methods
@@ -53,6 +53,34 @@ const parseBirthdayFromProfile = (birthday: Birthday | null | undefined): { mont
     year: (birthday as any).year || null
   };
 };
+
+
+  const GENDER_OPTIONS = [
+    { label: 'Male', value: 'male' },
+    { label: 'Female', value: 'female' },
+    { label: 'Other', value: 'other' },
+  ];
+
+  const MONTHS = [
+    { label: 'January', value: 1 },
+    { label: 'February', value: 2 },
+    { label: 'March', value: 3 },
+    { label: 'April', value: 4 },
+    { label: 'May', value: 5 },
+    { label: 'June', value: 6 },
+    { label: 'July', value: 7 },
+    { label: 'August', value: 8 },
+    { label: 'September', value: 9 },
+    { label: 'October', value: 10 },
+    { label: 'November', value: 11 },
+    { label: 'December', value: 12 },
+  ];
+
+  const CURRENT_YEAR = new Date().getFullYear() - 13;
+  const YEARS = Array.from({ length: 110 }, (_, i) => ({
+    label: (CURRENT_YEAR - i).toString(),
+    value: CURRENT_YEAR - i
+  }));
 
 
 export default function ProfileScreen({ navigation, route }: Props) {
@@ -118,26 +146,6 @@ export default function ProfileScreen({ navigation, route }: Props) {
     }
   }, [state.profile]);
 
-  const genderOptions = [
-    { label: 'Male', value: 'male' },
-    { label: 'Female', value: 'female' },
-    { label: 'Other', value: 'other' },
-  ];
-
-  const months = [
-    { label: 'January', value: 1 },
-    { label: 'February', value: 2 },
-    { label: 'March', value: 3 },
-    { label: 'April', value: 4 },
-    { label: 'May', value: 5 },
-    { label: 'June', value: 6 },
-    { label: 'July', value: 7 },
-    { label: 'August', value: 8 },
-    { label: 'September', value: 9 },
-    { label: 'October', value: 10 },
-    { label: 'November', value: 11 },
-    { label: 'December', value: 12 },
-  ];
 
   const days = useMemo(() => {
     let numDays;
@@ -163,11 +171,7 @@ export default function ProfileScreen({ navigation, route }: Props) {
     }));
   }, [birthMonth, birthYear]);
 
-  const currentYear = new Date().getFullYear() - 13;
-  const years = Array.from({ length: 110 }, (_, i) => ({
-    label: (currentYear - i).toString(),
-    value: currentYear - i
-  }));
+
 
 
   const handleEditSave = async () => {
@@ -329,7 +333,7 @@ export default function ProfileScreen({ navigation, route }: Props) {
                 style={[styles.dropdown, !isEditing && styles.disabledDropdown]}
                 placeholderStyle={styles.placeholderStyle}
                 selectedTextStyle={!selectedGender ? styles.placeholderStyle : styles.selectedTextStyle}
-                data={genderOptions}
+                data={GENDER_OPTIONS}
                 maxHeight={200}
                 labelField="label"
                 valueField="value"
@@ -351,12 +355,16 @@ export default function ProfileScreen({ navigation, route }: Props) {
                     style={[styles.dropdown, !isEditing && styles.disabledDropdown]}
                     placeholderStyle={styles.placeholderStyle}
                     selectedTextStyle={styles.selectedTextStyle}
-                    data={months}
+                    data={MONTHS}
                     labelField="label"
                     valueField="value"
                     placeholder="Month"
                     value={birthMonth}
                     onChange={item => setBirthMonth(item.value)}
+                    flatListProps={{
+                      initialNumToRender: MONTHS.length,
+                      removeClippedSubviews: false,
+                    }}
                     itemTextStyle={styles.selectedTextStyle}
                     itemContainerStyle={styles.dropdownOptionContainer}
                     containerStyle={styles.dropdownOption}
@@ -375,6 +383,10 @@ export default function ProfileScreen({ navigation, route }: Props) {
                     placeholder="Day"
                     value={birthDay}
                     onChange={item => setBirthDay(item.value)}
+                    flatListProps={{
+                      initialNumToRender: days.length,
+                      removeClippedSubviews: false,
+                    }}
                     itemTextStyle={styles.selectedTextStyle}
                     itemContainerStyle={styles.dropdownOptionContainer}
                     containerStyle={styles.dropdownOption}
@@ -387,12 +399,16 @@ export default function ProfileScreen({ navigation, route }: Props) {
                     style={[styles.dropdown, !isEditing && styles.disabledDropdown]}
                     placeholderStyle={styles.placeholderStyle}
                     selectedTextStyle={styles.selectedTextStyle}
-                    data={years}
+                    data={YEARS}
                     labelField="label"
                     valueField="value"
                     placeholder="Year"
                     value={birthYear}
                     onChange={item => setBirthYear(item.value)}
+                    flatListProps={{
+                      initialNumToRender: YEARS.length,
+                      removeClippedSubviews: false,
+                    }}
                     itemTextStyle={styles.selectedTextStyle}
                     itemContainerStyle={styles.dropdownOptionContainer}
                     containerStyle={styles.dropdownOption}
