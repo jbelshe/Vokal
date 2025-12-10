@@ -369,7 +369,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (state.profile?.userId) {
         currProfile.userId = state.profile.userId;
       }
-      const success = await updateProfile(currProfile, state.session);
+      const success = await updateProfile(currProfile);
       console.log("Profile updated successfully", success);
       return success;
     } catch (error) {

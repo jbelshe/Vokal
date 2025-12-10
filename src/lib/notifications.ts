@@ -1,7 +1,9 @@
 // notifications.ts
+import { updateProfile } from '@/api/auth';
 import * as Device from 'expo-device';
 import * as Notifications from 'expo-notifications';
 import { Platform, Alert } from 'react-native';
+import { Profile } from '@/types/profile';
 
 Notifications.setNotificationHandler({
     handleNotification: async () => ({
@@ -12,6 +14,9 @@ Notifications.setNotificationHandler({
         shouldShowList: true
     }),
 });
+
+
+
 
 export async function registerForPushNotificationsAsync(): Promise<string | null> {
     console.log("[NOTIFICATIONS] Checking device and permissions...");
@@ -58,4 +63,39 @@ export async function registerForPushNotificationsAsync(): Promise<string | null
 
     console.log('[NOTIFICATIONS] Expo push token:', token);
     return token;
+}
+
+
+
+export async function savePushToken(userId: string, token: string | null) {
+    const profile_update: Partial<Profile> = {
+        userId: userId,
+        expoPushToken: token
+    }
+    const result = await updateProfile(profile_update);
+    console.log(`Saving push token for user ${userId}: ${token}`);
+
+
+    if (!result) {
+        console.error("Failed to save push token");
+    }
+}
+
+
+
+export async function ensureNotificationsRegistered(userId: string) {
+    const { status } = await Notifications.getPermissionsAsync();
+    console.log("Current notification status:", status);
+    if (status !== "granted") {
+        console.log("Notifications still not granted");
+        return;
+    }
+    // Get Expo push token
+    const tokenData = await Notifications.getExpoPushTokenAsync();
+
+    const expoPushToken = tokenData.data;
+    console.log("Got Expo push token:", expoPushToken);
+
+    // Save token to Supabase (example schema)
+    await savePushToken(userId, expoPushToken);
 }

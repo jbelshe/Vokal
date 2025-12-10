@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { View, Text, StyleSheet, Linking, TouchableOpacity, Image, Alert, Platform, ImageBackground } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { AppStackParamList } from '../../types/navigation';
@@ -14,8 +14,7 @@ import VotedIcon from '../../assets/icons/home.png';
 import ProfileIcon from '../../assets/icons/profile-silhouette.png';
 import RemindersIcon from '../../assets/icons/alert.png';
 import ContactIcon from '../../assets/icons/telephone.png';
-import { updateProfile } from '@/api/auth';
-import { useNotificationsSetup } from '@/hooks/useNotificationSetup';
+import { useNotificationSettingsWatcher } from '@/hooks/useNotificationSettingsWatcher';
 
 // Import the icon images
 const Icons = {
@@ -31,6 +30,7 @@ export default function SettingsHomeScreen({ navigation, route }: Props) {
   const { state, signOut, updateProfileInDatabase } = useAuth();
   const [remindersEnabled, setRemindersEnabled] = useState<boolean>(state.profile?.notificationsEnabled ?? false);
 
+  const { openNotificationSettings } = useNotificationSettingsWatcher(state.profile?.userId!);
 
   const handleBack = () => {
     navigation.goBack(); //('Home');
@@ -44,7 +44,7 @@ export default function SettingsHomeScreen({ navigation, route }: Props) {
     console.log("TODO: Handle Profile image pressed")
   };
 
-  const handleNotificationToggle = (value: boolean, source: string) => {
+  const handleNotificationToggle = async (value: boolean, source: string) => {
     if (! state.profile?.expoPushToken ) {
       Alert.alert(
           "Notifications Disabled",
@@ -54,7 +54,7 @@ export default function SettingsHomeScreen({ navigation, route }: Props) {
             {
               text: "Open Settings",
               onPress: () => {
-                Linking.openSettings();
+                openNotificationSettings();
               },
             },
           ]

@@ -2,3 +2,4 @@
 2.  eas build:configure
 3.  eas build --platform ios --profile production
 4.  eas submit -p ios --profile production 
+npx expo login &&  eas build:configure && eas build --platform ios --profile production

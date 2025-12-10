@@ -177,6 +177,7 @@ export async function fetchUserProfile(userId: string, phone: string) {
         userId: userId,
         role: data.role,
         phoneNumber: phone,
+        expoPushToken: data.expo_push_token
       }
     }
     if (error) console.log("SAFE ERROR (user doesn't exist yet):", error);
@@ -250,9 +251,7 @@ function convertProfileToDatabaseFormat(profile: Partial<Profile>): any {
 
 
 
-
-
-export async function updateProfile(profile: Partial<Profile>, session: any): Promise<boolean> {
+export async function updateProfile(profile: Partial<Profile>): Promise<boolean> {
 
   const payload = convertProfileToDatabaseFormat(profile);
   console.log("Updating profile to:", payload)
