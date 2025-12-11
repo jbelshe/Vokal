@@ -14,7 +14,10 @@ import VotedIcon from '../../assets/icons/home.png';
 import ProfileIcon from '../../assets/icons/profile-silhouette.png';
 import RemindersIcon from '../../assets/icons/alert.png';
 import ContactIcon from '../../assets/icons/telephone.png';
+import { Profile } from '@/types/profile';
 import { useNotificationSettingsWatcher } from '@/hooks/useNotificationSettingsWatcher';
+import { ensureNotificationsRegistered } from '@/lib/notifications';
+
 
 // Import the icon images
 const Icons = {
@@ -27,10 +30,15 @@ const Icons = {
 type Props = NativeStackScreenProps<AppStackParamList, 'SettingsMain'>;
 
 export default function SettingsHomeScreen({ navigation, route }: Props) {
-  const { state, signOut, updateProfileInDatabase } = useAuth();
-  const [remindersEnabled, setRemindersEnabled] = useState<boolean>(state.profile?.notificationsEnabled ?? false);
+  const { state, dispatch, signOut, updateProfileInDatabase } = useAuth();
+  const [remindersEnabled, setRemindersEnabled] = useState<boolean>((!!state.profile?.expoPushToken && state.profile?.notificationsEnabled) || false);
 
-  const { openNotificationSettings } = useNotificationSettingsWatcher(state.profile?.userId!);
+  const { openNotificationSettings } = useNotificationSettingsWatcher(state.profile?.userId!, {
+    onTokenUpdated: (token) => {
+      const payload : Partial<Profile> = { expoPushToken: token };
+      dispatch({ type: 'SET_PROFILE', payload, msg: 'Notification Listener token updated' });
+    }
+  });
 
   const handleBack = () => {
     navigation.goBack(); //('Home');
@@ -60,8 +68,10 @@ export default function SettingsHomeScreen({ navigation, route }: Props) {
           ]
         );
       console.log("Exiting setup");
-      return;
+      // return;
     }
+
+    // const token = await ensureNotificationsRegistered(state.profile.userId!);
     console.log("Notification toggle:", value, "from:", source);
     updateProfileInDatabase({ notificationsEnabled: value });
     console.log("NotificationsEnabled:", value, remindersEnabled)

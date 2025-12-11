@@ -2,7 +2,12 @@ import { useEffect, useRef, useCallback } from "react";
 import { AppState, AppStateStatus, Linking } from "react-native";
 import { ensureNotificationsRegistered } from "../lib/notifications";
 
-export function useNotificationSettingsWatcher(userId: string) {
+
+type Options = {
+    onTokenUpdated?: (token: string) => void;
+}
+
+export function useNotificationSettingsWatcher(userId: string, options?: Options) {
     const appState = useRef<AppStateStatus>(AppState.currentState);
     const awaitingNotifSettingsRef = useRef(false);
 
@@ -26,7 +31,13 @@ export function useNotificationSettingsWatcher(userId: string) {
                     console.log("Coming back from notification settings");
                     // We just came back from Settings after asking about notifications
                     awaitingNotifSettingsRef.current = false;
-                    await ensureNotificationsRegistered(userId);
+                    const token = await ensureNotificationsRegistered(userId);
+                    if (options?.onTokenUpdated) {
+                        options.onTokenUpdated("TEST");
+                    }
+                    if (token && options?.onTokenUpdated) {
+                        options.onTokenUpdated(token);
+                    }
                 }
             }
 
@@ -34,7 +45,7 @@ export function useNotificationSettingsWatcher(userId: string) {
         });
 
         return () => subscription.remove();
-    }, [userId]);
+    }, [userId, options?.onTokenUpdated]);
 
 
 

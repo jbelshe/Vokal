@@ -72,6 +72,7 @@ export async function savePushToken(userId: string, token: string | null) {
         userId: userId,
         expoPushToken: token
     }
+
     const result = await updateProfile(profile_update);
     console.log(`Saving push token for user ${userId}: ${token}`);
 
@@ -83,19 +84,34 @@ export async function savePushToken(userId: string, token: string | null) {
 
 
 
-export async function ensureNotificationsRegistered(userId: string) {
+export async function ensureNotificationsRegistered(userId: string): Promise<string | undefined> {
     const { status } = await Notifications.getPermissionsAsync();
     console.log("Current notification status:", status);
     if (status !== "granted") {
         console.log("Notifications still not granted");
         return;
     }
-    // Get Expo push token
-    const tokenData = await Notifications.getExpoPushTokenAsync();
+    console.log("Notifications are granted, proceeding to get token");
 
-    const expoPushToken = tokenData.data;
-    console.log("Got Expo push token:", expoPushToken);
+    try {
+        // Get Expo push token
+        let tokenData: { data: string | undefined };
+        if (!Device.isDevice) {
+            console.warn("[NOTIFICATIONS] Notifications only work on a physical device - using fake data");
+            tokenData = { data: undefined};
+        }
+        else {
+            tokenData = await Notifications.getExpoPushTokenAsync();
+        }
+        
+        const expoPushToken = tokenData.data;
+        console.log("Got Expo push token:", expoPushToken);
+        // Save token to Supabase (example schema)
+        await savePushToken(userId, expoPushToken ?? null);
+        return expoPushToken ?? undefined;
+    } catch (error) {
+        console.error("Failed to get Expo push token:", error);
+        return;
+    }
 
-    // Save token to Supabase (example schema)
-    await savePushToken(userId, expoPushToken);
 }
