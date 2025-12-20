@@ -62,8 +62,9 @@ export async function fetchPropertiesInBounds(bounds: {
       .from('properties')
       .select(`
         *,
-        property_image_links!inner (
+        property_image_links (
           is_cover,
+          order_index,
           images (
             id,
             bucket,
@@ -81,8 +82,6 @@ export async function fetchPropertiesInBounds(bounds: {
       .lte('latitude', bounds.maxLat)
       .gte('longitude', bounds.minLng)
       .lte('longitude', bounds.maxLng)
-      .order('is_cover', { referencedTable: 'property_image_links', ascending: false })
-      .order('order_index', { referencedTable: 'property_image_links', ascending: true })
       .eq("votes.user_id", profileId);
 
 
@@ -99,7 +98,18 @@ export async function fetchPropertiesInBounds(bounds: {
     // Map the raw data to Property objects
     const properties: Property[] = await Promise.all(
       data.map(async (property) => {
-        const link = property.property_image_links?.[0];
+        // Sort property_image_links to get cover image first, then by order_index
+        const sortedLinks = property.property_image_links?.length > 0
+          ? [...property.property_image_links].sort((a, b) => {
+              // First sort by is_cover (cover images first)
+              if (a.is_cover && !b.is_cover) return -1;
+              if (!a.is_cover && b.is_cover) return 1;
+              // Then sort by order_index
+              return (a.order_index || 0) - (b.order_index || 0);
+            })
+          : [];
+        
+        const link = sortedLinks?.[0];
         const img = link?.images;
         const bucket = img?.bucket;
         const path = img?.path;
@@ -114,13 +124,16 @@ export async function fetchPropertiesInBounds(bounds: {
 
         const cover_image_path = path || "../assets/images/fillers/mc-shop-image1.png";
         const cover_image_url =  bucket && path ? convertImagePath(buildImageURL(bucket, path), ImageSize.SIZE_512) : '';
-        const image_paths = bucket && property.property_image_links ? property.property_image_links.map((link: { images: { path: string } }) => {
-          const path = link.images.path;
-          return path;
-        }) : [];
-        const image_urls = image_paths ? image_paths.map((path: string) => {
-          return path ? buildImageURL(bucket, path) : '';
-        }) : [];
+        const image_paths = bucket && sortedLinks && sortedLinks.length > 0 
+          ? sortedLinks
+              .filter((link: { images?: { path: string } }) => link?.images?.path)
+              .map((link: { images: { path: string } }) => link.images.path)
+          : [];
+        const image_urls = image_paths && bucket 
+          ? image_paths.map((path: string) => {
+              return path ? buildImageURL(bucket, path) : '';
+            }).filter((url: string) => url !== '')
+          : [];
 
         return {
           id: property.id,
@@ -136,7 +149,6 @@ export async function fetchPropertiesInBounds(bounds: {
           listed_by: property.listed_by,
           site_status: property.site_status,
           status: property.status,
-          category: property.category,
           description: property.description,
           owners_note: property.owners_note,
           link_type: property.link_type,
@@ -173,8 +185,9 @@ export async function fetchPropertiesForUser(userId: string, offset: number, lim
       .from('properties')
       .select(`
         *,
-        property_image_links!inner (
+        property_image_links (
           is_cover,
+          order_index,
           images (
             id,
             bucket,
@@ -190,9 +203,7 @@ export async function fetchPropertiesForUser(userId: string, offset: number, lim
       `)
       .eq("votes.user_id", userId)
       // .range(offset, offset + limit - 1)
-      .order('updated_at', { referencedTable: 'votes', ascending: false })
-      .order('is_cover', { referencedTable: 'property_image_links', ascending: false })
-      .order('order_index', { referencedTable: 'property_image_links', ascending: true });
+      .order('updated_at', { referencedTable: 'votes', ascending: false });
 
     console.log("Fetch properties query:", { userId, offset, limit, data });
 
@@ -210,7 +221,18 @@ export async function fetchPropertiesForUser(userId: string, offset: number, lim
     // Map the raw data to Property objects
     const properties: Property[] = await Promise.all(
       data.map(async (property) => {
-        const link = property.property_image_links?.[0];
+        // Sort property_image_links to get cover image first, then by order_index
+        const sortedLinks = property.property_image_links?.length > 0
+          ? [...property.property_image_links].sort((a, b) => {
+              // First sort by is_cover (cover images first)
+              if (a.is_cover && !b.is_cover) return -1;
+              if (!a.is_cover && b.is_cover) return 1;
+              // Then sort by order_index
+              return (a.order_index || 0) - (b.order_index || 0);
+            })
+          : [];
+        
+        const link = sortedLinks?.[0];
         const img = link?.images;
         const bucket = img?.bucket;
         const path = img?.path;
@@ -225,13 +247,16 @@ export async function fetchPropertiesForUser(userId: string, offset: number, lim
 
         const cover_image_path = path || "../assets/images/fillers/mc-shop-image1.png";
         const cover_image_url =  bucket && path ? convertImagePath(buildImageURL(bucket, path), ImageSize.SIZE_512) : '';
-        const image_paths = bucket && property.property_image_links ? property.property_image_links.map((link: { images: { path: string } }) => {
-          const path = link.images.path;
-          return path;
-        }) : [];
-        const image_urls = image_paths ? image_paths.map((path: string) => {
-          return path ? buildImageURL(bucket, path) : '';
-        }) : [];
+        const image_paths = bucket && sortedLinks && sortedLinks.length > 0 
+          ? sortedLinks
+              .filter((link: { images?: { path: string } }) => link?.images?.path)
+              .map((link: { images: { path: string } }) => link.images.path)
+          : [];
+        const image_urls = image_paths && bucket 
+          ? image_paths.map((path: string) => {
+              return path ? buildImageURL(bucket, path) : '';
+            }).filter((url: string) => url !== '')
+          : [];
 
         return {
           id: property.id,
@@ -247,7 +272,6 @@ export async function fetchPropertiesForUser(userId: string, offset: number, lim
           listed_by: property.listed_by,
           site_status: property.site_status,
           status: property.status,
-          category: property.category,
           description: property.description,
           owners_note: property.owners_note,
           link_type: property.link_type,

@@ -131,26 +131,39 @@ export default function PropertyDetailsScreen({ route, navigation }: Props) {
         showsVerticalScrollIndicator={false}
       >
         <View>
-          <FlatList
-            data={property.image_urls || []}
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            style={styles.imageScrollView}
-            contentContainerStyle={styles.imageScrollContent}
-            keyExtractor={(url, index) => url || index.toString()}
-            initialNumToRender={1}
-            maxToRenderPerBatch={1}
-            windowSize={3}
-            renderItem={({ item: url }) => (
-              <ImageWithLoader
-                uri={url}
-                resizeMode="cover"
-                imageSize={ImageSize.SIZE_512}
-                containerStyle={styles.imageContainer}
-                imageStyle={styles.propertyImage}
-              />
-            )}
-          />
+          {property.image_urls && property.image_urls.length > 0 ? (
+            <FlatList
+              data={property.image_urls}
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              style={styles.imageScrollView}
+              contentContainerStyle={[
+                styles.imageScrollContent,
+                property.image_urls.length === 1 && styles.imageScrollContentCentered
+              ]}
+              keyExtractor={(url, index) => url || index.toString()}
+              initialNumToRender={1}
+              maxToRenderPerBatch={1}
+              windowSize={3}
+              renderItem={({ item: url }) => (
+                <ImageWithLoader
+                  uri={url}
+                  resizeMode="cover"
+                  imageSize={ImageSize.SIZE_512}
+                  containerStyle={styles.imageContainer}
+                  imageStyle={styles.propertyImage}
+                />
+              )}
+            />
+          ) : (
+            <View style={styles.imageScrollView}>
+              <View style={[styles.imageScrollContent, styles.imageScrollContentCentered]}>
+                <View style={styles.imageContainerPlaceholder}>
+                  <Text style={styles.placeholderText}>no image</Text>
+                </View>
+              </View>
+            </View>
+          )}
           
           { /* Text Container */}
           <View style={styles.contentContainer}>
@@ -174,7 +187,7 @@ export default function PropertyDetailsScreen({ route, navigation }: Props) {
                 style={styles.statusIcon}
               />
               <Text style={[theme.textStyles.title2]}>
-                {property.address_1 + (property.address_2 ? (", #" + property.address_2) : "")}
+                {property.address_1 + (property.address_2 ? (", " + property.address_2) : "")}
               </Text>
             </View>
 
@@ -322,6 +335,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20, // Match listItem padding
     paddingRight: 6, // Extra space on the right for better scrolling
   },
+  imageScrollContentCentered: {
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   imageContainer: {
     width: 300,
     height: 300,
@@ -333,6 +350,20 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
+  },
+  imageContainerPlaceholder: {
+    width: 300,
+    height: 300,
+    borderRadius: 12,
+    marginRight: 12,
+    backgroundColor: theme.colors.surface2,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  placeholderText: {
+    color: theme.colors.secondary_text,
+    fontSize: 16,
+    fontWeight: '500',
   },
   propertyImage: {
     width: '100%',

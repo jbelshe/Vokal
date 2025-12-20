@@ -22,6 +22,10 @@ const ImageWithLoaderComponent : React.FC<ImageWithLoaderProps> = memo(({
   imageSize = ImageSize.SIZE_ORIGINAL,
   containerStyle 
 }) => {
+  // Early return if URI is empty or invalid
+  if (!uri || uri.trim() === '') {
+    return null;
+  }
 
   const sizedUri = imageSize === ImageSize.SIZE_ORIGINAL ? uri : convertImagePath(uri, imageSize) 
   // Check if image was already loaded before
@@ -30,10 +34,13 @@ const ImageWithLoaderComponent : React.FC<ImageWithLoaderProps> = memo(({
 
   // // Debug logging
   // React.useEffect(() => {
-  //   if (wasLoaded) {
-  //     console.log(`[ImageWithLoader] Image already in cache: ${uri.substring(0, 50)}...`);
-  //   } else {
-  //     console.log(`[ImageWithLoader] Loading new image: ${uri.substring(0, 50)}...`);
+  //   if (uri == "https://wjhnxvtqvehvhvhlwosk.supabase.co/storage/v1/object/public/properties_bucket/property_images/d12ccf43-8dc6-41b3-94b9-4ea132fbdfec/17921d30-d03f-4881-8ef8-b4b4987ab84a/original.jpeg") {
+  //     console.log("wasLoaded", wasLoaded, "Sized Uri", sizedUri);
+  //     if (wasLoaded) {
+  //       console.log(`[ImageWithLoader] Image already in cache: ${uri}`);
+  //     } else {
+  //       console.log(`[ImageWithLoader] Loading new image: ${uri}`);
+  //     }
   //   }
   // }, [uri, wasLoaded]);
 

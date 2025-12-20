@@ -51,10 +51,12 @@ const PropertyListCard = React.memo(({ property, onPress }: PropertyListCardProp
             onPress={handlePress}
             activeOpacity={0.7}
         >
-            <View style={styles.imageScrollContainer}>
-              <MemoizedImage imgKey={convertImagePath(property.image_urls![0], ImageSize.SIZE_512)} />
-              { property.image_urls!.length > 1 && <MemoizedImage imgKey={convertImagePath(property.image_urls![1], ImageSize.SIZE_512)} />}
-            </View>
+            {property.image_urls && property.image_urls.length > 0 && (
+              <View style={styles.imageScrollContainer}>
+                <MemoizedImage imgKey={convertImagePath(property.image_urls[0], ImageSize.SIZE_512)} />
+                {property.image_urls.length > 1 && <MemoizedImage imgKey={convertImagePath(property.image_urls[1], ImageSize.SIZE_512)} />}
+              </View>
+            )}
 
             {/* <FlatList
                 data={property.image_urls || []}

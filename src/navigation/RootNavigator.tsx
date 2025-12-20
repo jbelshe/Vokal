@@ -6,6 +6,7 @@ import AuthStack from './AuthStack';
 import AppStack from './AppStack';
 import * as Notifications from 'expo-notifications';
 import { useEffect, useRef } from 'react';
+import { PostHogProvider } from 'posthog-react-native';
 
 function Splash() {
   return (
@@ -55,13 +56,16 @@ export default function RootNavigator() {
 
   return (
     <NavigationContainer>
-      <View style={{ flex: 1 }}>
-        {!state.isAuthenticated || state.isOnboarding ? (
-          <AuthStack />
-        ) : (
-          <AppStack />
-        )}
-      </View>
+      <PostHogProvider
+        apiKey="phc_fNTrxQcWb0h53CW1tyPPSNbgWYX9ChvuATuYjYMDI7E"
+        options={{
+          host: 'https://us.i.posthog.com',
+          enableSessionReplay: false,
+        }}
+        autocapture={false}
+      >
+        {!state.isAuthenticated || state.isOnboarding ? (<AuthStack />) : (<AppStack />)}
+      </PostHogProvider>
     </NavigationContainer>
   );
 }

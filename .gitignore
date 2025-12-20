@@ -47,3 +47,4 @@ eas.json
 
 src/todo.txt
 src/scratch.txt
+.env.local

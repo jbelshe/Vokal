@@ -7,13 +7,13 @@ import { supabase } from '../lib/supabase';
 import { AppState, AppStateStatus } from 'react-native';
 import { useReducer } from 'react';
 import { useNotificationsSetup } from '../hooks/useNotificationSetup';
+import * as Sentry from "@sentry/react-native";
 
 type AuthContextType = {
   state : AuthState;
   dispatch: React.Dispatch<AuthAction>;
   handleSendOtp: (phoneNumber: string) => Promise<void>;
   handleVerifyOtp: (otpInput: string) => Promise<number>;
-  // signIn: (tokenOrUser: string | any) => Promise<void>;
   signOut: () => Promise<void>;
   saveNewProfileToDatabase: (currProfile: Profile) => Promise<boolean>;
   updateProfileInDatabase: (currProfile: Partial<Profile>) => Promise<boolean>;
@@ -144,6 +144,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // Ref to prevent concurrent session processing (race condition guard)
   const isProcessingSession = useRef(false);
   const isInitializing = useRef(true);
+
+  useEffect(() => {
+    if (state.profile?.userId) {
+      console.log("Setting Sentry UUID to:", state.profile?.userId )
+      Sentry.setUser({ id: state.profile?.userId });
+    } else {
+
+      console.log("Resetting Sentry UUID")
+      Sentry.setUser(null);
+    }
+  }, [state.profile?.userId]);
 
   /**
    * Centralized function to handle session changes consistently
@@ -302,6 +313,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signOut = async () => {
     try {
       console.log("Signing out...");
+      Sentry.setUser(null);
       await supabase.auth.signOut();  // will trigger dispatch('SIGN_OUT') through auth.onAuthStateChange
     } catch (error) {
       console.error('Error signing out:', error);
@@ -336,7 +348,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (!result.profile) {
           console.log("OTP Verified, but no profile found => New User => setting onboarding to true");
           const partProfile  : Partial<Profile> = { 
-            userId: result.newSession.user?.id ?? '',
+            userId: result.newSession.user?.id,
             phoneNumber: result.newSession.user?.phone ?? '',
           };
           dispatch({ type: "SET_ONBOARDING", payload: true, msg: "handleVerifyOtp" });
@@ -400,7 +412,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     dispatch,
     handleSendOtp,
     handleVerifyOtp,
-    // signIn,
     signOut,  
     saveNewProfileToDatabase,
     updateProfileInDatabase

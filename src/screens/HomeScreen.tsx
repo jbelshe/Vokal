@@ -24,6 +24,7 @@ import { RoundNextButton } from '@/components/RoundNextButton';
 import * as Location from 'expo-location';
 import { Linking } from 'react-native';
 import { useNotificationsSetup } from '../hooks/useNotificationSetup';
+import * as Sentry from '@sentry/react-native';
 
 type Props = NativeStackScreenProps<AppStackParamList, 'Home'>;
 
@@ -92,25 +93,10 @@ export default function HomeScreen({ navigation }: Props) {
     checkLocationPermission();
   }, [requestLocation]);
 
-  // useEffect(() => {
-
-  //   async function getCurrentLocation() {
-
-  //     let { status } = await Location.requestForegroundPermissionsAsync();
-  //     console.log('Location permission status:', status);
-  //     if (status !== 'granted') {
-  //       Error('Permission to access location was denied');
-  //       return;
-  //     }
-
-  //     let location = await Location.getCurrentPositionAsync({});
-  //     console.log('User location:', location);
-  //     setUserLocation(location);
-
-  //   }
-
-  //   getCurrentLocation();
-  // }, []);
+  useEffect(() => {
+    Sentry.captureException(new Error("SENTRY SIMPLE TEST"));
+    Sentry.flush();
+  }, []);
 
 
 
