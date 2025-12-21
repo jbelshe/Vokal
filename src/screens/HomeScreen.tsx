@@ -12,7 +12,6 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { theme } from '../assets/theme';
 import MapIcon from '../assets/icons/map-icon.svg';
 import ListIcon from '../assets/icons/list-icon.svg';
-import AccountIcon from '../assets/icons/account-icon.svg';
 import { Image } from 'react-native';
 import { useAppContext } from '../context/AppContext';
 import { useAuth } from '../context/AuthContext';
@@ -79,6 +78,22 @@ export default function HomeScreen({ navigation }: Props) {
     status: locationStatus,
   } = useUserLocation();
 
+  const getUserInitials = () => {
+    const firstName = state.profile?.firstName || '';
+    const lastName = state.profile?.lastName || '';
+    
+    const firstInitial = firstName.charAt(0).toUpperCase();
+    const lastInitial = lastName.charAt(0).toUpperCase();
+    
+    if (firstInitial && lastInitial) {
+      return `${firstInitial}${lastInitial}`;
+    }
+    if (firstInitial) {
+      return firstInitial;
+    }
+    return 'U'; // Default to 'U' for User if no name available
+  };
+
 
   useEffect(() => {
     const checkLocationPermission = async () => {
@@ -93,10 +108,10 @@ export default function HomeScreen({ navigation }: Props) {
     checkLocationPermission();
   }, [requestLocation]);
 
-  useEffect(() => {
-    Sentry.captureException(new Error("SENTRY SIMPLE TEST"));
-    Sentry.flush();
-  }, []);
+  // useEffect(() => {
+  //   Sentry.captureException(new Error("SENTRY SIMPLE TEST"));
+  //   Sentry.flush();
+  // }, []);
 
 
 
@@ -415,53 +430,60 @@ export default function HomeScreen({ navigation }: Props) {
                 <Text style={theme.textStyles.caption}>Opening Soon</Text>
               </View>
             </View>
-            <View style={styles.searchBar}>
-              <View style={styles.searchBarInputContainer}>
-                <View style={styles.searchTextContainerRow}>
-                  <Ionicons name="search" size={20} color={theme.colors.secondary_text} style={styles.searchIcon} />
-                  <TextInput
-                    style={styles.input}
-                    placeholder="Search..."
-                    placeholderTextColor="#999"
-                    value={searchQuery}
-                    onChangeText={onSearchTextChange}
-                    returnKeyType="search"
-                  />
-                  <AccountIcon
-                    width={25}
-                    height={25}
-                    fill={theme.colors.secondary_text}
-                    style={styles.accountIcon}
-                    onPress={() => navigation.navigate('SettingsMain')}
-                  />
-                </View>
-                {loadingPredictions && (
-                  <View style={styles.loadingRow}>
-                    <ActivityIndicator size="small" />
-                    <Text style={styles.loadingText}>Searching...</Text>
-                  </View>
-                )}
-                {predictedQuery.length > 0 && (
-                  <View style={styles.suggestionsContainer}>
-                    <FlatList
-                      data={predictedQuery}
-                      keyExtractor={(item) => item.place_id}
-                      keyboardShouldPersistTaps="handled"
-                      renderItem={({ item }) => (
-                        <TouchableOpacity
-                          style={styles.suggestionItem}
-                          onPress={() => handleSelectPrediction(item)}
-                        >
-                          <Text style={styles.suggestionPrimaryText}>
-                            {item.description}
-                          </Text>
-                        </TouchableOpacity>
-                      )}
+            <View style={styles.searchBarRow}>
+              <View style={styles.searchBar}>
+                <View style={styles.searchBarInputContainer}>
+                  <View style={styles.searchTextContainerRow}>
+                    <Ionicons name="search" size={20} color={theme.colors.secondary_text} style={styles.searchIcon} />
+                    <TextInput
+                      style={styles.input}
+                      placeholder="Search..."
+                      placeholderTextColor="#999"
+                      value={searchQuery}
+                      onChangeText={onSearchTextChange}
+                      returnKeyType="search"
                     />
                   </View>
-                )}
-
+                  {loadingPredictions && (
+                    <View style={styles.loadingRow}>
+                      <ActivityIndicator size="small" />
+                      <Text style={styles.loadingText}>Searching...</Text>
+                    </View>
+                  )}
+                  {predictedQuery.length > 0 && (
+                    <View style={styles.suggestionsContainer}>
+                      <FlatList
+                        data={predictedQuery}
+                        keyExtractor={(item) => item.place_id}
+                        keyboardShouldPersistTaps="handled"
+                        renderItem={({ item }) => (
+                          <TouchableOpacity
+                            style={styles.suggestionItem}
+                            onPress={() => handleSelectPrediction(item)}
+                          >
+                            <Text style={styles.suggestionPrimaryText}>
+                              {item.description}
+                            </Text>
+                          </TouchableOpacity>
+                        )}
+                      />
+                    </View>
+                  )}
+                </View>
               </View>
+              <TouchableOpacity
+                onPress={() => navigation.navigate('SettingsMain')}
+                style={styles.accountIconContainer}
+              >
+                <LinearGradient
+                  colors={[theme.colors.primary_gradient_start, theme.colors.primary_gradient_end]}
+                  style={styles.profileInitialsContainer}
+                  start={{ x: 0.5, y: 0 }}
+                  end={{ x: 0.5, y: 1 }}
+                >
+                  <Text style={styles.profileInitials}>{getUserInitials()}</Text>
+                </LinearGradient>
+              </TouchableOpacity>
             </View>
           </View>
 
@@ -924,22 +946,41 @@ const styles = StyleSheet.create({
     // zIndex: 0,
     pointerEvents: 'none',
   },
+  searchBarRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    width: '100%',
+  },
   searchBar: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: theme.colors.surface1,
-    borderRadius: 12,
-    paddingHorizontal: 12,
+    borderRadius: 30,
+    paddingHorizontal: 10,
     height: 50,
-    width: '100%',
-    alignSelf: 'center',
+    flex: 1,
+    marginRight: 8,
   },
   searchBarInputContainer: {
-    position: 'absolute',
-    top: 8,
-    left: 16,
-    right: 16,
+    flex: 1,
     zIndex: 1002,
+  },
+  accountIconContainer: {
+    padding: 4,
+    zIndex: 1003,
+  },
+  profileInitialsContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  profileInitials: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#FFFFFF',
+    textAlign: 'center',
   },
   loadingRow: {
     flexDirection: 'row',

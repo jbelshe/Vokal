@@ -57,7 +57,11 @@ export function useUserLocation() {
 
       return { latitude, longitude };
     } catch (err: any) {
-      console.error('Error getting location', err);
+      // Suppress error logging for simulator (error code 0 is common on simulator)
+      if (err?.code !== 0) {
+        console.error('Error getting location', err);
+      }
+      
       setState(prev => ({
         ...prev,
         status: 'error',

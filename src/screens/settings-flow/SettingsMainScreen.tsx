@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { View, Text, StyleSheet, Linking, TouchableOpacity, Image, Alert, Platform, ImageBackground } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Image, Alert, Platform, ImageBackground } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { AppStackParamList } from '../../types/navigation';
 import { theme } from '../../assets/theme';
@@ -7,7 +7,7 @@ import { useAuth } from '../../context/AuthContext';
 import { PurpleButtonLarge } from '../../components/PurpleButtonLarge';
 import { SectionOptionsButton } from '../../components/SectionOptionsButton';
 import { ProfileIconButton } from '../../components/ProfileIconButton';
-
+import { LinearGradient } from 'expo-linear-gradient';
 import ChevronLeftIcon from '../../assets/icons/chevron-left.svg';
 import ChevronRightIcon from '../../assets/icons/chevron-right.svg';
 import VotedIcon from '../../assets/icons/home.png';
@@ -97,6 +97,22 @@ export default function SettingsHomeScreen({ navigation, route }: Props) {
     return 'User';
   };
 
+  const getUserInitials = () => {
+    const firstName = state.profile?.firstName || '';
+    const lastName = state.profile?.lastName || '';
+    
+    const firstInitial = firstName.charAt(0).toUpperCase();
+    const lastInitial = lastName.charAt(0).toUpperCase();
+    
+    if (firstInitial && lastInitial) {
+      return `${firstInitial}${lastInitial}`;
+    }
+    if (firstInitial) {
+      return firstInitial;
+    }
+    return 'U'; // Default to 'U' for User if no name available
+  };
+
   return (
     <ImageBackground
                 source={require('../../assets/images/bg-bottom-gradient.png')}
@@ -112,12 +128,14 @@ export default function SettingsHomeScreen({ navigation, route }: Props) {
 
         {/* Profile Image */}
         <View style={styles.imageContainer}>
-          <TouchableOpacity onPress={() => {handleProfileImagePress()}}> 
-            <Image
-              source={require('../../assets/icons/profile-empty.png')}
-              style={styles.profileImage}
-            />
-          </TouchableOpacity>
+            <LinearGradient
+              colors={[theme.colors.primary_gradient_start, theme.colors.primary_gradient_end]}
+              style={styles.profileImageContainer}
+              start={{ x: 0.5, y: 0 }}
+              end={{ x: 0.5, y: 1 }}
+            >
+                    <Text style={styles.profileInitials}>{getUserInitials()}</Text>
+            </LinearGradient>
         </View>
 
         {/* User Name */}
@@ -221,7 +239,7 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     position: 'absolute',
-    left: 0,
+    left: -5,
     top: 60,
     right: 0,
     textAlign: 'center',
@@ -240,6 +258,20 @@ const styles = StyleSheet.create({
   profileImage: {
     width: 120,
     height: 120,
+  },
+  profileImageContainer: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    backgroundColor: theme.colors.primary_gradient_start,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  profileInitials: {
+    fontSize: 48,
+    fontWeight: '600',
+    color: '#FFFFFF',
+    textAlign: 'center',
   },
   userName: {
     textAlign: 'center',
