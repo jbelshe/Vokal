@@ -7,6 +7,7 @@ import { theme } from '../../../assets/theme';
 import { PurpleButtonLarge } from '../../../components/PurpleButtonLarge';
 import { onboardingStyles } from '../../../assets/theme/onboardingStyles';
 import { useAuth } from '../../../context/AuthContext';
+import { usePostHogAnalytics } from '../../../hooks/usePostHogAnalytics';
 
 
 type Props = NativeStackScreenProps<AuthStackParamList, 'Onboarding4'>;
@@ -14,11 +15,13 @@ type Props = NativeStackScreenProps<AuthStackParamList, 'Onboarding4'>;
 const styles = onboardingStyles;
 
 export default function Onboarding4({ navigation }: Props) {
-    const { dispatch } = useAuth();
+    const analytics = usePostHogAnalytics();
+    const { dispatch, state } = useAuth();
 
     const handleNext = () => {
+        analytics.trackOnboardingCompleted(state.profile?.userId!);
         dispatch({ type: 'SET_ONBOARDING', payload: false });
-    }
+    }   
     return (<
         ImageBackground
                 source={require('../../../assets/images/bg-top-bottom-gradient.png')}

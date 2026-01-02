@@ -6,10 +6,12 @@ import { theme } from '../../assets/theme';
 import { RoundNextButton } from '../../components/RoundNextButton';
 import { useAuth } from '../../context/AuthContext';
 import { TouchableWithoutFeedback } from 'react-native';
+import { usePostHogAnalytics } from '../../hooks/usePostHogAnalytics';
 
 type Props = NativeStackScreenProps<AuthStackParamList, 'EnterPhoneNumber'>;
 
 export default function EnterPhoneNumber({ navigation }: Props) {
+  const analytics = usePostHogAnalytics();
   const [keyboardVisible, setKeyboardVisible] = useState(false);
 
   useEffect(() => {
@@ -56,6 +58,7 @@ export default function EnterPhoneNumber({ navigation }: Props) {
     if (isValid) {
       try {
         handleSendOtp("1" + phoneNumberLocal);
+        analytics.trackOTPRequested("1" + phoneNumberLocal);
       } catch (error) {
         console.error('Error checking if user exists:', error);
       }

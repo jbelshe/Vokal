@@ -13,6 +13,7 @@ import { useVotingContext } from '../../context/VotingContext';
 import { submitVote, getTopVotes } from '../../api/voting';
 import { useAuth } from '../../context/AuthContext';
 import { TopVoteResults, VoteTally } from '../../types/vote';
+import { usePostHogAnalytics } from '../../hooks/usePostHogAnalytics';
 
 
 
@@ -21,11 +22,13 @@ import { TopVoteResults, VoteTally } from '../../types/vote';
 type Props = NativeStackScreenProps<VotingStackParamList, 'AdditionalNote'>;
 
 export default function AdditionalNoteScreen({ navigation, route }: Props) {
+
+  const analytics = usePostHogAnalytics();
   const maxLength = 50;
   const subCategorySelected = route.params.subCategorySelected;
   const { properties, setProperties, currentPropertyId, subcategoryToIdMap, idToCategoryMap } = useAppContext();
   const { state } = useAuth();
-  const { additionalNote, setAdditionalNote, resetVoting } = useVotingContext();
+  const { additionalNote, setAdditionalNote, resetVoting, categorySelected } = useVotingContext();
 
   const handleBack = () => {
     navigation.goBack();
@@ -37,7 +40,6 @@ export default function AdditionalNoteScreen({ navigation, route }: Props) {
   };
 
   const handleSendVote = async () => {
-
 
 
     const sanitizedNode = additionalNote.trim()
@@ -54,6 +56,14 @@ export default function AdditionalNoteScreen({ navigation, route }: Props) {
       console.error('Failed to submit vote');
       return;
     }
+
+    analytics.trackVoteSubmitted({
+      propertyId: currentPropertyId!,
+      categoryCode: categorySelected!,
+      subcategoryCode: subCategorySelected,
+      hasNote: !!additionalNote && additionalNote.trim().length > 0,
+    });
+
 
     const property = properties.find((property) => property.id === currentPropertyId);
     if (!property) {

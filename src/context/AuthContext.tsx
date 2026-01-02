@@ -8,6 +8,7 @@ import { AppState, AppStateStatus } from 'react-native';
 import { useReducer } from 'react';
 import { useNotificationsSetup } from '../hooks/useNotificationSetup';
 import * as Sentry from "@sentry/react-native";
+import { usePostHogAnalytics } from '../hooks/usePostHogAnalytics'
 
 type AuthContextType = {
   state : AuthState;
@@ -134,7 +135,7 @@ const initialAuthState: AuthState = {
 
 // Provider for the context
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-
+  const analytics = usePostHogAnalytics();
 
 
 
@@ -312,6 +313,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signOut = async () => {
     try {
+      analytics.trackSignOut();
       console.log("Signing out...");
       Sentry.setUser(null);
       await supabase.auth.signOut();  // will trigger dispatch('SIGN_OUT') through auth.onAuthStateChange
@@ -338,6 +340,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (result && result.newSession) {
         console.log("[VERIFY_OTP] OTP verified successfully");
         console.log("Sesssion + Profile:", result)
+        
         // Set the session - this will trigger onAuthStateChange which will trigger handleSessionChange
         // and handle profile loading and state updates consistently
         await supabase.auth.setSession({
@@ -351,11 +354,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             userId: result.newSession.user?.id,
             phoneNumber: result.newSession.user?.phone ?? '',
           };
+          
           dispatch({ type: "SET_ONBOARDING", payload: true, msg: "handleVerifyOtp" });
           dispatch({ type: "SET_PROFILE", payload: partProfile, msg: "handleVerifyOtp (no profile)" });
           return 1;
         }
         else {
+          analytics.identifyUser(result.profile?.userId, {
+            email: result.profile?.email || undefined,
+            firstName: result.profile?.firstName,
+            zipCode: result.profile?.zipCode || undefined,
+          });
+          analytics.trackSignIn(result.profile?.userId);
           console.log("Profile found, existing user => setting onboarding to false");
           dispatch({ type: "SET_ONBOARDING", payload: false, msg: "handleVerifyOtp" });
           dispatch({ type: "SET_PROFILE", payload: result.profile, msg: "handleVerifyOtp" });

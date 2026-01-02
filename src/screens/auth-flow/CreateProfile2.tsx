@@ -12,6 +12,7 @@ import { useMemo, useState } from 'react';
 import Checkbox from 'expo-checkbox';
 import { Profile } from '../../types/profile';
 import { Birthday } from '../../types/birthday';
+import { usePostHogAnalytics } from '../../hooks/usePostHogAnalytics';
 
 type Props = NativeStackScreenProps<AuthStackParamList, 'CreateProfile2'>;
 
@@ -75,6 +76,7 @@ const parseBirthdayFromProfile = (birthday: Birthday | null | undefined): { mont
 
 
 export default function CreateProfile2({ navigation }: Props) {
+  const analytics = usePostHogAnalytics();
   const { state, dispatch, saveNewProfileToDatabase } = useAuth();
   const [selectedGender, setSelectedGender] = React.useState<string>(state.profile?.gender || '');
   const [email, setEmail] = React.useState(state.profile?.email || '');
@@ -166,6 +168,7 @@ export default function CreateProfile2({ navigation }: Props) {
 
     dispatch({ type: "SET_PROFILE", payload: updatedProfile, msg: "CreateProfile Call" });
     try {
+      analytics.trackProfileCreated(state.profile?.userId!);
       const success = await saveNewProfileToDatabase(updatedProfile);
       if (!success) {
         setContentError('Failed to save profile. Please try again.');

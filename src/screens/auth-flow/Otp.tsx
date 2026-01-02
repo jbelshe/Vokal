@@ -6,11 +6,13 @@ import { AuthStackParamList } from '../../types/navigation';
 import { theme } from '@/assets/theme';
 import { RoundNextButton } from '../../components/RoundNextButton';
 import { useAuth } from '@/context/AuthContext';
+import { usePostHogAnalytics } from '../../hooks/usePostHogAnalytics';
 
 
 type Props = NativeStackScreenProps<AuthStackParamList, 'OTP'>;
 
 export default function Otp({ navigation }: Props) {
+  const analytics = usePostHogAnalytics();
   const [otpValue, setOtpValue] = React.useState('');
   const [resendDisabled, setResendDisabled] = React.useState(false);
   const [countdown, setCountdown] = React.useState(30);
@@ -56,6 +58,7 @@ export default function Otp({ navigation }: Props) {
     // Reset countdown and disable resend button for 30 seconds
     console.log('Resending verification code...');
     handleSendOtp(safePhoneNumber);
+    analytics.trackOTPRerequested(safePhoneNumber);
     setResendDisabled(true);
     setCountdown(30);
 
@@ -90,13 +93,14 @@ export default function Otp({ navigation }: Props) {
       if (success == 1) {     
         console.log("handleVerifyOtp success, onboarding: ", state.isOnboarding);
         navigation.navigate('CreateProfile1'); // if user exists, AuthContext sends them to HomeScreen
-        
+        analytics.trackOTPVerified();
       } else if (success == 0) {
           console.log("handleVerifyOtp success, no onboarding: ", success);
           setTimeout(() => {
             console.log("Waiting....")
             // wait until the auth context has updated the state.  Navigation will automatically switch to AppContext
           }, 5000);
+          analytics.trackOTPVerified();
       }
       else if (success < 0) {
         Alert.alert(
@@ -104,6 +108,7 @@ export default function Otp({ navigation }: Props) {
           'The verification code you entered is incorrect. Please try again.',
           [{ text: 'OK', onPress: () => setOtpValue('') }]
         );
+        analytics.trackOTPFailed();
       }
       else { 
         console.log("Unknown error from handleVerifyOtp - check handleVerifyOtp logic in Otp.tsx: ", success);

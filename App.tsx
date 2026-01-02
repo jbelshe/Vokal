@@ -3,6 +3,7 @@ import { AuthProvider } from './src/context/AuthContext';
 import { AppProvider } from './src/context/AppContext';
 import { VotingProvider } from './src/context/VotingContext';
 import { FontLoader } from './src/components/FontLoader';
+import { PostHogProvider } from 'posthog-react-native';
 import * as Sentry from '@sentry/react-native';
 
 Sentry.init({
@@ -17,14 +18,23 @@ Sentry.init({
 
 export default Sentry.wrap(function App() {
   return (
-    <FontLoader>
-      <AuthProvider>
-        <AppProvider>
-          <VotingProvider>
-            <RootNavigator />
-          </VotingProvider>
-        </AppProvider>
-      </AuthProvider>
-    </FontLoader>
+    <PostHogProvider
+      apiKey="phc_fNTrxQcWb0h53CW1tyPPSNbgWYX9ChvuATuYjYMDI7E"
+      options={{
+        host: 'https://us.i.posthog.com',
+        enableSessionReplay: false,
+      }}
+      autocapture={false}
+    >
+      <FontLoader>
+        <AuthProvider>
+          <AppProvider>
+            <VotingProvider>
+              <RootNavigator />
+            </VotingProvider>
+          </AppProvider>
+        </AuthProvider>
+      </FontLoader>
+    </PostHogProvider>
   );
 });

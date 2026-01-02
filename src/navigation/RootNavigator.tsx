@@ -6,7 +6,7 @@ import AuthStack from './AuthStack';
 import AppStack from './AppStack';
 import * as Notifications from 'expo-notifications';
 import { useEffect, useRef } from 'react';
-import { PostHogProvider } from 'posthog-react-native';
+import { useScreenTracking } from '../hooks/useScreenTracking';
 
 function Splash() {
   return (
@@ -16,8 +16,10 @@ function Splash() {
   );
 }
 
+
 export default function RootNavigator() {
   const { state } = useAuth();
+  const { onStateChange } = useScreenTracking();
 
   const notificationListener = useRef<Notifications.EventSubscription | null>(null);
   const responseListener = useRef<Notifications.EventSubscription | null>(null);
@@ -52,20 +54,9 @@ export default function RootNavigator() {
     return <Splash />;
   }
 
-
-
   return (
-    <NavigationContainer>
-      <PostHogProvider
-        apiKey="phc_fNTrxQcWb0h53CW1tyPPSNbgWYX9ChvuATuYjYMDI7E"
-        options={{
-          host: 'https://us.i.posthog.com',
-          enableSessionReplay: false,
-        }}
-        autocapture={false}
-      >
-        {!state.isAuthenticated || state.isOnboarding ? (<AuthStack />) : (<AppStack />)}
-      </PostHogProvider>
+    <NavigationContainer onStateChange={onStateChange}>
+      {!state.isAuthenticated || state.isOnboarding ? <AuthStack /> : <AppStack />}
     </NavigationContainer>
   );
 }
