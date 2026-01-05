@@ -77,9 +77,9 @@ const PropertyListCard = React.memo(({ property, onPress }: PropertyListCardProp
             <View style={styles.listItemContent}>
                 <Image
                     source={property.status === 'vacant' ?
-                        require('../assets/icons/location-purple-icon.png')
+                        require('../assets/icons/location-purple.png')
                         :
-                        require('../assets/icons/location-blue-icon.png')
+                        require('../assets/icons/location-blue.png')
                     }
                     style={{ width: 20, height: 20, marginTop: 2 }}
                 />

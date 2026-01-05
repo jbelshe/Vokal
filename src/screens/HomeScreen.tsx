@@ -19,7 +19,6 @@ import PropertyListCard from '@/components/PropertyListCard';
 import { ImageWithLoader } from '@/components/ImageWithLoader';
 import { fetchPlaces, fetchPredictedPlace } from '../api/places';
 import { useUserLocation } from '../hooks/useUserLocation';
-import { RoundNextButton } from '@/components/RoundNextButton';
 import * as Location from 'expo-location';
 import { Linking } from 'react-native';
 import { useNotificationsSetup } from '../hooks/useNotificationSetup';
@@ -422,11 +421,11 @@ export default function HomeScreen({ navigation }: Props) {
           <View style={styles.headerContainer}>
             <View style={[styles.locationRuleContainer, { flexDirection: 'row', justifyContent: 'space-between' }]}>
               <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                <Image source={require('../assets/icons/location-purple-icon.png')} style={{ width: 25, height: 25, marginRight: 8 }} />
+                <Image source={require('../assets/icons/location-purple.png')} style={{ width: 28, height: 28, marginRight: 8 }} />
                 <Text style={theme.textStyles.caption}>Vacant Spaces</Text>
               </View>
               <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                <Image source={require('../assets/icons/location-blue-icon.png')} style={{ width: 25, height: 25, marginRight: 8 }} />
+                <Image source={require('../assets/icons/location-blue.png')} style={{ width: 28, height: 28, marginRight: 8 }} />
                 <Text style={theme.textStyles.caption}>Opening Soon</Text>
               </View>
             </View>
@@ -450,26 +449,28 @@ export default function HomeScreen({ navigation }: Props) {
                       <Text style={styles.loadingText}>Searching...</Text>
                     </View>
                   )}
-                  {predictedQuery.length > 0 && (
-                    <View style={styles.suggestionsContainer}>
-                      <FlatList
-                        data={predictedQuery}
-                        keyExtractor={(item) => item.place_id}
-                        keyboardShouldPersistTaps="handled"
-                        renderItem={({ item }) => (
-                          <TouchableOpacity
-                            style={styles.suggestionItem}
-                            onPress={() => handleSelectPrediction(item)}
-                          >
-                            <Text style={styles.suggestionPrimaryText}>
-                              {item.description}
-                            </Text>
-                          </TouchableOpacity>
-                        )}
-                      />
-                    </View>
-                  )}
                 </View>
+                {predictedQuery.length > 0 && (
+                  <View style={styles.suggestionsContainer}>
+                    <FlatList
+                      data={predictedQuery}
+                      keyExtractor={(item) => item.place_id}
+                      keyboardShouldPersistTaps="handled"
+                      scrollEnabled={true}
+                      nestedScrollEnabled={true}
+                      renderItem={({ item }) => (
+                        <TouchableOpacity
+                          style={styles.suggestionItem}
+                          onPress={() => handleSelectPrediction(item)}
+                        >
+                          <Text style={styles.suggestionPrimaryText}>
+                            {item.description}
+                          </Text>
+                        </TouchableOpacity>
+                      )}
+                    />
+                  </View>
+                )}
               </View>
               <TouchableOpacity
                 onPress={() => navigation.navigate('SettingsMain')}
@@ -591,11 +592,11 @@ export default function HomeScreen({ navigation }: Props) {
               >
                 <Image
                   source={property.status === 'vacant' ?
-                    require('../assets/icons/location-purple-icon.png')
+                    require('../assets/icons/location-purple.png')
                     :
-                    require('../assets/icons/location-blue-icon.png')
+                    require('../assets/icons/location-blue.png')
                   }
-                  style={{ width: 40, height: 40 }}
+                  style={{ width: 32, height: 32 }}
                 />
                 <Callout
                   tooltip={false}
@@ -704,7 +705,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderRadius: 12,
     paddingHorizontal: 12,
-    height: 50,
+    height: 40,
     width: '100%',
   },
 
@@ -960,6 +961,7 @@ const styles = StyleSheet.create({
     height: 50,
     flex: 1,
     marginRight: 8,
+    position: 'relative',
   },
   searchBarInputContainer: {
     flex: 1,
@@ -989,7 +991,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
   },
   suggestionsContainer: {
-    marginTop: 7,
+    position: 'absolute',
+    top: 55,
+    left: 0,
+    right: 0,
     backgroundColor: 'white',
     borderRadius: 16,
     borderColor: theme.colors.border,
@@ -1002,12 +1007,13 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     elevation: 3,
     zIndex: 1002,
-    position: 'relative'
   },
   suggestionItem: {
-    paddingVertical: 10,
+    paddingVertical: 12,
     paddingHorizontal: 12,
-    borderBottomWidth: 2,
+    minHeight: 44,
+    justifyContent: 'center',
+    borderBottomWidth: 1,
     borderBottomColor: '#eee',
   },
   suggestionPrimaryText: {

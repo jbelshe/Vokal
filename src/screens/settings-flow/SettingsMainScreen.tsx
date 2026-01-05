@@ -75,15 +75,24 @@ export default function SettingsHomeScreen({ navigation, route }: Props) {
 
     analytics.trackSettingsChanged('notifications', value);
 
-    // const token = await ensureNotificationsRegistered(state.profile.userId!);
     console.log("Notification toggle:", value, "from:", source);
-    updateProfileInDatabase({ notificationsEnabled: value });
+    
+    // If disabling notifications, clear the push token
+    if (!value && state.profile?.expoPushToken) {
+      await updateProfileInDatabase({ 
+        notificationsEnabled: false,
+        expoPushToken: null 
+      });
+      dispatch({ type: 'SET_PROFILE', payload: { expoPushToken: null }, msg: 'Notifications disabled' });
+    } else {
+      await updateProfileInDatabase({ notificationsEnabled: value });
+    }
+    
     console.log("NotificationsEnabled:", value, remindersEnabled)
     if (value) {
       if (state.profile?.expoPushToken) {
         Alert.alert("Notifications Enabled", "You will now receive reminder notifications.");
       }
-
     }
 
     setRemindersEnabled(value);

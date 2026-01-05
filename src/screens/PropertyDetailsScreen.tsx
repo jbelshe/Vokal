@@ -187,8 +187,8 @@ export default function PropertyDetailsScreen({ route, navigation }: Props) {
             <View style={styles.headerRow}>
               <Image
                 source={property?.status === 'vacant'
-                  ? require('../assets/icons/location-purple-icon.png')
-                  : require('../assets/icons/location-blue-icon.png')
+                  ? require('../assets/icons/location-purple.png')
+                  : require('../assets/icons/location-blue.png')
                 }
                 style={styles.statusIcon}
               />

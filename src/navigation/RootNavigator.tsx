@@ -7,6 +7,7 @@ import AppStack from './AppStack';
 import * as Notifications from 'expo-notifications';
 import { useEffect, useRef } from 'react';
 import { useScreenTracking } from '../hooks/useScreenTracking';
+import { AppStackParamList } from '../types/navigation';
 
 function Splash() {
   return (
@@ -20,6 +21,7 @@ function Splash() {
 export default function RootNavigator() {
   const { state } = useAuth();
   const { onStateChange } = useScreenTracking();
+  const navigationRef = React.useRef<any>(null);
 
   const notificationListener = useRef<Notifications.EventSubscription | null>(null);
   const responseListener = useRef<Notifications.EventSubscription | null>(null);
@@ -37,6 +39,24 @@ export default function RootNavigator() {
       Notifications.addNotificationResponseReceivedListener(response => {
         const data = response.notification.request.content.data;
         console.log('User interacted with notification:', data);
+        
+        // Handle navigation based on notification data
+        // You can customize this based on your notification payload structure
+        if (navigationRef.current?.isReady()) {
+          const navigation = navigationRef.current;
+          
+          if (data?.screen) {
+            try {
+              navigation.navigate(data.screen as keyof AppStackParamList, data.params || {});
+            } catch (error) {
+              console.error('Navigation error from notification:', error);
+            }
+          }
+          // Example: Navigate to home if no specific screen is provided
+          else if (state.isAuthenticated) {
+            navigation.navigate('Home');
+          }
+        }
       });
 
     // Cleanup on unmount
@@ -48,14 +68,14 @@ export default function RootNavigator() {
         responseListener.current.remove();
       }
     };
-  }, []);
+  }, [state.isAuthenticated]);
 
   if (state.loading) {
     return <Splash />;
   }
 
   return (
-    <NavigationContainer onStateChange={onStateChange}>
+    <NavigationContainer ref={navigationRef} onStateChange={onStateChange}>
       {!state.isAuthenticated || state.isOnboarding ? <AuthStack /> : <AppStack />}
     </NavigationContainer>
   );

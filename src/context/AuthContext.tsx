@@ -315,6 +315,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       analytics.trackSignOut();
       console.log("Signing out...");
+      
+      // Clear push token from database when user logs out
+      if (state.profile?.userId) {
+        try {
+          await updateProfile({ userId: state.profile.userId, expoPushToken: null });
+          console.log("Cleared push token on logout");
+        } catch (error) {
+          console.error("Failed to clear push token on logout:", error);
+        }
+      }
+      
       Sentry.setUser(null);
       await supabase.auth.signOut();  // will trigger dispatch('SIGN_OUT') through auth.onAuthStateChange
     } catch (error) {

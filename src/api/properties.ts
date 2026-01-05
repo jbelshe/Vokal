@@ -5,9 +5,6 @@ import { DBVote } from '../types/vote';
 import { ImageSize } from '../types/imageSizes'
 import { convertImagePath } from '@/lib/imageHelper';
 
-export type PropertyStatus = 'active' | 'pending' | 'sold' | 'draft' | 'archived';
-export type PropertySiteStatus = 'published' | 'unpublished' | 'featured';
-
 
 /**
  * Fetches all properties from the Supabase "properties" table.
