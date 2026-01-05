@@ -32,13 +32,15 @@ export function usePostHogAnalytics() {
     };
 
     const trackOTPRequested = (phoneNumber: string) => {
-      posthog?.capture('otp_requested', {
-        // Don't log full phone number for privacy, just country code if needed
-        phone_country_code: phoneNumber.substring(0, 3),
-      });
+        console.log('[PostHog] trackOTPRequested', phoneNumber);
+        posthog?.capture('otp_requested', {
+            // Don't log full phone number for privacy, just country code if needed
+            phone_country_code: phoneNumber.substring(0, 3),
+        });
     };
 
     const trackOTPRerequested = (phoneNumber: string) => {
+        console.log('[PostHog] trackOTPRerequested', phoneNumber);
         posthog?.capture('otp_re_requested', {
           // Don't log full phone number for privacy, just country code if needed
           phone_country_code: phoneNumber.substring(0, 3),
@@ -46,19 +48,22 @@ export function usePostHogAnalytics() {
       };
 
     const trackOTPVerified = () => {
-      posthog?.capture('otp_verified');
+        posthog?.capture('otp_verified');
     };
 
     const trackOTPFailed = () => {
+        console.log('[PostHog] trackOTPFailed');
         posthog?.capture('otp_verification_failed');
-      };
+    };
 
     const trackProfileCreated = (userId: string) => {
+      console.log('[PostHog] trackProfileCreated', userId);
       posthog?.identify(userId);
       posthog?.capture('profile_created', {user_id: userId});
     };
 
     const trackOnboardingCompleted = (userId: string) => {
+      console.log('[PostHog] trackOnboardingCompleted', userId);
       posthog?.identify(userId);
       posthog?.capture('onboarding_completed');
     };
@@ -79,9 +84,9 @@ export function usePostHogAnalytics() {
       });
     };
 
-    const trackCategorySelected = (categoryCode: string) => {
+    const trackCategorySelected = (category: string) => {
       posthog?.capture('category_selected', {
-        category_code: categoryCode,
+        category_code: category,
       });
     };
 
@@ -129,12 +134,14 @@ export function usePostHogAnalytics() {
 
     // User Action Events
     const trackProfileUpdated = (fields: string[]) => {
+      console.log('[PostHog] trackProfileUpdated', fields);
       posthog?.capture('profile_updated', {
         updated_fields: fields,
       });
     };
 
     const trackSettingsChanged = (settingName: string, value: any) => {
+      console.log('[PostHog] trackSettingsChanged', settingName, value);
       posthog?.capture('settings_changed', {
         setting_name: settingName,
         setting_value: value,
@@ -143,6 +150,7 @@ export function usePostHogAnalytics() {
 
     // Generic event tracker for flexibility
     const trackEvent = (eventName: string, properties?: Record<string, any>) => {
+      console.log('[PostHog] trackEvent', eventName, properties);
       posthog?.capture(eventName, properties);
     };
 

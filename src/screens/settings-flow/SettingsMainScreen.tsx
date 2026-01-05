@@ -17,6 +17,7 @@ import ContactIcon from '../../assets/icons/telephone.png';
 import { Profile } from '@/types/profile';
 import { useNotificationSettingsWatcher } from '@/hooks/useNotificationSettingsWatcher';
 import { ensureNotificationsRegistered } from '@/lib/notifications';
+import { usePostHogAnalytics } from '../../hooks/usePostHogAnalytics';
 
 
 // Import the icon images
@@ -32,6 +33,7 @@ type Props = NativeStackScreenProps<AppStackParamList, 'SettingsMain'>;
 export default function SettingsHomeScreen({ navigation, route }: Props) {
   const { state, dispatch, signOut, updateProfileInDatabase } = useAuth();
   const [remindersEnabled, setRemindersEnabled] = useState<boolean>((!!state.profile?.expoPushToken && state.profile?.notificationsEnabled) || false);
+  const analytics = usePostHogAnalytics();
 
   const { openNotificationSettings } = useNotificationSettingsWatcher(state.profile?.userId!, {
     onTokenUpdated: (token) => {
@@ -70,6 +72,8 @@ export default function SettingsHomeScreen({ navigation, route }: Props) {
       console.log("Exiting setup");
       // return;
     }
+
+    analytics.trackSettingsChanged('notifications', value);
 
     // const token = await ensureNotificationsRegistered(state.profile.userId!);
     console.log("Notification toggle:", value, "from:", source);

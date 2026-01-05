@@ -11,6 +11,7 @@ import { VotingStackParamList } from '../../types/navigation';
 import { votingScreenStyles } from '../../assets/theme/votingFlowStyles';
 import { useVotingContext } from '../../context/VotingContext';
 import { SelectableOptions } from '../../components/SelectableOptions';
+import { usePostHogAnalytics } from '../../hooks/usePostHogAnalytics';
 
 type Props = NativeStackScreenProps<VotingStackParamList, 'SubCategory'>;
 
@@ -21,8 +22,9 @@ export default function SubCategoryScreen({ navigation, route }: Props) {
 
   const selectedCategoryCode = route.params.selectedCategoryCode;
   // const propertyId = route.params.propertyId;
-  const { categoriesDataMap, categoryToSubcategoryMap } = useAppContext();
+  const { categoriesDataMap, categoryToSubcategoryMap, currentPropertyId } = useAppContext();
   const { subCategorySelected, setSubCategorySelected, resetVoting } = useVotingContext();
+  const analytics = usePostHogAnalytics();
 
   const handleSubCategorySelect = (subcategory_code: string) => {
     console.log('Selected Subcategory:', subcategory_code);
@@ -30,16 +32,19 @@ export default function SubCategoryScreen({ navigation, route }: Props) {
   };
 
   const handleClose = () => {
+    analytics.trackVotingFlowAbandoned(currentPropertyId!, 'SubCategory');
     resetVoting();
     navigation.getParent()?.goBack();
   };
 
   const handleNext = () => {
+    analytics.trackSubcategorySelected(subCategorySelected!, selectedCategoryCode!);
     console.log('Navigate to AdditionalNoteScreen');
     if (!subCategorySelected) {
       Alert.alert('Please select a subcategory');
       return;
     }
+
     navigation.navigate('AdditionalNote', { subCategorySelected });
   };
 

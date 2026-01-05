@@ -10,6 +10,7 @@ import { Dropdown } from 'react-native-element-dropdown';
 import { PurpleButtonLarge } from '../../components/PurpleButtonLarge';
 import { Profile } from '../../types/profile';
 import { Birthday } from '../../types/birthday';
+import { usePostHogAnalytics } from '../../hooks/usePostHogAnalytics';
 
 type Props = NativeStackScreenProps<AppStackParamList, 'Profile'>;
 
@@ -84,6 +85,8 @@ const parseBirthdayFromProfile = (birthday: Birthday | null | undefined): { mont
 
 
 export default function ProfileScreen({ navigation, route }: Props) {
+  
+  const analytics = usePostHogAnalytics();
 
   const handleBack = () => {
     navigation.goBack();
@@ -249,6 +252,10 @@ export default function ProfileScreen({ navigation, route }: Props) {
           setIsEditing(false);
           return;
         }
+
+        const updatedFieldsArray = Object.keys(updatedFields);
+        analytics.trackProfileUpdated(updatedFieldsArray); 
+        
         console.log("Updated Fields:", updatedFields);
         const mergedProfile: Profile = {
           phoneNumber: phoneNumber || null,

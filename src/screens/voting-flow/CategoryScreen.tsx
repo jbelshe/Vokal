@@ -12,26 +12,31 @@ import { votingScreenStyles } from '../../assets/theme/votingFlowStyles';
 import { useAppContext } from '../../context/AppContext';
 import { useVotingContext } from '../../context/VotingContext';
 import { useEffect } from 'react';
+import { usePostHogAnalytics } from '../../hooks/usePostHogAnalytics';
 
 type Props = NativeStackScreenProps<VotingStackParamList, 'Category'>;
 
 export default function CategoryScreen({ navigation, route }: Props) {
 
-  const { categoriesDataMap } = useAppContext();
+  const { categoriesDataMap, currentPropertyId } = useAppContext();
   const { categorySelected, setCategorySelected, resetVoting } = useVotingContext();
   const [selectedCategoryCode, setSelectedCategoryCode] = React.useState<string | null>(null);
-
+  const analytics = usePostHogAnalytics();
+  
   useEffect(() => {
     setSelectedCategoryCode(null);
   }, []);
 
   const handleClose = () => {
+
+    analytics.trackVotingFlowAbandoned(currentPropertyId!, 'Category');
     resetVoting();
     navigation.getParent()?.goBack();
   };
 
 
   const handleNext = () => {
+    analytics.trackCategorySelected(categorySelected!);
     console.log('Navigate to SubCategoryScreen');
     navigation.navigate('SubCategory', { selectedCategoryCode: selectedCategoryCode! });
   };

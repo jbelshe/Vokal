@@ -92,15 +92,16 @@ export default function Otp({ navigation }: Props) {
       
       if (success == 1) {     
         console.log("handleVerifyOtp success, onboarding: ", state.isOnboarding);
-        navigation.navigate('CreateProfile1'); // if user exists, AuthContext sends them to HomeScreen
         analytics.trackOTPVerified();
+        navigation.navigate('CreateProfile1'); // if user exists, AuthContext sends them to HomeScreen
+        
       } else if (success == 0) {
           console.log("handleVerifyOtp success, no onboarding: ", success);
+          analytics.trackOTPVerified();
           setTimeout(() => {
             console.log("Waiting....")
             // wait until the auth context has updated the state.  Navigation will automatically switch to AppContext
           }, 5000);
-          analytics.trackOTPVerified();
       }
       else if (success < 0) {
         Alert.alert(

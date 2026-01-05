@@ -14,6 +14,7 @@ import { TopVoteResults, VoteTally,DisplayVote } from '../types/vote';
 import { getTopVotes } from '../api/voting';
 import { VoteDetails } from '../components/VoteDetails';
 import { ImageSize } from '../types/imageSizes';
+import { usePostHogAnalytics } from '../hooks/usePostHogAnalytics';
 
 type Props = NativeStackScreenProps<AppStackParamList, 'PropertyDetails'>;
 
@@ -23,7 +24,7 @@ export default function PropertyDetailsScreen({ route, navigation }: Props) {
   const { propertyId } = route.params;
   const { currProperty, properties, categoriesDataMap, idToCategoryMap, subcategoryToCategoryMap } = useAppContext();
   const { currentPropertyId, currentTopVotes, setCurrentTopVotes } = useAppContext();
-
+  const analytics = usePostHogAnalytics();
 
   const property = properties.find(p => p.id === propertyId) ?? currProperty;
 
@@ -41,13 +42,18 @@ export default function PropertyDetailsScreen({ route, navigation }: Props) {
 
 
   const handleSubmitSuggestion = ( ) => {
+    if(currentPropertyId) {
+      analytics.trackVotingFlowStarted(currentPropertyId);
+    }
     navigation.push('VotingFlow');
     //navigation.navigate('Category', { propertyId });
   };
 
   useEffect(() => {
-    console.log("PropertyDetailsScreen mounted", route.params);
-  }, []);
+    if(currentPropertyId) {
+      analytics.trackPropertyViewed(currentPropertyId);
+    }
+  }, [currentPropertyId]);
 
   const handleViewResults = () => {
     try {

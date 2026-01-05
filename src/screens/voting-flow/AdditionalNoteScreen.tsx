@@ -35,6 +35,7 @@ export default function AdditionalNoteScreen({ navigation, route }: Props) {
   };
 
   const handleClose = () => {
+    analytics.trackVotingFlowAbandoned(currentPropertyId!, 'AdditionalNote');
     resetVoting();
     navigation.getParent()?.goBack();
   };
@@ -64,7 +65,7 @@ export default function AdditionalNoteScreen({ navigation, route }: Props) {
       hasNote: !!additionalNote && additionalNote.trim().length > 0,
     });
 
-
+    analytics.trackVotingFlowCompleted(currentPropertyId!);
     const property = properties.find((property) => property.id === currentPropertyId);
     if (!property) {
       console.error('Property not found');
