@@ -443,12 +443,6 @@ export default function HomeScreen({ navigation }: Props) {
                       returnKeyType="search"
                     />
                   </View>
-                  {loadingPredictions && (
-                    <View style={styles.loadingRow}>
-                      <ActivityIndicator size="small" />
-                      <Text style={styles.loadingText}>Searching...</Text>
-                    </View>
-                  )}
                 </View>
                 {predictedQuery.length > 0 && (
                   <View style={styles.suggestionsContainer}>
@@ -983,12 +977,6 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#FFFFFF',
     textAlign: 'center',
-  },
-  loadingRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 4,
-    paddingHorizontal: 8,
   },
   suggestionsContainer: {
     position: 'absolute',
