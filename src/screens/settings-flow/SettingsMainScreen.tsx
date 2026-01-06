@@ -32,7 +32,7 @@ type Props = NativeStackScreenProps<AppStackParamList, 'SettingsMain'>;
 
 export default function SettingsHomeScreen({ navigation, route }: Props) {
   const { state, dispatch, signOut, updateProfileInDatabase } = useAuth();
-  const [remindersEnabled, setRemindersEnabled] = useState<boolean>((!!state.profile?.expoPushToken && state.profile?.notificationsEnabled) || false);
+  const [remindersEnabled, setRemindersEnabled] = useState<boolean>((state.profile?.notificationsEnabled) || false);
   const analytics = usePostHogAnalytics();
 
   const { openNotificationSettings } = useNotificationSettingsWatcher(state.profile?.userId!, {
@@ -50,27 +50,33 @@ export default function SettingsHomeScreen({ navigation, route }: Props) {
     await signOut();
   };
 
-  const handleProfileImagePress = () => {
-    console.log("TODO: Handle Profile image pressed")
-  };
 
   const handleNotificationToggle = async (value: boolean, source: string) => {
-    if (! state.profile?.expoPushToken ) {
+    // If trying to enable notifications but no token exists, show alert and don't proceed
+    if (value && !state.profile?.expoPushToken) {
       Alert.alert(
           "Notifications Disabled",
           "Please enable notifications in your device settings to get alerts.",
           [
-            { text: "Cancel", style: "cancel" },
+            { 
+              text: "Cancel", 
+              style: "cancel",
+              onPress: () => {
+                console.log("User cancelled - maintaining previous state");
+                // Don't update state, toggle will revert to previous value
+              } 
+            },
             {
               text: "Open Settings",
               onPress: () => {
                 openNotificationSettings();
+                // Don't update state here either - wait for token to be registered
               },
             },
           ]
         );
-      console.log("Exiting setup");
-      // return;
+      // Return early to prevent state update - this keeps the toggle in its previous state
+      return;
     }
 
     analytics.trackSettingsChanged('notifications', value);

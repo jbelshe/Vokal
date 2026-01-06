@@ -146,10 +146,6 @@ export async function doesUserExist(userId: string) : Promise<boolean> {
 export async function fetchUserProfile(userId: string, phone: string) {
   try {
     console.log("Fetching user profile for user:", userId)
-    // const { data: { user }, error: userError } = await supabase.auth.getUser();
-    // console.log("USER:", user)
-    // const phone = user?.phone;
-    // console.log("PHONE:", phone)
     const { data, error } = await supabase.from('profiles')
       .select(`*`)
       .eq('id', userId)
@@ -174,6 +170,7 @@ export async function fetchUserProfile(userId: string, phone: string) {
         gender: data.gender,
         birthday: data.date_of_birth,
         emailSubscribed: data.email_subscription,
+        notificationsEnabled: data.notifications_enabled,
         userId: userId,
         role: data.role,
         phoneNumber: phone,
