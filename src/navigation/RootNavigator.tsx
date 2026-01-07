@@ -8,6 +8,7 @@ import * as Notifications from 'expo-notifications';
 import { useEffect, useRef, useCallback } from 'react';
 import { useScreenTracking } from '../hooks/useScreenTracking';
 import { AppStackParamList } from '../types/navigation';
+import * as Sentry from '@sentry/react-native';
 
 function Splash() {
   return (
@@ -69,6 +70,16 @@ const handleNotificationNavigation = (
     
   } catch (error) {
     console.error('[NOTIFICATION] Navigation error:', error);
+    // Capture navigation errors in Sentry
+    Sentry.captureException(error, {
+      tags: {
+        feature: 'notification_navigation',
+      },
+      extra: {
+        notificationData: data,
+        isAuthenticated,
+      },
+    });
     return false;
   }
 };

@@ -23,6 +23,8 @@ import * as Location from 'expo-location';
 import { Linking } from 'react-native';
 import { useNotificationsSetup } from '../hooks/useNotificationSetup';
 import * as Sentry from '@sentry/react-native';
+import { testSentrySetup } from '../lib/sentryTestUtils';
+
 
 type Props = NativeStackScreenProps<AppStackParamList, 'Home'>;
 
@@ -47,6 +49,12 @@ export default function HomeScreen({ navigation }: Props) {
       animationTypeForReplace: 'pop',
     });
   }, [navigation]);
+
+  // useEffect(() => {
+  //   // Run test on mount (remove after verification)
+  //   const result = testSentrySetup();
+  //   console.log('Sentry Test Results:', result);
+  // }, []);
 
   const { currentPropertyId, setCurrentPropertyId } = useAppContext();
   const { state } = useAuth();

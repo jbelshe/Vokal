@@ -2,6 +2,7 @@
 import { useRef } from 'react';
 import { NavigationState } from '@react-navigation/native';
 import { usePostHogAnalytics } from './usePostHogAnalytics';
+import * as Sentry from '@sentry/react-native';
 
 /**
  * Helper function to get the current route name and params from navigation state
@@ -28,7 +29,7 @@ function getActiveRoute(
 
 /**
  * Hook to create an onStateChange handler for NavigationContainer
- * that automatically tracks screen views in PostHog
+ * that automatically tracks screen views in PostHog and adds Sentry breadcrumbs
  * 
  * Usage in RootNavigator:
  *   const { onStateChange } = useScreenTracking();
@@ -52,7 +53,27 @@ export function useScreenTracking() {
     if (previousRouteName !== currentRouteName && currentRouteName) {
       routeNameRef.current = currentRouteName;
       console.log('[PostHog] Screen viewed:', currentRouteName, 'Params:', routeParams);
+      
+      // Track in PostHog
       trackScreenViewed(currentRouteName, routeParams);
+      
+      // Add Sentry breadcrumb for navigation
+      Sentry.addBreadcrumb({
+        category: 'navigation',
+        message: `Navigated to ${currentRouteName}`,
+        level: 'info',
+        data: {
+          from: previousRouteName || 'unknown',
+          to: currentRouteName,
+          params: routeParams ? JSON.stringify(routeParams) : undefined,
+        },
+      });
+      
+      // Set Sentry context for current screen
+      Sentry.setContext('screen', {
+        name: currentRouteName,
+        params: routeParams,
+      });
     }
   };
 
