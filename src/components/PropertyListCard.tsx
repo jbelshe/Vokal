@@ -57,23 +57,11 @@ const PropertyListCard = React.memo(({ property, onPress }: PropertyListCardProp
                 {property.image_urls.length > 1 && <MemoizedImage imgKey={convertImagePath(property.image_urls[1], ImageSize.SIZE_512)} />}
               </View>
             )}
-
-            {/* <FlatList
-                data={property.image_urls || []}
-                horizontal
-                keyExtractor={(_, index) => index.toString()}
-                initialNumToRender={2}
-                maxToRenderPerBatch={2}
-                windowSize={1}
-                showsHorizontalScrollIndicator={false}
-                style={styles.imageScrollView}
-                contentContainerStyle={styles.imageScrollContent}
-                renderItem={({ item: imgKey }) => (
-                    <View style={styles.imageItemContainer}>
-                      <MemoizedImage imgKey={convertImagePath(imgKey, ImageSize.SIZE_512)} />
-                    </View>
-                )}
-            /> */}
+            { property.tenant || property.title ? 
+            <Text style={[styles.cardTitleContent, theme.textStyles.title1]} numberOfLines={1}>
+                        { property.tenant &&  property.title ? property.tenant + ' @ ' + property.title : property.tenant || property.title}
+            </Text>
+            : null}
             <View style={styles.listItemContent}>
                 <Image
                     source={property.status === 'vacant' ?
@@ -85,7 +73,7 @@ const PropertyListCard = React.memo(({ property, onPress }: PropertyListCardProp
                 />
                 <View style={styles.listItemTextContainer}>
                     <Text style={[styles.listItemAddress, theme.textStyles.body]}>
-                        {property.address_1 + (property.address_2 ? ', #' + property.address_2 : '') || 'Property'}
+                      {property.address_1 + (property.address_2 ? ', #' + property.address_2 : '')}
                     </Text>
                 </View>
             </View>
@@ -166,6 +154,10 @@ const styles = StyleSheet.create({
     resizeMode: 'cover',
   },
 
+  cardTitleContent: {
+    textAlign: 'center',
+    marginVertical: 6,
+  },
 });
 
 export default PropertyListCard;
